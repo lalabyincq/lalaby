@@ -1,0 +1,4079 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Anchor-DMC颜色查询工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", SimHei, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background-color: #f5f7fa;
+            height: 100vh;
+            padding: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 6px;
+            padding: 12px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        h1 {
+            font-size: 18px;
+            margin-bottom: 12px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 12px;
+            flex-shrink: 0;
+        }
+        @media (max-width: 768px) {
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .filter-item label {
+            font-size: 12px;
+            color: #666;
+        }
+        .input-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            position: relative;
+        }
+
+        /* 输入框样式 60px */
+        .filter-input {
+            flex: 1;
+            min-width: 0;
+            height: 60px;
+            padding: 0 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        /* 下拉按钮 */
+        .custom-select {
+            flex: 2;
+            min-width: 0;
+            height: 60px;
+            padding: 0 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            background: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+        }
+        .custom-select .arrow {
+            width: 12px;
+            height: 12px;
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'%3E%3Cpath fill='%23666' d='M840.4 300H183.6c-19.7 0-30.7 20.8-18.5 35l328.4 380.8c9.4 10.9 27.5 10.9 37 0L858.9 335c12.2-14.2 1.2-35-18.5-35z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
+        }
+
+        /* 全局悬浮下拉框（永远最上层） */
+        .select-dropdown {
+            position: fixed;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 999999;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            -webkit-overflow-scrolling: touch;
+        }
+        .select-dropdown.show {
+            display: block;
+        }
+        .select-option {
+            padding: 14px 12px;
+            font-size: 14px;
+            border-bottom: 1px solid #f2f2f2;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        .select-option:hover {
+            background: #f5f7fa;
+        }
+        .color-option-preview {
+            width: 24px;
+            height: 24px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+
+        /* 结果区域 */
+        .result-count {
+            font-size: 12px;
+            color: #999;
+            text-align: right;
+            margin-bottom: 8px;
+        }
+        .table-wrapper {
+            flex-grow: 1;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            font-size: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .color-preview {
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .empty-state {
+            padding: 40px;
+            text-align: center;
+            color: #999;
+            display: none;
+        }
+        .empty-state.show {
+            display: block;
+        }
+
+        /* 遮罩 */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 999998;
+            display: none;
+        }
+        .overlay.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Anchor-DMC颜色查询工具</h1>
+        <div class="filter-grid">
+            <div class="filter-item">
+                <label>Anchor</label>
+                <div class="input-group">
+                    <input type="text" id="anchorInput" class="filter-input" placeholder="输入值">
+                    <div class="custom-select" id="anchorSelect">
+                        <span class="select-text">请选择</span>
+                        <span class="arrow"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="filter-item">
+                <label>DMC</label>
+                <div class="input-group">
+                    <input type="text" id="dmcInput" class="filter-input" placeholder="输入值">
+                    <div class="custom-select" id="dmcSelect">
+                        <span class="select-text">请选择</span>
+                        <span class="arrow"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="filter-item">
+                <label>颜色</label>
+                <div class="input-group">
+                    <input type="text" id="colorInput" class="filter-input" placeholder="输入值">
+                    <div class="custom-select" id="colorSelect">
+                        <span class="select-text">请选择</span>
+                        <span class="arrow"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="filter-item">
+                <label>颜色名称</label>
+                <div class="input-group">
+                    <input type="text" id="colorNameInput" class="filter-input" placeholder="输入值">
+                    <div class="custom-select" id="colorNameSelect">
+                        <span class="select-text">请选择</span>
+                        <span class="arrow"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="resultCount" class="result-count">当前匹配结果：0 条</div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Anchor</th><th>DMC</th><th>颜色</th><th>颜色名称</th></tr>
+                </thead>
+                <tbody id="resultTable"></tbody>
+            </table>
+        </div>
+        <div id="emptyState" class="empty-state">暂无匹配结果</div>
+    </div>
+
+    <!-- 全局悬浮下拉框 -->
+    <div class="select-dropdown" id="anchorDropdown"></div>
+    <div class="select-dropdown" id="dmcDropdown"></div>
+    <div class="select-dropdown" id="colorDropdown"></div>
+    <div class="select-dropdown" id="colorNameDropdown"></div>
+    <div class="overlay" id="overlay"></div>
+
+    <script>
+        const rawData = [
+ {
+        "Anchor": 1,
+        "DMC": "White",
+        "颜色": "#fafafa",
+        "颜色名称": "white"
+    },
+    {
+        "Anchor": 1,
+        "DMC": "B5200",
+        "颜色": "#fafafa",
+        "颜色名称": "snow white"
+    },
+    {
+        "Anchor": 2,
+        "DMC": "White",
+        "颜色": "#fafafa",
+        "颜色名称": "white"
+    },
+    {
+        "Anchor": 2,
+        "DMC": 3865,
+        "颜色": "#f9f7f1",
+        "颜色名称": "winter white"
+    },
+    {
+        "Anchor": 6,
+        "DMC": 353,
+        "颜色": "#f2a898",
+        "颜色名称": "peach"
+    },
+    {
+        "Anchor": 8,
+        "DMC": 3824,
+        "颜色": "#ffb496",
+        "颜色名称": "lt apricot"
+    },
+    {
+        "Anchor": 9,
+        "DMC": 352,
+        "颜色": "#ea8079",
+        "颜色名称": "lt coral"
+    },
+    {
+        "Anchor": 10,
+        "DMC": 351,
+        "颜色": "#de605e",
+        "颜色名称": "coral"
+    },
+    {
+        "Anchor": 11,
+        "DMC": 350,
+        "颜色": "#d64542",
+        "颜色名称": "md coral"
+    },
+    {
+        "Anchor": 13,
+        "DMC": 349,
+        "颜色": "#c72e33",
+        "颜色名称": "dk coral"
+    },
+    {
+        "Anchor": 13,
+        "DMC": 817,
+        "颜色": "#bf1a23",
+        "颜色名称": "vy dk coral red"
+    },
+    {
+        "Anchor": 19,
+        "DMC": 321,
+        "颜色": "#c32a3c",
+        "颜色名称": "red"
+    },
+    {
+        "Anchor": 20,
+        "DMC": 816,
+        "颜色": "#940b24",
+        "颜色名称": "garnet"
+    },
+    {
+        "Anchor": 22,
+        "DMC": 815,
+        "颜色": "#840720",
+        "颜色名称": "md garnet"
+    },
+    {
+        "Anchor": 22,
+        "DMC": 902,
+        "颜色": "#6d1a2b",
+        "颜色名称": "vy dk garnet"
+    },
+    {
+        "Anchor": 23,
+        "DMC": 151,
+        "颜色": "#f3c1cd",
+        "颜色名称": "vy lt dustry rose"
+    },
+    {
+        "Anchor": 23,
+        "DMC": 963,
+        "颜色": "#ffced7",
+        "颜色名称": "ul vy lt dusty rose"
+    },
+    {
+        "Anchor": 24,
+        "DMC": 776,
+        "颜色": "#f3949f",
+        "颜色名称": "md pink"
+    },
+    {
+        "Anchor": 25,
+        "DMC": 3716,
+        "颜色": "#f6a7b4",
+        "颜色名称": "vy lt dusty rose"
+    },
+    {
+        "Anchor": 26,
+        "DMC": 894,
+        "颜色": "#ff9bb2",
+        "颜色名称": "vy lt carnation"
+    },
+    {
+        "Anchor": 27,
+        "DMC": 893,
+        "颜色": "#fb7493",
+        "颜色名称": "lt carnation"
+    },
+    {
+        "Anchor": 28,
+        "DMC": 956,
+        "颜色": "#fb5c84",
+        "颜色名称": "geranium"
+    },
+    {
+        "Anchor": 29,
+        "DMC": 891,
+        "颜色": "#f32d3e",
+        "颜色名称": "dk carnation"
+    },
+    {
+        "Anchor": 31,
+        "DMC": 3708,
+        "颜色": "#ffa2b0",
+        "颜色名称": "lt melon"
+    },
+    {
+        "Anchor": 33,
+        "DMC": 3706,
+        "颜色": "#ff7f8c",
+        "颜色名称": "md melon"
+    },
+    {
+        "Anchor": 33,
+        "DMC": 892,
+        "颜色": "#f75172",
+        "颜色名称": "md carnation"
+    },
+    {
+        "Anchor": 35,
+        "DMC": 3705,
+        "颜色": "#f75156",
+        "颜色名称": "dk melon"
+    },
+    {
+        "Anchor": 35,
+        "DMC": 891,
+        "颜色": "#f32d3e",
+        "颜色名称": "dk carnation"
+    },
+    {
+        "Anchor": 36,
+        "DMC": 3326,
+        "颜色": "#f3949f",
+        "颜色名称": "lt rose"
+    },
+    {
+        "Anchor": 38,
+        "DMC": 956,
+        "颜色": "#fb5c84",
+        "颜色名称": "geranium"
+    },
+    {
+        "Anchor": 39,
+        "DMC": 3832,
+        "颜色": "#e0577e",
+        "颜色名称": "md raspberry"
+    },
+    {
+        "Anchor": 40,
+        "DMC": 956,
+        "颜色": "#fb5c84",
+        "颜色名称": "geranium"
+    },
+    {
+        "Anchor": 41,
+        "DMC": 893,
+        "颜色": "#fb7493",
+        "颜色名称": "lt carnation"
+    },
+    {
+        "Anchor": 42,
+        "DMC": 309,
+        "颜色": "#c9344d",
+        "颜色名称": "dk rose"
+    },
+    {
+        "Anchor": 42,
+        "DMC": 3831,
+        "颜色": "#b22b54",
+        "颜色名称": "dk raspberry"
+    },
+    {
+        "Anchor": 43,
+        "DMC": 815,
+        "颜色": "#840720",
+        "颜色名称": "md garnet"
+    },
+    {
+        "Anchor": 44,
+        "DMC": 815,
+        "颜色": "#840720",
+        "颜色名称": "md garnet"
+    },
+    {
+        "Anchor": 45,
+        "DMC": 814,
+        "颜色": "#79001c",
+        "颜色名称": "dk garnet"
+    },
+    {
+        "Anchor": 46,
+        "DMC": 666,
+        "颜色": "#d90028",
+        "颜色名称": "bright red"
+    },
+    {
+        "Anchor": 47,
+        "DMC": 321,
+        "颜色": "#c32a3c",
+        "颜色名称": "red"
+    },
+    {
+        "Anchor": 48,
+        "DMC": 963,
+        "颜色": "#ffced7",
+        "颜色名称": "ul vy lt dusty rose"
+    },
+    {
+        "Anchor": 49,
+        "DMC": 3689,
+        "颜色": "#fdbace",
+        "颜色名称": "lt mauve"
+    },
+    {
+        "Anchor": 50,
+        "DMC": 957,
+        "颜色": "#ff9bba",
+        "颜色名称": "pale geranium"
+    },
+    {
+        "Anchor": 52,
+        "DMC": 899,
+        "颜色": "#e2697b",
+        "颜色名称": "md rose"
+    },
+    {
+        "Anchor": 54,
+        "DMC": 956,
+        "颜色": "#fb5c84",
+        "颜色名称": "geranium"
+    },
+    {
+        "Anchor": 55,
+        "DMC": 603,
+        "颜色": "#ee6195",
+        "颜色名称": "cranberry"
+    },
+    {
+        "Anchor": 55,
+        "DMC": 604,
+        "颜色": "#f784aa",
+        "颜色名称": "lt cranberry"
+    },
+    {
+        "Anchor": 57,
+        "DMC": 601,
+        "颜色": "#de2271",
+        "颜色名称": "dk cranberry"
+    },
+    {
+        "Anchor": 57,
+        "DMC": 602,
+        "颜色": "#e64281",
+        "颜色名称": "md cranberry"
+    },
+    {
+        "Anchor": 59,
+        "DMC": 150,
+        "颜色": "#a8024a",
+        "颜色名称": "ul vy dk dustry rose"
+    },
+    {
+        "Anchor": 59,
+        "DMC": 150,
+        "颜色": "#a8024b",
+        "颜色名称": "ul vy dk dustry rose"
+    },
+    {
+        "Anchor": 59,
+        "DMC": 326,
+        "颜色": "#af3a4a",
+        "颜色名称": "vy dk rose"
+    },
+    {
+        "Anchor": 59,
+        "DMC": 3350,
+        "颜色": "#b84263",
+        "颜色名称": "ul dk dusty rose"
+    },
+    {
+        "Anchor": 59,
+        "DMC": 3831,
+        "颜色": "#b22b54",
+        "颜色名称": "dk raspberry"
+    },
+    {
+        "Anchor": 59,
+        "DMC": 600,
+        "颜色": "#d30b61",
+        "颜色名称": "vy dk cranberry"
+    },
+    {
+        "Anchor": 60,
+        "DMC": 3688,
+        "颜色": "#e890ac",
+        "颜色名称": "md mauve"
+    },
+    {
+        "Anchor": 62,
+        "DMC": 3805,
+        "颜色": "#f34188",
+        "颜色名称": "cyclamen pink"
+    },
+    {
+        "Anchor": 62,
+        "DMC": 3806,
+        "颜色": "#fd75a9",
+        "颜色名称": "lt cyclamen pink"
+    },
+    {
+        "Anchor": 62,
+        "DMC": 603,
+        "颜色": "#ee6195",
+        "颜色名称": "cranberry"
+    },
+    {
+        "Anchor": 63,
+        "DMC": 3804,
+        "颜色": "#e6367c",
+        "颜色名称": "dk cyclamen pink"
+    },
+    {
+        "Anchor": 63,
+        "DMC": 602,
+        "颜色": "#e64281",
+        "颜色名称": "md cranberry"
+    },
+    {
+        "Anchor": 65,
+        "DMC": 3350,
+        "颜色": "#b84263",
+        "颜色名称": "ul dk dusty rose"
+    },
+    {
+        "Anchor": 65,
+        "DMC": 777,
+        "颜色": "#810b28",
+        "颜色名称": "vy dk Raspberry"
+    },
+    {
+        "Anchor": 66,
+        "DMC": 3688,
+        "颜色": "#e890ac",
+        "颜色名称": "md mauve"
+    },
+    {
+        "Anchor": 68,
+        "DMC": 3687,
+        "颜色": "#c65375",
+        "颜色名称": "mauve"
+    },
+    {
+        "Anchor": 69,
+        "DMC": 3803,
+        "颜色": "#a83255",
+        "颜色名称": "dk mauve"
+    },
+    {
+        "Anchor": 70,
+        "DMC": 3685,
+        "颜色": "#851531",
+        "颜色名称": "vy dk mauve"
+    },
+    {
+        "Anchor": 72,
+        "DMC": 902,
+        "颜色": "#6d1a2b",
+        "颜色名称": "vy dk garnet"
+    },
+    {
+        "Anchor": 73,
+        "DMC": 818,
+        "颜色": "#ffcece",
+        "颜色名称": "baby pink"
+    },
+    {
+        "Anchor": 73,
+        "DMC": 963,
+        "颜色": "#ffced7",
+        "颜色名称": "ul vy lt dusty rose"
+    },
+    {
+        "Anchor": 74,
+        "DMC": 3354,
+        "颜色": "#eea1b2",
+        "颜色名称": "lt dusty rose"
+    },
+    {
+        "Anchor": 74,
+        "DMC": 605,
+        "颜色": "#ffaac5",
+        "颜色名称": "vy lt cranberry"
+    },
+    {
+        "Anchor": 75,
+        "DMC": 3733,
+        "颜色": "#e78197",
+        "颜色名称": "dusty rose"
+    },
+    {
+        "Anchor": 75,
+        "DMC": 962,
+        "颜色": "#dd818f",
+        "颜色名称": "md dusty rose"
+    },
+    {
+        "Anchor": 76,
+        "DMC": 3731,
+        "颜色": "#d96280",
+        "颜色名称": "vy dk dusty rose"
+    },
+    {
+        "Anchor": 76,
+        "DMC": 3833,
+        "颜色": "#eb6d84",
+        "颜色名称": "lt raspberry"
+    },
+    {
+        "Anchor": 76,
+        "DMC": 961,
+        "颜色": "#da627c",
+        "颜色名称": "dk dusty rose"
+    },
+    {
+        "Anchor": 77,
+        "DMC": 3687,
+        "颜色": "#c65375",
+        "颜色名称": "mauve"
+    },
+    {
+        "Anchor": 78,
+        "DMC": 917,
+        "颜色": "#a4175d",
+        "颜色名称": "md plum"
+    },
+    {
+        "Anchor": 79,
+        "DMC": 3687,
+        "颜色": "#c65375",
+        "颜色名称": "mauve"
+    },
+    {
+        "Anchor": 85,
+        "DMC": 3609,
+        "颜色": "#ffaacf",
+        "颜色名称": "ul lt plum"
+    },
+    {
+        "Anchor": 86,
+        "DMC": 3608,
+        "颜色": "#e67dac",
+        "颜色名称": "vy lt plum"
+    },
+    {
+        "Anchor": 87,
+        "DMC": 3607,
+        "颜色": "#d25292",
+        "颜色名称": "lt plum"
+    },
+    {
+        "Anchor": 88,
+        "DMC": 718,
+        "颜色": "#b73275",
+        "颜色名称": "plum"
+    },
+    {
+        "Anchor": 89,
+        "DMC": 917,
+        "颜色": "#a4175d",
+        "颜色名称": "md plum"
+    },
+    {
+        "Anchor": 90,
+        "DMC": 3836,
+        "颜色": "#b78da7",
+        "颜色名称": "lt grape"
+    },
+    {
+        "Anchor": 92,
+        "DMC": 553,
+        "颜色": "#a16089",
+        "颜色名称": "violet"
+    },
+    {
+        "Anchor": 94,
+        "DMC": 917,
+        "颜色": "#a4175d",
+        "颜色名称": "md plum"
+    },
+    {
+        "Anchor": 95,
+        "DMC": 153,
+        "颜色": "#e3c6d5",
+        "颜色名称": "vy lt violet"
+    },
+    {
+        "Anchor": 96,
+        "DMC": 554,
+        "颜色": "#d8aec7",
+        "颜色名称": "lt violet"
+    },
+    {
+        "Anchor": 97,
+        "DMC": 554,
+        "颜色": "#d8aec7",
+        "颜色名称": "lt violet"
+    },
+    {
+        "Anchor": 98,
+        "DMC": 3835,
+        "颜色": "#915e81",
+        "颜色名称": "md grape"
+    },
+    {
+        "Anchor": 98,
+        "DMC": 553,
+        "颜色": "#a16089",
+        "颜色名称": "violet"
+    },
+    {
+        "Anchor": 99,
+        "DMC": 552,
+        "颜色": "#793666",
+        "颜色名称": "md violet"
+    },
+    {
+        "Anchor": 100,
+        "DMC": 327,
+        "颜色": "#551346",
+        "颜色名称": "dk violet"
+    },
+    {
+        "Anchor": 100,
+        "DMC": 3834,
+        "颜色": "#70365b",
+        "颜色名称": "dk grape"
+    },
+    {
+        "Anchor": 100,
+        "DMC": 3837,
+        "颜色": "#69396c",
+        "颜色名称": "ul dk lavender"
+    },
+    {
+        "Anchor": 101,
+        "DMC": 550,
+        "颜色": "#4a133f",
+        "颜色名称": "vy dk violet"
+    },
+    {
+        "Anchor": 102,
+        "DMC": 550,
+        "颜色": "#4a133f",
+        "颜色名称": "vy dk violet"
+    },
+    {
+        "Anchor": 103,
+        "DMC": 153,
+        "颜色": "#e3c6d5",
+        "颜色名称": "vy lt violet"
+    },
+    {
+        "Anchor": 108,
+        "DMC": 210,
+        "颜色": "#c09bc0",
+        "颜色名称": "md lavender"
+    },
+    {
+        "Anchor": 109,
+        "DMC": 209,
+        "颜色": "#a078a5",
+        "颜色名称": "Dk Lavender"
+    },
+    {
+        "Anchor": 110,
+        "DMC": 333,
+        "颜色": "#604e87",
+        "颜色名称": "vy dk blue violet"
+    },
+    {
+        "Anchor": 111,
+        "DMC": 208,
+        "颜色": "#805988",
+        "颜色名称": "vy dk lavender"
+    },
+    {
+        "Anchor": 112,
+        "DMC": 3837,
+        "颜色": "#69396c",
+        "颜色名称": "ul dk lavender"
+    },
+    {
+        "Anchor": 117,
+        "DMC": 341,
+        "颜色": "#b8bfdc",
+        "颜色名称": "lt blue violet"
+    },
+    {
+        "Anchor": 117,
+        "DMC": 3840,
+        "颜色": "#a7b2c5",
+        "颜色名称": "lt lavender blue"
+    },
+    {
+        "Anchor": 118,
+        "DMC": 156,
+        "颜色": "#a5b0d1",
+        "颜色名称": "md lt blue violet"
+    },
+    {
+        "Anchor": 118,
+        "DMC": 340,
+        "颜色": "#a4a4c4",
+        "颜色名称": "md blue violet"
+    },
+    {
+        "Anchor": 119,
+        "DMC": 333,
+        "颜色": "#604e87",
+        "颜色名称": "vy dk blue violet"
+    },
+    {
+        "Anchor": 120,
+        "DMC": 157,
+        "颜色": "#b7c4e4",
+        "颜色名称": "vy lt cornflower blue"
+    },
+    {
+        "Anchor": 120,
+        "DMC": 159,
+        "颜色": "#c1c9d9",
+        "颜色名称": "lt gray blue"
+    },
+    {
+        "Anchor": 120,
+        "DMC": 3747,
+        "颜色": "#cdd2ea",
+        "颜色名称": "vy lt blue violet"
+    },
+    {
+        "Anchor": 121,
+        "DMC": 794,
+        "颜色": "#8e9dc6",
+        "颜色名称": "lt cornflower blue"
+    },
+    {
+        "Anchor": 121,
+        "DMC": 809,
+        "颜色": "#82a8c9",
+        "颜色名称": "delft blue"
+    },
+    {
+        "Anchor": 122,
+        "DMC": 3807,
+        "颜色": "#5b648f",
+        "颜色名称": "cornflower blue"
+    },
+    {
+        "Anchor": 123,
+        "DMC": 158,
+        "颜色": "#403d6d",
+        "颜色名称": "md vy dk cornflower blue"
+    },
+    {
+        "Anchor": 123,
+        "DMC": 791,
+        "颜色": "#363562",
+        "颜色名称": "vy dk cornflower blue"
+    },
+    {
+        "Anchor": 127,
+        "DMC": 823,
+        "颜色": "#071f3a",
+        "颜色名称": "dk navy blue"
+    },
+    {
+        "Anchor": 128,
+        "DMC": 775,
+        "颜色": "#d7ebf2",
+        "颜色名称": "vy lt baby blue"
+    },
+    {
+        "Anchor": 129,
+        "DMC": 3325,
+        "颜色": "#a6c3d9",
+        "颜色名称": "lt baby blue"
+    },
+    {
+        "Anchor": 130,
+        "DMC": 809,
+        "颜色": "#82a8c9",
+        "颜色名称": "delft blue"
+    },
+    {
+        "Anchor": 131,
+        "DMC": 798,
+        "颜色": "#3e5ea0",
+        "颜色名称": "dk delft blue"
+    },
+    {
+        "Anchor": 132,
+        "DMC": 797,
+        "颜色": "#223f88",
+        "颜色名称": "royal blue"
+    },
+    {
+        "Anchor": 133,
+        "DMC": 796,
+        "颜色": "#0f2075",
+        "颜色名称": "dk royal blue"
+    },
+    {
+        "Anchor": 134,
+        "DMC": 820,
+        "颜色": "#000861",
+        "颜色名称": "vy dk royal blue"
+    },
+    {
+        "Anchor": 136,
+        "DMC": 799,
+        "颜色": "#5b81b5",
+        "颜色名称": "md delft blue"
+    },
+    {
+        "Anchor": 137,
+        "DMC": 3838,
+        "颜色": "#5d6f9d",
+        "颜色名称": "dk lavender blue"
+    },
+    {
+        "Anchor": 137,
+        "DMC": 798,
+        "颜色": "#3e5ea0",
+        "颜色名称": "dk delft blue"
+    },
+    {
+        "Anchor": 139,
+        "DMC": 797,
+        "颜色": "#223f88",
+        "颜色名称": "royal blue"
+    },
+    {
+        "Anchor": 140,
+        "DMC": 3755,
+        "颜色": "#83a4c1",
+        "颜色名称": "baby blue"
+    },
+    {
+        "Anchor": 142,
+        "DMC": 798,
+        "颜色": "#3e5ea0",
+        "颜色名称": "dk delft blue"
+    },
+    {
+        "Anchor": 143,
+        "DMC": 797,
+        "颜色": "#223f88",
+        "颜色名称": "royal blue"
+    },
+    {
+        "Anchor": 144,
+        "DMC": 800,
+        "颜色": "#adcbe1",
+        "颜色名称": "pale delft blue"
+    },
+    {
+        "Anchor": 145,
+        "DMC": 799,
+        "颜色": "#5b81b5",
+        "颜色名称": "md delft blue"
+    },
+    {
+        "Anchor": 146,
+        "DMC": 798,
+        "颜色": "#3e5ea0",
+        "颜色名称": "dk delft blue"
+    },
+    {
+        "Anchor": 147,
+        "DMC": 797,
+        "颜色": "#223f88",
+        "颜色名称": "royal blue"
+    },
+    {
+        "Anchor": 148,
+        "DMC": 311,
+        "颜色": "#064055",
+        "颜色名称": "md navy blue"
+    },
+    {
+        "Anchor": 149,
+        "DMC": 803,
+        "颜色": "#1e4669",
+        "颜色名称": "ul vy dk baby blue"
+    },
+    {
+        "Anchor": 150,
+        "DMC": 336,
+        "颜色": "#0f3251",
+        "颜色名称": "navy blue"
+    },
+    {
+        "Anchor": 152,
+        "DMC": 823,
+        "颜色": "#071f3a",
+        "颜色名称": "dk navy blue"
+    },
+    {
+        "Anchor": 152,
+        "DMC": 939,
+        "颜色": "#001326",
+        "颜色名称": "vy dk navy blue"
+    },
+    {
+        "Anchor": 158,
+        "DMC": 747,
+        "颜色": "#d3fff9",
+        "颜色名称": "vy lt sky blue"
+    },
+    {
+        "Anchor": 159,
+        "DMC": 162,
+        "颜色": "#c7e2ef",
+        "颜色名称": "ul vy lt blue"
+    },
+    {
+        "Anchor": 160,
+        "DMC": 827,
+        "颜色": "#acd4e9",
+        "颜色名称": "vy lt blue"
+    },
+    {
+        "Anchor": 161,
+        "DMC": 813,
+        "颜色": "#7eacc9",
+        "颜色名称": "lt blue"
+    },
+    {
+        "Anchor": 161,
+        "DMC": 826,
+        "颜色": "#5785ad",
+        "颜色名称": "md blue"
+    },
+    {
+        "Anchor": 162,
+        "DMC": 517,
+        "颜色": "#2e7288",
+        "颜色名称": "dk wedgewood"
+    },
+    {
+        "Anchor": 162,
+        "DMC": 825,
+        "颜色": "#3a628c",
+        "颜色名称": "dk blue"
+    },
+    {
+        "Anchor": 164,
+        "DMC": 3842,
+        "颜色": "#17566d",
+        "颜色名称": "dk wedgwood"
+    },
+    {
+        "Anchor": 164,
+        "DMC": 824,
+        "颜色": "#224271",
+        "颜色名称": "vy dk blue"
+    },
+    {
+        "Anchor": 167,
+        "DMC": 3766,
+        "颜色": "#9acdcd",
+        "颜色名称": "lt peacock blue"
+    },
+    {
+        "Anchor": 168,
+        "DMC": 807,
+        "颜色": "#5f9ea5",
+        "颜色名称": "peacock blue"
+    },
+    {
+        "Anchor": 169,
+        "DMC": 3760,
+        "颜色": "#3d839f",
+        "颜色名称": "md wedgewood"
+    },
+    {
+        "Anchor": 169,
+        "DMC": 806,
+        "颜色": "#3d839f",
+        "颜色名称": "dk peacock blue"
+    },
+    {
+        "Anchor": 170,
+        "DMC": 3765,
+        "颜色": "#17616d",
+        "颜色名称": "vy dk peacock blue"
+    },
+    {
+        "Anchor": 175,
+        "DMC": 160,
+        "颜色": "#8293b3",
+        "颜色名称": "md gray blue"
+    },
+    {
+        "Anchor": 175,
+        "DMC": 794,
+        "颜色": "#8e9dc6",
+        "颜色名称": "lt cornflower blue"
+    },
+    {
+        "Anchor": 176,
+        "DMC": 161,
+        "颜色": "#5c6694",
+        "颜色名称": "gray blue"
+    },
+    {
+        "Anchor": 176,
+        "DMC": 3839,
+        "颜色": "#798fb3",
+        "颜色名称": "md lavender blue"
+    },
+    {
+        "Anchor": 176,
+        "DMC": 793,
+        "颜色": "#7784af",
+        "颜色名称": "md cornflower blue"
+    },
+    {
+        "Anchor": 177,
+        "DMC": 792,
+        "颜色": "#4b497d",
+        "颜色名称": "dk cornflower blue"
+    },
+    {
+        "Anchor": 178,
+        "DMC": 158,
+        "颜色": "#403d6d",
+        "颜色名称": "md vy dk cornflower blue"
+    },
+    {
+        "Anchor": 178,
+        "DMC": 791,
+        "颜色": "#363562",
+        "颜色名称": "vy dk cornflower blue"
+    },
+    {
+        "Anchor": 185,
+        "DMC": 959,
+        "颜色": "#85d5b6",
+        "颜色名称": "md seagreen"
+    },
+    {
+        "Anchor": 185,
+        "DMC": 993,
+        "颜色": "#7ecdaf",
+        "颜色名称": "vy lt aquamarine"
+    },
+    {
+        "Anchor": 186,
+        "DMC": 959,
+        "颜色": "#85d5b6",
+        "颜色名称": "md seagreen"
+    },
+    {
+        "Anchor": 187,
+        "DMC": 3851,
+        "颜色": "#66bf9d",
+        "颜色名称": "lt bright green"
+    },
+    {
+        "Anchor": 187,
+        "DMC": 958,
+        "颜色": "#5bc39d",
+        "颜色名称": "dk seagreen"
+    },
+    {
+        "Anchor": 188,
+        "DMC": 3812,
+        "颜色": "#1c925f",
+        "颜色名称": "vy dk seagreen"
+    },
+    {
+        "Anchor": 188,
+        "DMC": 943,
+        "颜色": "#39ac78",
+        "颜色名称": "md aquamarine"
+    },
+    {
+        "Anchor": 189,
+        "DMC": 3850,
+        "颜色": "#0f9161",
+        "颜色名称": "dk bright green"
+    },
+    {
+        "Anchor": 203,
+        "DMC": 954,
+        "颜色": "#99e5a6",
+        "颜色名称": "nile green"
+    },
+    {
+        "Anchor": 204,
+        "DMC": 913,
+        "颜色": "#76d185",
+        "颜色名称": "md nile green"
+    },
+    {
+        "Anchor": 205,
+        "DMC": 911,
+        "颜色": "#36a459",
+        "颜色名称": "md emerald green"
+    },
+    {
+        "Anchor": 206,
+        "DMC": 564,
+        "颜色": "#b5e1be",
+        "颜色名称": "vy lt jade"
+    },
+    {
+        "Anchor": 206,
+        "DMC": 955,
+        "颜色": "#c6ffca",
+        "颜色名称": "lt nile green"
+    },
+    {
+        "Anchor": 206,
+        "DMC": 966,
+        "颜色": "#a2d5ae",
+        "颜色名称": "md baby green"
+    },
+    {
+        "Anchor": 208,
+        "DMC": 563,
+        "颜色": "#8cd2a8",
+        "颜色名称": "lt jade"
+    },
+    {
+        "Anchor": 209,
+        "DMC": 912,
+        "颜色": "#53bd6a",
+        "颜色名称": "lt emerald green"
+    },
+    {
+        "Anchor": 210,
+        "DMC": 505,
+        "颜色": "#328060",
+        "颜色名称": "jade green"
+    },
+    {
+        "Anchor": 210,
+        "DMC": 562,
+        "颜色": "#519468",
+        "颜色名称": "md jade"
+    },
+    {
+        "Anchor": 211,
+        "DMC": 700,
+        "颜色": "#07711a",
+        "颜色名称": "bright green"
+    },
+    {
+        "Anchor": 212,
+        "DMC": 561,
+        "颜色": "#2b6843",
+        "颜色名称": "vy dk jade"
+    },
+    {
+        "Anchor": 213,
+        "DMC": 504,
+        "颜色": "#b2d4bd",
+        "颜色名称": "vy lt blue green"
+    },
+    {
+        "Anchor": 214,
+        "DMC": 368,
+        "颜色": "#aad99f",
+        "颜色名称": "lt pistachio green"
+    },
+    {
+        "Anchor": 215,
+        "DMC": 320,
+        "颜色": "#75bb71",
+        "颜色名称": "md pistachio green"
+    },
+    {
+        "Anchor": 216,
+        "DMC": 562,
+        "颜色": "#519468",
+        "颜色名称": "md jade"
+    },
+    {
+        "Anchor": 217,
+        "DMC": 367,
+        "颜色": "#4b924b",
+        "颜色名称": "dk pistachio green"
+    },
+    {
+        "Anchor": 218,
+        "DMC": 319,
+        "颜色": "#236831",
+        "颜色名称": "vy dkpistachio green"
+    },
+    {
+        "Anchor": 218,
+        "DMC": 890,
+        "颜色": "#144b26",
+        "颜色名称": "ul dk pistachio green"
+    },
+    {
+        "Anchor": 219,
+        "DMC": 3813,
+        "颜色": "#b2d4bd",
+        "颜色名称": "lt blue green"
+    },
+    {
+        "Anchor": 221,
+        "DMC": 502,
+        "颜色": "#598d6e",
+        "颜色名称": "blue green"
+    },
+    {
+        "Anchor": 224,
+        "DMC": 3818,
+        "颜色": "#00692d",
+        "颜色名称": "ul vy dk emerald greene"
+    },
+    {
+        "Anchor": 225,
+        "DMC": 702,
+        "颜色": "#46a42e",
+        "颜色名称": "kelly green"
+    },
+    {
+        "Anchor": 226,
+        "DMC": 702,
+        "颜色": "#46a42e",
+        "颜色名称": "kelly green"
+    },
+    {
+        "Anchor": 227,
+        "DMC": 701,
+        "颜色": "#1c8817",
+        "颜色名称": "lt green"
+    },
+    {
+        "Anchor": 228,
+        "DMC": 700,
+        "颜色": "#07711a",
+        "颜色名称": "bright green"
+    },
+    {
+        "Anchor": 229,
+        "DMC": 910,
+        "颜色": "#1e9044",
+        "颜色名称": "dk emerald green"
+    },
+    {
+        "Anchor": 230,
+        "DMC": 909,
+        "颜色": "#0b7c38",
+        "颜色名称": "vy dk emerald green"
+    },
+    {
+        "Anchor": 231,
+        "DMC": 453,
+        "颜色": "#d1c3cf",
+        "颜色名称": "lt shell gray"
+    },
+    {
+        "Anchor": 232,
+        "DMC": 452,
+        "颜色": "#ae9aa4",
+        "颜色名称": "md shell gray"
+    },
+    {
+        "Anchor": 233,
+        "DMC": 451,
+        "颜色": "#7c696d",
+        "颜色名称": "dk shell gray"
+    },
+    {
+        "Anchor": 234,
+        "DMC": 762,
+        "颜色": "#e2e2e7",
+        "颜色名称": "vy lt pearl gray"
+    },
+    {
+        "Anchor": 235,
+        "DMC": 414,
+        "颜色": "#7c7c84",
+        "颜色名称": "dk steel gray"
+    },
+    {
+        "Anchor": 236,
+        "DMC": 3799,
+        "颜色": "#2b2c2f",
+        "颜色名称": "vy dk pewter gray"
+    },
+    {
+        "Anchor": 236,
+        "DMC": 413,
+        "颜色": "#3e4144",
+        "颜色名称": "dk pewter gray"
+    },
+    {
+        "Anchor": 237,
+        "DMC": 704,
+        "颜色": "#aeda62",
+        "颜色名称": "bright chartreuse"
+    },
+    {
+        "Anchor": 238,
+        "DMC": 703,
+        "颜色": "#7ab146",
+        "颜色名称": "chartreuse"
+    },
+    {
+        "Anchor": 239,
+        "DMC": 702,
+        "颜色": "#46a42e",
+        "颜色名称": "kelly green"
+    },
+    {
+        "Anchor": 240,
+        "DMC": 164,
+        "颜色": "#b6d4a3",
+        "颜色名称": "lt forest green"
+    },
+    {
+        "Anchor": 241,
+        "DMC": 989,
+        "颜色": "#92bf68",
+        "颜色名称": "forest green"
+    },
+    {
+        "Anchor": 242,
+        "DMC": 989,
+        "颜色": "#92bf68",
+        "颜色名称": "forest green"
+    },
+    {
+        "Anchor": 243,
+        "DMC": 988,
+        "颜色": "#68a046",
+        "颜色名称": "md forest green"
+    },
+    {
+        "Anchor": 244,
+        "DMC": 987,
+        "颜色": "#408128",
+        "颜色名称": "dk forest green"
+    },
+    {
+        "Anchor": 245,
+        "DMC": 987,
+        "颜色": "#408128",
+        "颜色名称": "dk forest green"
+    },
+    {
+        "Anchor": 246,
+        "DMC": 986,
+        "颜色": "#2b671f",
+        "颜色名称": "vy dk forest green"
+    },
+    {
+        "Anchor": 253,
+        "DMC": 14,
+        "颜色": "#d0fbb2",
+        "颜色名称": "apple green pale"
+    },
+    {
+        "Anchor": 253,
+        "DMC": 472,
+        "颜色": "#d5e191",
+        "颜色名称": "ul lt avocado green"
+    },
+    {
+        "Anchor": 254,
+        "DMC": 472,
+        "颜色": "#d5e191",
+        "颜色名称": "ul lt avocado green"
+    },
+    {
+        "Anchor": 255,
+        "DMC": 907,
+        "颜色": "#c6e560",
+        "颜色名称": "lt parrot green"
+    },
+    {
+        "Anchor": 256,
+        "DMC": 704,
+        "颜色": "#aeda62",
+        "颜色名称": "bright chartreuse"
+    },
+    {
+        "Anchor": 256,
+        "DMC": 906,
+        "颜色": "#89c53a",
+        "颜色名称": "md parrot green"
+    },
+    {
+        "Anchor": 257,
+        "DMC": 905,
+        "颜色": "#568f2e",
+        "颜色名称": "dk parrot green"
+    },
+    {
+        "Anchor": 258,
+        "DMC": 904,
+        "颜色": "#2f6800",
+        "颜色名称": "vy dk parrot green"
+    },
+    {
+        "Anchor": 259,
+        "DMC": 772,
+        "颜色": "#e4feb0",
+        "颜色名称": "vy lt yellow green"
+    },
+    {
+        "Anchor": 260,
+        "DMC": 3364,
+        "颜色": "#9db275",
+        "颜色名称": "pine green"
+    },
+    {
+        "Anchor": 261,
+        "DMC": 3053,
+        "颜色": "#a4b583",
+        "颜色名称": "green gray"
+    },
+    {
+        "Anchor": 262,
+        "DMC": 3051,
+        "颜色": "#516132",
+        "颜色名称": "dk green gray"
+    },
+    {
+        "Anchor": 262,
+        "DMC": 3363,
+        "颜色": "#6e8d58",
+        "颜色名称": "md pine green"
+    },
+    {
+        "Anchor": 263,
+        "DMC": 3362,
+        "颜色": "#4a6332",
+        "颜色名称": "dk pine green"
+    },
+    {
+        "Anchor": 264,
+        "DMC": 3348,
+        "颜色": "#ceeb90",
+        "颜色名称": "lt yellow green"
+    },
+    {
+        "Anchor": 264,
+        "DMC": 772,
+        "颜色": "#e4feb0",
+        "颜色名称": "vy lt yellow green"
+    },
+    {
+        "Anchor": 265,
+        "DMC": 471,
+        "颜色": "#b9c572",
+        "颜色名称": "vy lt avocado green"
+    },
+    {
+        "Anchor": 266,
+        "DMC": 3347,
+        "颜色": "#76a451",
+        "颜色名称": "md yellow green"
+    },
+    {
+        "Anchor": 266,
+        "DMC": 471,
+        "颜色": "#b9c572",
+        "颜色名称": "vy lt avocado green"
+    },
+    {
+        "Anchor": 267,
+        "DMC": 3346,
+        "颜色": "#4b8835",
+        "颜色名称": "hunter green"
+    },
+    {
+        "Anchor": 267,
+        "DMC": 469,
+        "颜色": "#819442",
+        "颜色名称": "avocado green"
+    },
+    {
+        "Anchor": 267,
+        "DMC": 470,
+        "颜色": "#9ead57",
+        "颜色名称": "lt avocado green"
+    },
+    {
+        "Anchor": 268,
+        "DMC": 3345,
+        "颜色": "#2f6913",
+        "颜色名称": "dk hunter green"
+    },
+    {
+        "Anchor": 268,
+        "DMC": 3346,
+        "颜色": "#4b8835",
+        "颜色名称": "hunter green"
+    },
+    {
+        "Anchor": 268,
+        "DMC": 937,
+        "颜色": "#697c2e",
+        "颜色名称": "md avocado green"
+    },
+    {
+        "Anchor": 269,
+        "DMC": 936,
+        "颜色": "#52651a",
+        "颜色名称": "vy dk avocado green"
+    },
+    {
+        "Anchor": 271,
+        "DMC": 819,
+        "颜色": "#ffe1e1",
+        "颜色名称": "lt baby pink"
+    },
+    {
+        "Anchor": 273,
+        "DMC": 3787,
+        "颜色": "#656040",
+        "颜色名称": "dk brown gray"
+    },
+    {
+        "Anchor": 273,
+        "DMC": 645,
+        "颜色": "#515542",
+        "颜色名称": "vy dk beaver gray"
+    },
+    {
+        "Anchor": 274,
+        "DMC": 3752,
+        "颜色": "#9ab3cd",
+        "颜色名称": "vy lt antique blue"
+    },
+    {
+        "Anchor": 274,
+        "DMC": 928,
+        "颜色": "#c2d4d4",
+        "颜色名称": "vy lt gray green"
+    },
+    {
+        "Anchor": 275,
+        "DMC": 746,
+        "颜色": "#ffffe1",
+        "颜色名称": "off white"
+    },
+    {
+        "Anchor": 276,
+        "DMC": 543,
+        "颜色": "#eaded3",
+        "颜色名称": "ul vy lt beige brown"
+    },
+    {
+        "Anchor": 276,
+        "DMC": 739,
+        "颜色": "#f2d3a8",
+        "颜色名称": "ul vy lt tan"
+    },
+    {
+        "Anchor": 277,
+        "DMC": 830,
+        "颜色": "#766400",
+        "颜色名称": "dk golden olive"
+    },
+    {
+        "Anchor": 277,
+        "DMC": 831,
+        "颜色": "#928030",
+        "颜色名称": "md golden olive"
+    },
+    {
+        "Anchor": 278,
+        "DMC": 165,
+        "颜色": "#eff39d",
+        "颜色名称": "vy lt moss green"
+    },
+    {
+        "Anchor": 278,
+        "DMC": 3819,
+        "颜色": "#e0e762",
+        "颜色名称": "lt moss green"
+    },
+    {
+        "Anchor": 279,
+        "DMC": 734,
+        "颜色": "#d4ce75",
+        "颜色名称": "lt olive green"
+    },
+    {
+        "Anchor": 280,
+        "DMC": 166,
+        "颜色": "#ced129",
+        "颜色名称": "md lt moss green"
+    },
+    {
+        "Anchor": 280,
+        "DMC": 581,
+        "颜色": "#8ba136",
+        "颜色名称": "moss green"
+    },
+    {
+        "Anchor": 280,
+        "DMC": 733,
+        "颜色": "#c0ba61",
+        "颜色名称": "md olive green"
+    },
+    {
+        "Anchor": 281,
+        "DMC": 580,
+        "颜色": "#667913",
+        "颜色名称": "dk moss green"
+    },
+    {
+        "Anchor": 281,
+        "DMC": 732,
+        "颜色": "#989239",
+        "颜色名称": "olive green"
+    },
+    {
+        "Anchor": 288,
+        "DMC": 445,
+        "颜色": "#fff983",
+        "颜色名称": "lt lemon"
+    },
+    {
+        "Anchor": 289,
+        "DMC": 307,
+        "颜色": "#fee73d",
+        "颜色名称": "lemon"
+    },
+    {
+        "Anchor": 290,
+        "DMC": 444,
+        "颜色": "#fac800",
+        "颜色名称": "dk lemon"
+    },
+    {
+        "Anchor": 291,
+        "DMC": 444,
+        "颜色": "#fac800",
+        "颜色名称": "dk lemon"
+    },
+    {
+        "Anchor": 292,
+        "DMC": 3078,
+        "颜色": "#faf6b7",
+        "颜色名称": "vy lt golden yellow"
+    },
+    {
+        "Anchor": 293,
+        "DMC": 727,
+        "颜色": "#f6e990",
+        "颜色名称": "vy lt topaz"
+    },
+    {
+        "Anchor": 295,
+        "DMC": 3822,
+        "颜色": "#f2df70",
+        "颜色名称": "lt straw"
+    },
+    {
+        "Anchor": 295,
+        "DMC": 726,
+        "颜色": "#f7dd68",
+        "颜色名称": "lt topaz"
+    },
+    {
+        "Anchor": 297,
+        "DMC": 973,
+        "颜色": "#fadd00",
+        "颜色名称": "bright canary"
+    },
+    {
+        "Anchor": 298,
+        "DMC": 972,
+        "颜色": "#f7be12",
+        "颜色名称": "deep canary"
+    },
+    {
+        "Anchor": 300,
+        "DMC": 745,
+        "颜色": "#fff1b2",
+        "颜色名称": "lt pale yellow"
+    },
+    {
+        "Anchor": 301,
+        "DMC": 743,
+        "颜色": "#ffe48b",
+        "颜色名称": "pale yellow"
+    },
+    {
+        "Anchor": 301,
+        "DMC": 744,
+        "颜色": "#ffe48b",
+        "颜色名称": "pale yellow"
+    },
+    {
+        "Anchor": 302,
+        "DMC": 743,
+        "颜色": "#ffdd64",
+        "颜色名称": "md yellow"
+    },
+    {
+        "Anchor": 303,
+        "DMC": 742,
+        "颜色": "#ffbc50",
+        "颜色名称": "lt tangerine"
+    },
+    {
+        "Anchor": 304,
+        "DMC": 741,
+        "颜色": "#ff9d25",
+        "颜色名称": "md tangerine"
+    },
+    {
+        "Anchor": 305,
+        "DMC": 3821,
+        "颜色": "#f2cd49",
+        "颜色名称": "straw"
+    },
+    {
+        "Anchor": 305,
+        "DMC": 725,
+        "颜色": "#f7cc41",
+        "颜色名称": "md lt topaz"
+    },
+    {
+        "Anchor": 305,
+        "DMC": 728,
+        "颜色": "#efc11a",
+        "颜色名称": "topaz"
+    },
+    {
+        "Anchor": 306,
+        "DMC": 3820,
+        "颜色": "#e2b735",
+        "颜色名称": "dk straw"
+    },
+    {
+        "Anchor": 306,
+        "DMC": 3852,
+        "颜色": "#d2a021",
+        "颜色名称": "vy dk straw"
+    },
+    {
+        "Anchor": 306,
+        "DMC": 783,
+        "颜色": "#da9605",
+        "颜色名称": "md topaz"
+    },
+    {
+        "Anchor": 307,
+        "DMC": 782,
+        "颜色": "#c77e00",
+        "颜色名称": "dk topaz"
+    },
+    {
+        "Anchor": 308,
+        "DMC": 781,
+        "颜色": "#c77e00",
+        "颜色名称": "vy dk topaz"
+    },
+    {
+        "Anchor": 309,
+        "DMC": 780,
+        "颜色": "#af5e00",
+        "颜色名称": "ul vy dk topaz"
+    },
+    {
+        "Anchor": 310,
+        "DMC": 434,
+        "颜色": "#8c602a",
+        "颜色名称": "lt brown"
+    },
+    {
+        "Anchor": 311,
+        "DMC": 3827,
+        "颜色": "#f7b670",
+        "颜色名称": "pale golden brown"
+    },
+    {
+        "Anchor": 311,
+        "DMC": 3855,
+        "颜色": "#f9da8c",
+        "颜色名称": "lt autumn gold"
+    },
+    {
+        "Anchor": 313,
+        "DMC": 3854,
+        "颜色": "#f9b460",
+        "颜色名称": "md autumn gold"
+    },
+    {
+        "Anchor": 314,
+        "DMC": 741,
+        "颜色": "#ff9d25",
+        "颜色名称": "md tangerine"
+    },
+    {
+        "Anchor": 316,
+        "DMC": 740,
+        "颜色": "#fa8500",
+        "颜色名称": "tangerine"
+    },
+    {
+        "Anchor": 316,
+        "DMC": 970,
+        "颜色": "#f7860e",
+        "颜色名称": "lt pumpkin"
+    },
+    {
+        "Anchor": 316,
+        "DMC": 971,
+        "颜色": "#fa8500",
+        "颜色名称": "pumpkin"
+    },
+    {
+        "Anchor": 323,
+        "DMC": 3825,
+        "颜色": "#fdb78e",
+        "颜色名称": "pale pumpkin"
+    },
+    {
+        "Anchor": 323,
+        "DMC": 722,
+        "颜色": "#f79168",
+        "颜色名称": "lt orange spice"
+    },
+    {
+        "Anchor": 324,
+        "DMC": 721,
+        "颜色": "#f37c51",
+        "颜色名称": "md orange spice"
+    },
+    {
+        "Anchor": 326,
+        "DMC": 720,
+        "颜色": "#ef6a41",
+        "颜色名称": "dk orange spice"
+    },
+    {
+        "Anchor": 328,
+        "DMC": 3341,
+        "颜色": "#ff9774",
+        "颜色名称": "apricot"
+    },
+    {
+        "Anchor": 329,
+        "DMC": 3340,
+        "颜色": "#fa8155",
+        "颜色名称": "md apricot"
+    },
+    {
+        "Anchor": 330,
+        "DMC": 947,
+        "颜色": "#e66007",
+        "颜色名称": "burnt orange"
+    },
+    {
+        "Anchor": 332,
+        "DMC": 608,
+        "颜色": "#fd552f",
+        "颜色名称": "bright orange"
+    },
+    {
+        "Anchor": 332,
+        "DMC": 946,
+        "颜色": "#de4600",
+        "颜色名称": "md burnt orange"
+    },
+    {
+        "Anchor": 333,
+        "DMC": 900,
+        "颜色": "#db3700",
+        "颜色名称": "dk burnt orange"
+    },
+    {
+        "Anchor": 334,
+        "DMC": 606,
+        "颜色": "#fd340c",
+        "颜色名称": "bright orange-red"
+    },
+    {
+        "Anchor": 335,
+        "DMC": 606,
+        "颜色": "#fd340c",
+        "颜色名称": "bright orange-red"
+    },
+    {
+        "Anchor": 336,
+        "DMC": 3771,
+        "颜色": "#f3b5a2",
+        "颜色名称": "ul vy lt terra cotta"
+    },
+    {
+        "Anchor": 337,
+        "DMC": 3778,
+        "颜色": "#da8e7f",
+        "颜色名称": "lt terra cotta"
+    },
+    {
+        "Anchor": 338,
+        "DMC": 3778,
+        "颜色": "#da8e7f",
+        "颜色名称": "lt terra cotta"
+    },
+    {
+        "Anchor": 339,
+        "DMC": 920,
+        "颜色": "#cf501e",
+        "颜色名称": "md copper"
+    },
+    {
+        "Anchor": 340,
+        "DMC": 919,
+        "颜色": "#bb3a0f",
+        "颜色名称": "red copper"
+    },
+    {
+        "Anchor": 341,
+        "DMC": 918,
+        "颜色": "#a02500",
+        "颜色名称": "dk red copper"
+    },
+    {
+        "Anchor": 342,
+        "DMC": 211,
+        "颜色": "#e0c5e0",
+        "颜色名称": "lt lavender"
+    },
+    {
+        "Anchor": 343,
+        "DMC": 3752,
+        "颜色": "#9ab3cd",
+        "颜色名称": "vy lt antique blue"
+    },
+    {
+        "Anchor": 347,
+        "DMC": 3064,
+        "颜色": "#ca9073",
+        "颜色名称": "desert sand"
+    },
+    {
+        "Anchor": 349,
+        "DMC": 3826,
+        "颜色": "#b66e2a",
+        "颜色名称": "golden brown"
+    },
+    {
+        "Anchor": 351,
+        "DMC": 400,
+        "颜色": "#8c410f",
+        "颜色名称": "dk mahogany"
+    },
+    {
+        "Anchor": 352,
+        "DMC": 300,
+        "颜色": "#6d2d00",
+        "颜色名称": "vy dk mahogany"
+    },
+    {
+        "Anchor": 354,
+        "DMC": 611,
+        "颜色": "#847a57",
+        "颜色名称": "drab brown"
+    },
+    {
+        "Anchor": 355,
+        "DMC": 975,
+        "颜色": "#8e4c12",
+        "颜色名称": "dk golden brown"
+    },
+    {
+        "Anchor": 357,
+        "DMC": 433,
+        "颜色": "#79511a",
+        "颜色名称": "Md Brown"
+    },
+    {
+        "Anchor": 358,
+        "DMC": 3862,
+        "颜色": "#8c6f4e",
+        "颜色名称": "dk mocha beige"
+    },
+    {
+        "Anchor": 358,
+        "DMC": 433,
+        "颜色": "#79511a",
+        "颜色名称": "md brown"
+    },
+    {
+        "Anchor": 359,
+        "DMC": 801,
+        "颜色": "#653d0f",
+        "颜色名称": "dk coffee brown"
+    },
+    {
+        "Anchor": 360,
+        "DMC": 898,
+        "颜色": "#512d07",
+        "颜色名称": "vy dk coffee brown"
+    },
+    {
+        "Anchor": 361,
+        "DMC": 738,
+        "颜色": "#ddb689",
+        "颜色名称": "vy lt tan"
+    },
+    {
+        "Anchor": 362,
+        "DMC": 437,
+        "颜色": "#c99f6a",
+        "颜色名称": "lt tan"
+    },
+    {
+        "Anchor": 363,
+        "DMC": 977,
+        "颜色": "#db9851",
+        "颜色名称": "lt golden brown"
+    },
+    {
+        "Anchor": 365,
+        "DMC": 435,
+        "颜色": "#a0743e",
+        "颜色名称": "vy lt brown"
+    },
+    {
+        "Anchor": 366,
+        "DMC": 738,
+        "颜色": "#ddb689",
+        "颜色名称": "vy lt tan"
+    },
+    {
+        "Anchor": 366,
+        "DMC": 945,
+        "颜色": "#ffc9ae",
+        "颜色名称": "tawny"
+    },
+    {
+        "Anchor": 367,
+        "DMC": 738,
+        "颜色": "#ddb689",
+        "颜色名称": "vy lt tan"
+    },
+    {
+        "Anchor": 368,
+        "DMC": 437,
+        "颜色": "#c99f6a",
+        "颜色名称": "lt tan"
+    },
+    {
+        "Anchor": 369,
+        "DMC": 435,
+        "颜色": "#a0743e",
+        "颜色名称": "vy lt brown"
+    },
+    {
+        "Anchor": 370,
+        "DMC": 780,
+        "颜色": "#af5e00",
+        "颜色名称": "ul vy dk topaz"
+    },
+    {
+        "Anchor": 371,
+        "DMC": 975,
+        "颜色": "#8e4c12",
+        "颜色名称": "dk golden brown"
+    },
+    {
+        "Anchor": 372,
+        "DMC": 422,
+        "颜色": "#d5b067",
+        "颜色名称": "lt hazelnut brown"
+    },
+    {
+        "Anchor": 373,
+        "DMC": 3828,
+        "颜色": "#b2913c",
+        "颜色名称": "hazelnut brown"
+    },
+    {
+        "Anchor": 374,
+        "DMC": 420,
+        "颜色": "#9a7b33",
+        "颜色名称": "dk hazelnut brown"
+    },
+    {
+        "Anchor": 375,
+        "DMC": 869,
+        "颜色": "#745e27",
+        "颜色名称": "vy dk hazelnut brown"
+    },
+    {
+        "Anchor": 376,
+        "DMC": 3864,
+        "颜色": "#cbb69c",
+        "颜色名称": "lt mocha beige"
+    },
+    {
+        "Anchor": 376,
+        "DMC": 842,
+        "颜色": "#d9c2a8",
+        "颜色名称": "vy lt beige brown"
+    },
+    {
+        "Anchor": 378,
+        "DMC": 3861,
+        "颜色": "#a4857e",
+        "颜色名称": "lt cocoa"
+    },
+    {
+        "Anchor": 379,
+        "DMC": 3860,
+        "颜色": "#8f6d65",
+        "颜色名称": "cocoa"
+    },
+    {
+        "Anchor": 379,
+        "DMC": 3863,
+        "颜色": "#a88764",
+        "颜色名称": "md mocha beige"
+    },
+    {
+        "Anchor": 380,
+        "DMC": 779,
+        "颜色": "#604944",
+        "颜色名称": "dk cocoa"
+    },
+    {
+        "Anchor": 381,
+        "DMC": 838,
+        "颜色": "#523516",
+        "颜色名称": "vy dk beige brown"
+    },
+    {
+        "Anchor": 381,
+        "DMC": 938,
+        "颜色": "#3e2200",
+        "颜色名称": "ul dk coffee brown"
+    },
+    {
+        "Anchor": 382,
+        "DMC": 3371,
+        "颜色": "#3a2723",
+        "颜色名称": "black brown"
+    },
+    {
+        "Anchor": 386,
+        "DMC": 3823,
+        "颜色": "#fefbce",
+        "颜色名称": "ul pale yellow"
+    },
+    {
+        "Anchor": 387,
+        "DMC": "Ecru",
+        "颜色": "#f5f0ec",
+        "颜色名称": "ecru"
+    },
+    {
+        "Anchor": 387,
+        "DMC": 739,
+        "颜色": "#f2d3a8",
+        "颜色名称": "ul vy lt tan"
+    },
+    {
+        "Anchor": 388,
+        "DMC": 842,
+        "颜色": "#d9c2a8",
+        "颜色名称": "vy lt beige brown"
+    },
+    {
+        "Anchor": 390,
+        "DMC": 822,
+        "颜色": "#f3ecdc",
+        "颜色名称": "lt beige gray"
+    },
+    {
+        "Anchor": 391,
+        "DMC": 3033,
+        "颜色": "#e0d4c3",
+        "颜色名称": "vy lt mocha brown"
+    },
+    {
+        "Anchor": 392,
+        "DMC": 642,
+        "颜色": "#b8ad92",
+        "颜色名称": "dk beige gray"
+    },
+    {
+        "Anchor": 393,
+        "DMC": 3790,
+        "颜色": "#776847",
+        "颜色名称": "ul dk beige gray"
+    },
+    {
+        "Anchor": 397,
+        "DMC": 3024,
+        "颜色": "#d7d7c3",
+        "颜色名称": "vy lt brown gray"
+    },
+    {
+        "Anchor": 398,
+        "DMC": 168,
+        "颜色": "#c7cdce",
+        "颜色名称": "vy lt pewter"
+    },
+    {
+        "Anchor": 398,
+        "DMC": 415,
+        "颜色": "#bfbfc3",
+        "颜色名称": "pearl gray"
+    },
+    {
+        "Anchor": 399,
+        "DMC": 318,
+        "颜色": "#9c9ca4",
+        "颜色名称": "lt steel gray"
+    },
+    {
+        "Anchor": 400,
+        "DMC": 317,
+        "颜色": "#575d61",
+        "颜色名称": "pewter gray"
+    },
+    {
+        "Anchor": 401,
+        "DMC": 535,
+        "颜色": "#555545",
+        "颜色名称": "vy lt ash gray"
+    },
+    {
+        "Anchor": 403,
+        "DMC": 310,
+        "颜色": "#000000",
+        "颜色名称": "black"
+    },
+    {
+        "Anchor": 410,
+        "DMC": 3844,
+        "颜色": "#099d89",
+        "颜色名称": "dk bright turquoise"
+    },
+    {
+        "Anchor": 410,
+        "DMC": 995,
+        "颜色": "#016ea5",
+        "颜色名称": "dk electric blue"
+    },
+    {
+        "Anchor": 433,
+        "DMC": 996,
+        "颜色": "#13bcde",
+        "颜色名称": "md electric blue"
+    },
+    {
+        "Anchor": 675,
+        "DMC": 3808,
+        "颜色": "#0b525d",
+        "颜色名称": "ul vy dk turquoise"
+    },
+    {
+        "Anchor": 676,
+        "DMC": 452,
+        "颜色": "#ae9aa4",
+        "颜色名称": "md shell gray"
+    },
+    {
+        "Anchor": 677,
+        "DMC": 3863,
+        "颜色": "#a88764",
+        "颜色名称": "md mocha beige"
+    },
+    {
+        "Anchor": 678,
+        "DMC": 611,
+        "颜色": "#847a57",
+        "颜色名称": "drab brown"
+    },
+    {
+        "Anchor": 679,
+        "DMC": 3772,
+        "颜色": "#aa7959",
+        "颜色名称": "vy dk desert sand"
+    },
+    {
+        "Anchor": 681,
+        "DMC": 3051,
+        "颜色": "#516132",
+        "颜色名称": "dk green gray"
+    },
+    {
+        "Anchor": 683,
+        "DMC": 500,
+        "颜色": "#055538",
+        "颜色名称": "vy dk blue green"
+    },
+    {
+        "Anchor": 772,
+        "DMC": 3772,
+        "颜色": "#aa7959",
+        "颜色名称": "vy dk desert sand"
+    },
+    {
+        "Anchor": 778,
+        "DMC": 3774,
+        "颜色": "#f1dbd0",
+        "颜色名称": "vy lt desert sand"
+    },
+    {
+        "Anchor": 779,
+        "DMC": 3768,
+        "颜色": "#528779",
+        "颜色名称": "dk gray green"
+    },
+    {
+        "Anchor": 781,
+        "DMC": 931,
+        "颜色": "#46728c",
+        "颜色名称": "md antique blue"
+    },
+    {
+        "Anchor": 799,
+        "DMC": 498,
+        "颜色": "#a4132b",
+        "颜色名称": "dk red"
+    },
+    {
+        "Anchor": 802,
+        "DMC": 445,
+        "颜色": "#fff983",
+        "颜色名称": "lt lemon"
+    },
+    {
+        "Anchor": 803,
+        "DMC": 976,
+        "颜色": "#cb8234",
+        "颜色名称": "md golden brown"
+    },
+    {
+        "Anchor": 815,
+        "DMC": 414,
+        "颜色": "#7c7c84",
+        "颜色名称": "dk steel gray"
+    },
+    {
+        "Anchor": 816,
+        "DMC": 924,
+        "颜色": "#166059",
+        "颜色名称": "vy dk gray green"
+    },
+    {
+        "Anchor": 817,
+        "DMC": 580,
+        "颜色": "#667913",
+        "颜色名称": "dk moss green"
+    },
+    {
+        "Anchor": 820,
+        "DMC": 729,
+        "颜色": "#e3b344",
+        "颜色名称": "md old gold"
+    },
+    {
+        "Anchor": 830,
+        "DMC": 644,
+        "颜色": "#ddd3bc",
+        "颜色名称": "md beige gray"
+    },
+    {
+        "Anchor": 831,
+        "DMC": 613,
+        "颜色": "#d4c7a8",
+        "颜色名称": "vy lt drab brown"
+    },
+    {
+        "Anchor": 832,
+        "DMC": 612,
+        "颜色": "#a29670",
+        "颜色名称": "lt drab brown"
+    },
+    {
+        "Anchor": 837,
+        "DMC": 927,
+        "颜色": "#a0bebe",
+        "颜色名称": "lt gray green"
+    },
+    {
+        "Anchor": 840,
+        "DMC": 930,
+        "颜色": "#316274",
+        "颜色名称": "dk antique blue"
+    },
+    {
+        "Anchor": 842,
+        "DMC": 3013,
+        "颜色": "#b7b77e",
+        "颜色名称": "lt khaki green"
+    },
+    {
+        "Anchor": 842,
+        "DMC": 3348,
+        "颜色": "#ceeb90",
+        "颜色名称": "lt yellow green"
+    },
+    {
+        "Anchor": 843,
+        "DMC": 3012,
+        "颜色": "#939857",
+        "颜色名称": "md khaki green"
+    },
+    {
+        "Anchor": 844,
+        "DMC": 3012,
+        "颜色": "#939857",
+        "颜色名称": "md khaki green"
+    },
+    {
+        "Anchor": 845,
+        "DMC": 730,
+        "颜色": "#706c21",
+        "颜色名称": "vy dk olive green"
+    },
+    {
+        "Anchor": 846,
+        "DMC": 3011,
+        "颜色": "#6e783b",
+        "颜色名称": "dk khaki green"
+    },
+    {
+        "Anchor": 847,
+        "DMC": 3072,
+        "颜色": "#e3e7d9",
+        "颜色名称": "vy lt beaver gray"
+    },
+    {
+        "Anchor": 848,
+        "DMC": 927,
+        "颜色": "#a0bebe",
+        "颜色名称": "lt gray green"
+    },
+    {
+        "Anchor": 849,
+        "DMC": 169,
+        "颜色": "#7f8887",
+        "颜色名称": "lt pewter"
+    },
+    {
+        "Anchor": 850,
+        "DMC": 926,
+        "颜色": "#79a296",
+        "颜色名称": "md gray green"
+    },
+    {
+        "Anchor": 851,
+        "DMC": 924,
+        "颜色": "#166059",
+        "颜色名称": "vy dk gray green"
+    },
+    {
+        "Anchor": 852,
+        "DMC": 3047,
+        "颜色": "#e7e1b8",
+        "颜色名称": "lt yellow beige"
+    },
+    {
+        "Anchor": 853,
+        "DMC": 372,
+        "颜色": "#c1ba7e",
+        "颜色名称": "lt mustard"
+    },
+    {
+        "Anchor": 854,
+        "DMC": 371,
+        "颜色": "#b7a765",
+        "颜色名称": "mustard"
+    },
+    {
+        "Anchor": 855,
+        "DMC": 370,
+        "颜色": "#ae9b54",
+        "颜色名称": "md mustard"
+    },
+    {
+        "Anchor": 856,
+        "DMC": 3052,
+        "颜色": "#798855",
+        "颜色名称": "md green gray"
+    },
+    {
+        "Anchor": 858,
+        "DMC": 524,
+        "颜色": "#c1caa7",
+        "颜色名称": "vy lt fern green"
+    },
+    {
+        "Anchor": 859,
+        "DMC": 523,
+        "颜色": "#b3be95",
+        "颜色名称": "lt fern green"
+    },
+    {
+        "Anchor": 860,
+        "DMC": 522,
+        "颜色": "#819569",
+        "颜色名称": "fern green"
+    },
+    {
+        "Anchor": 861,
+        "DMC": 935,
+        "颜色": "#3b4d0f",
+        "颜色名称": "dk avocado green"
+    },
+    {
+        "Anchor": 862,
+        "DMC": 520,
+        "颜色": "#42612b",
+        "颜色名称": "dk fern green"
+    },
+    {
+        "Anchor": 862,
+        "DMC": 934,
+        "颜色": "#314615",
+        "颜色名称": "black avocado green"
+    },
+    {
+        "Anchor": 868,
+        "DMC": 758,
+        "颜色": "#eda394",
+        "颜色名称": "vy lt terra cotta"
+    },
+    {
+        "Anchor": 869,
+        "DMC": 3743,
+        "颜色": "#d3c6cf",
+        "颜色名称": "vy lt antique violet"
+    },
+    {
+        "Anchor": 870,
+        "DMC": 3042,
+        "颜色": "#b499a4",
+        "颜色名称": "lt antique violet"
+    },
+    {
+        "Anchor": 871,
+        "DMC": 3041,
+        "颜色": "#937580",
+        "颜色名称": "md antique violet"
+    },
+    {
+        "Anchor": 872,
+        "DMC": 3740,
+        "颜色": "#765561",
+        "颜色名称": "dk antique violet"
+    },
+    {
+        "Anchor": 873,
+        "DMC": 154,
+        "颜色": "#552332",
+        "颜色名称": "vy dk grape"
+    },
+    {
+        "Anchor": 873,
+        "DMC": 3740,
+        "颜色": "#765561",
+        "颜色名称": "dk antique violet"
+    },
+    {
+        "Anchor": 874,
+        "DMC": 834,
+        "颜色": "#d5c77f",
+        "颜色名称": "vy lt golden olive"
+    },
+    {
+        "Anchor": 875,
+        "DMC": 3813,
+        "颜色": "#b2d4bd",
+        "颜色名称": "lt blue green"
+    },
+    {
+        "Anchor": 875,
+        "DMC": 3817,
+        "颜色": "#aad9ba",
+        "颜色名称": "lt celadon green"
+    },
+    {
+        "Anchor": 876,
+        "DMC": 3816,
+        "颜色": "#78b48a",
+        "颜色名称": "celadon green"
+    },
+    {
+        "Anchor": 876,
+        "DMC": 503,
+        "颜色": "#8ab5a0",
+        "颜色名称": "md blue green"
+    },
+    {
+        "Anchor": 877,
+        "DMC": 163,
+        "颜色": "#559a6e",
+        "颜色名称": "md celadon green"
+    },
+    {
+        "Anchor": 877,
+        "DMC": 3815,
+        "颜色": "#397a59",
+        "颜色名称": "dk celadon green"
+    },
+    {
+        "Anchor": 877,
+        "DMC": 502,
+        "颜色": "#598d6e",
+        "颜色名称": "blue green"
+    },
+    {
+        "Anchor": 878,
+        "DMC": 501,
+        "颜色": "#3d7654",
+        "颜色名称": "dk blue green"
+    },
+    {
+        "Anchor": 879,
+        "DMC": 500,
+        "颜色": "#055538",
+        "颜色名称": "vy dk blue green"
+    },
+    {
+        "Anchor": 880,
+        "DMC": 951,
+        "颜色": "#ffddc6",
+        "颜色名称": "lt tawny"
+    },
+    {
+        "Anchor": 881,
+        "DMC": 945,
+        "颜色": "#ffc9ae",
+        "颜色名称": "tawny"
+    },
+    {
+        "Anchor": 882,
+        "DMC": 758,
+        "颜色": "#eda394",
+        "颜色名称": "vy lt terra cotta"
+    },
+    {
+        "Anchor": 883,
+        "DMC": 3064,
+        "颜色": "#ca9073",
+        "颜色名称": "desert sand"
+    },
+    {
+        "Anchor": 884,
+        "DMC": 355,
+        "颜色": "#a5463c",
+        "颜色名称": "dk terra cotta"
+    },
+    {
+        "Anchor": 884,
+        "DMC": 920,
+        "颜色": "#cf501e",
+        "颜色名称": "md copper"
+    },
+    {
+        "Anchor": 885,
+        "DMC": 739,
+        "颜色": "#f2d3a8",
+        "颜色名称": "ul vy lt tan"
+    },
+    {
+        "Anchor": 886,
+        "DMC": 677,
+        "颜色": "#f4e7b4",
+        "颜色名称": "vy lt old gold"
+    },
+    {
+        "Anchor": 887,
+        "DMC": 3046,
+        "颜色": "#d9cda3",
+        "颜色名称": "md yellow beige"
+    },
+    {
+        "Anchor": 888,
+        "DMC": 3045,
+        "颜色": "#c5ad66",
+        "颜色名称": "dk yellow beige"
+    },
+    {
+        "Anchor": 889,
+        "DMC": 610,
+        "颜色": "#6f6641",
+        "颜色名称": "dk drab brown"
+    },
+    {
+        "Anchor": 890,
+        "DMC": 729,
+        "颜色": "#e3b344",
+        "颜色名称": "md old gold"
+    },
+    {
+        "Anchor": 891,
+        "DMC": 3825,
+        "颜色": "#fdb78e",
+        "颜色名称": "pale pumpkin"
+    },
+    {
+        "Anchor": 891,
+        "DMC": 676,
+        "颜色": "#eeca70",
+        "颜色名称": "lt old gold"
+    },
+    {
+        "Anchor": 892,
+        "DMC": 225,
+        "颜色": "#ffd7ce",
+        "颜色名称": "ul vy lt shell pink"
+    },
+    {
+        "Anchor": 893,
+        "DMC": 224,
+        "颜色": "#e9b1a8",
+        "颜色名称": "vy lt shell pink"
+    },
+    {
+        "Anchor": 895,
+        "DMC": 223,
+        "颜色": "#d58582",
+        "颜色名称": "lt shell pink"
+    },
+    {
+        "Anchor": 896,
+        "DMC": 3721,
+        "颜色": "#ac4a52",
+        "颜色名称": "dk shell pink"
+    },
+    {
+        "Anchor": 897,
+        "DMC": 221,
+        "颜色": "#9a3d43",
+        "颜色名称": "vy dk shell pink"
+    },
+    {
+        "Anchor": 897,
+        "DMC": 902,
+        "颜色": "#6d1a2b",
+        "颜色名称": "vy dk garnet"
+    },
+    {
+        "Anchor": 898,
+        "DMC": 167,
+        "颜色": "#ac8d3e",
+        "颜色名称": "vy dk yellow beige"
+    },
+    {
+        "Anchor": 898,
+        "DMC": 611,
+        "颜色": "#847a57",
+        "颜色名称": "drab brown"
+    },
+    {
+        "Anchor": 899,
+        "DMC": 3782,
+        "颜色": "#cabca3",
+        "颜色名称": "lt mocha brown"
+    },
+    {
+        "Anchor": 900,
+        "DMC": 648,
+        "颜色": "#bcc0a8",
+        "颜色名称": "lt beaver gray"
+    },
+    {
+        "Anchor": 901,
+        "DMC": 3829,
+        "颜色": "#a67d04",
+        "颜色名称": "vy dk old gold"
+    },
+    {
+        "Anchor": 901,
+        "DMC": 680,
+        "颜色": "#c8a027",
+        "颜色名称": "dk old gold"
+    },
+    {
+        "Anchor": 903,
+        "DMC": 3032,
+        "颜色": "#ae9d78",
+        "颜色名称": "md mocha brown"
+    },
+    {
+        "Anchor": 903,
+        "DMC": 640,
+        "颜色": "#918463",
+        "颜色名称": "vy dk beige gray"
+    },
+    {
+        "Anchor": 904,
+        "DMC": 3781,
+        "颜色": "#574d2a",
+        "颜色名称": "dk mocha brown"
+    },
+    {
+        "Anchor": 905,
+        "DMC": 3021,
+        "颜色": "#44452a",
+        "颜色名称": "vy dk brown gray"
+    },
+    {
+        "Anchor": 905,
+        "DMC": 3031,
+        "颜色": "#473727",
+        "颜色名称": "vy dk mocha brown"
+    },
+    {
+        "Anchor": 906,
+        "DMC": 829,
+        "颜色": "#694f00",
+        "颜色名称": "vy dk golden olive"
+    },
+    {
+        "Anchor": 907,
+        "DMC": 832,
+        "颜色": "#a89234",
+        "颜色名称": "golden olive"
+    },
+    {
+        "Anchor": 907,
+        "DMC": 833,
+        "颜色": "#ccba60",
+        "颜色名称": "lt golden olive"
+    },
+    {
+        "Anchor": 914,
+        "DMC": 3859,
+        "颜色": "#b88778",
+        "颜色名称": "lt rosewood"
+    },
+    {
+        "Anchor": 914,
+        "DMC": 407,
+        "颜色": "#bb8871",
+        "颜色名称": "dk desert sand"
+    },
+    {
+        "Anchor": 920,
+        "DMC": 932,
+        "颜色": "#80a3ba",
+        "颜色名称": "lt antique blue"
+    },
+    {
+        "Anchor": 921,
+        "DMC": 931,
+        "颜色": "#46728c",
+        "颜色名称": "md antique blue"
+    },
+    {
+        "Anchor": 922,
+        "DMC": 930,
+        "颜色": "#316274",
+        "颜色名称": "dk antique blue"
+    },
+    {
+        "Anchor": 923,
+        "DMC": 3818,
+        "颜色": "#00692d",
+        "颜色名称": "ul vy dk emerald greene"
+    },
+    {
+        "Anchor": 923,
+        "DMC": 699,
+        "颜色": "#005922",
+        "颜色名称": "green"
+    },
+    {
+        "Anchor": 923,
+        "DMC": 909,
+        "颜色": "#0b7c38",
+        "颜色名称": "vy dk emerald green"
+    },
+    {
+        "Anchor": 924,
+        "DMC": 731,
+        "颜色": "#989239",
+        "颜色名称": "dk olive green"
+    },
+    {
+        "Anchor": 925,
+        "DMC": 721,
+        "颜色": "#f37c51",
+        "颜色名称": "md orange spice"
+    },
+    {
+        "Anchor": 926,
+        "DMC": 3866,
+        "颜色": "#f8f2e9",
+        "颜色名称": "ul vy lt mocha brown"
+    },
+    {
+        "Anchor": 926,
+        "DMC": 712,
+        "颜色": "#fff8e5",
+        "颜色名称": "cream"
+    },
+    {
+        "Anchor": 928,
+        "DMC": 3761,
+        "颜色": "#9dd5dd",
+        "颜色名称": "lt sky blue"
+    },
+    {
+        "Anchor": 933,
+        "DMC": 543,
+        "颜色": "#eaded3",
+        "颜色名称": "ul vy lt beige brown"
+    },
+    {
+        "Anchor": 936,
+        "DMC": 632,
+        "颜色": "#936148",
+        "颜色名称": "ul vy dk desert sand"
+    },
+    {
+        "Anchor": 939,
+        "DMC": 3755,
+        "颜色": "#83a4c1",
+        "颜色名称": "baby blue"
+    },
+    {
+        "Anchor": 940,
+        "DMC": 824,
+        "颜色": "#224271",
+        "颜色名称": "vy dk blue"
+    },
+    {
+        "Anchor": 941,
+        "DMC": 792,
+        "颜色": "#4b497d",
+        "颜色名称": "dk cornflower blue"
+    },
+    {
+        "Anchor": 942,
+        "DMC": 738,
+        "颜色": "#ddb689",
+        "颜色名称": "vy lt tan"
+    },
+    {
+        "Anchor": 943,
+        "DMC": 422,
+        "颜色": "#d5b067",
+        "颜色名称": "lt hazelnut brown"
+    },
+    {
+        "Anchor": 944,
+        "DMC": 869,
+        "颜色": "#745e27",
+        "颜色名称": "vy dk hazelnut brown"
+    },
+    {
+        "Anchor": 945,
+        "DMC": 834,
+        "颜色": "#d5c77f",
+        "颜色名称": "vy lt golden olive"
+    },
+    {
+        "Anchor": 956,
+        "DMC": 613,
+        "颜色": "#d4c7a8",
+        "颜色名称": "vy lt drab brown"
+    },
+    {
+        "Anchor": 968,
+        "DMC": 778,
+        "颜色": "#ddadb6",
+        "颜色名称": "vy lt antique mauve"
+    },
+    {
+        "Anchor": 969,
+        "DMC": 152,
+        "颜色": "#e09a93",
+        "颜色名称": "md lt shell pink"
+    },
+    {
+        "Anchor": 970,
+        "DMC": 3687,
+        "颜色": "#c65375",
+        "颜色名称": "mauve"
+    },
+    {
+        "Anchor": 972,
+        "DMC": 3803,
+        "颜色": "#a83255",
+        "颜色名称": "dk mauve"
+    },
+    {
+        "Anchor": 975,
+        "DMC": 828,
+        "颜色": "#b9e1e9",
+        "颜色名称": "ul vy very lt blue"
+    },
+    {
+        "Anchor": 976,
+        "DMC": 3752,
+        "颜色": "#9ab3cd",
+        "颜色名称": "vy lt antique blue"
+    },
+    {
+        "Anchor": 977,
+        "DMC": 334,
+        "颜色": "#5f8da9",
+        "颜色名称": "md baby blue"
+    },
+    {
+        "Anchor": 978,
+        "DMC": 322,
+        "颜色": "#467194",
+        "颜色名称": "dk dark baby blue"
+    },
+    {
+        "Anchor": 979,
+        "DMC": 312,
+        "颜色": "#2e597c",
+        "颜色名称": "vy dk baby blue"
+    },
+    {
+        "Anchor": 1001,
+        "DMC": 976,
+        "颜色": "#cb8234",
+        "颜色名称": "md golden brown"
+    },
+    {
+        "Anchor": 1002,
+        "DMC": 977,
+        "颜色": "#db9851",
+        "颜色名称": "lt golden brown"
+    },
+    {
+        "Anchor": 1003,
+        "DMC": 3853,
+        "颜色": "#e58632",
+        "颜色名称": "dk autumn gold"
+    },
+    {
+        "Anchor": 1003,
+        "DMC": 921,
+        "颜色": "#e26132",
+        "颜色名称": "copper"
+    },
+    {
+        "Anchor": 1003,
+        "DMC": 922,
+        "颜色": "#ec9163",
+        "颜色名称": "lt copper"
+    },
+    {
+        "Anchor": 1004,
+        "DMC": 920,
+        "颜色": "#cf501e",
+        "颜色名称": "md copper"
+    },
+    {
+        "Anchor": 1005,
+        "DMC": 498,
+        "颜色": "#a4132b",
+        "颜色名称": "dk red"
+    },
+    {
+        "Anchor": 1005,
+        "DMC": 816,
+        "颜色": "#940b24",
+        "颜色名称": "garnet"
+    },
+    {
+        "Anchor": 1006,
+        "DMC": 304,
+        "颜色": "#b31e32",
+        "颜色名称": "md red"
+    },
+    {
+        "Anchor": 1007,
+        "DMC": 3772,
+        "颜色": "#aa7959",
+        "颜色名称": "vy dk desert sand"
+    },
+    {
+        "Anchor": 1007,
+        "DMC": 3858,
+        "颜色": "#93483e",
+        "颜色名称": "md rosewood"
+    },
+    {
+        "Anchor": 1008,
+        "DMC": 3773,
+        "颜色": "#bb8871",
+        "颜色名称": "md desert sand"
+    },
+    {
+        "Anchor": 1009,
+        "DMC": 3770,
+        "颜色": "#fff3e1",
+        "颜色名称": "vy lt tawny"
+    },
+    {
+        "Anchor": 1009,
+        "DMC": 3773,
+        "颜色": "#bb8871",
+        "颜色名称": "md desert sand"
+    },
+    {
+        "Anchor": 1010,
+        "DMC": 3856,
+        "颜色": "#f5c3a9",
+        "颜色名称": "ul vy lt mahogany"
+    },
+    {
+        "Anchor": 1010,
+        "DMC": 951,
+        "颜色": "#ffddc6",
+        "颜色名称": "lt tawny"
+    },
+    {
+        "Anchor": 1011,
+        "DMC": 948,
+        "颜色": "#fddcc5",
+        "颜色名称": "vy lt peach"
+    },
+    {
+        "Anchor": 1012,
+        "DMC": 3779,
+        "颜色": "#efbdba",
+        "颜色名称": "ul vy lt terra cotta"
+    },
+    {
+        "Anchor": 1012,
+        "DMC": 754,
+        "颜色": "#f6c4b7",
+        "颜色名称": "lt peach"
+    },
+    {
+        "Anchor": 1012,
+        "DMC": 967,
+        "颜色": "#ffc9b4",
+        "颜色名称": "vy lt apricot"
+    },
+    {
+        "Anchor": 1013,
+        "DMC": 3778,
+        "颜色": "#da8e7f",
+        "颜色名称": "lt terra cotta"
+    },
+    {
+        "Anchor": 1014,
+        "DMC": 335,
+        "颜色": "#d64a5f",
+        "颜色名称": "rose"
+    },
+    {
+        "Anchor": 1014,
+        "DMC": 355,
+        "颜色": "#a5463c",
+        "颜色名称": "dk terra cotta"
+    },
+    {
+        "Anchor": 1015,
+        "DMC": 3777,
+        "颜色": "#8e3230",
+        "颜色名称": "vy dk terra cotta"
+    },
+    {
+        "Anchor": 1016,
+        "DMC": 3727,
+        "颜色": "#c98c97",
+        "颜色名称": "lt antique mauve"
+    },
+    {
+        "Anchor": 1017,
+        "DMC": 316,
+        "颜色": "#b56f7c",
+        "颜色名称": "md antique mauve"
+    },
+    {
+        "Anchor": 1018,
+        "DMC": 3726,
+        "颜色": "#a45561",
+        "颜色名称": "dk antique mauve"
+    },
+    {
+        "Anchor": 1019,
+        "DMC": 315,
+        "颜色": "#903e4e",
+        "颜色名称": "md dk antique mauve"
+    },
+    {
+        "Anchor": 1019,
+        "DMC": 3802,
+        "颜色": "#7c2a40",
+        "颜色名称": "vy dk antique mauve"
+    },
+    {
+        "Anchor": 1020,
+        "DMC": 3713,
+        "颜色": "#ffd5d5",
+        "颜色名称": "vy lt salmon"
+    },
+    {
+        "Anchor": 1021,
+        "DMC": 761,
+        "颜色": "#f2acac",
+        "颜色名称": "lt salmon"
+    },
+    {
+        "Anchor": 1022,
+        "DMC": 760,
+        "颜色": "#e6858f",
+        "颜色名称": "salmon"
+    },
+    {
+        "Anchor": 1023,
+        "DMC": 3712,
+        "颜色": "#da6270",
+        "颜色名称": "md salmon"
+    },
+    {
+        "Anchor": 1024,
+        "DMC": 3328,
+        "颜色": "#ce3f54",
+        "颜色名称": "dk salmon"
+    },
+    {
+        "Anchor": 1025,
+        "DMC": 347,
+        "颜色": "#bf2642",
+        "颜色名称": "vy dk salmon"
+    },
+    {
+        "Anchor": 1026,
+        "DMC": 225,
+        "颜色": "#ffd5d5",
+        "颜色名称": "ul vy lt shell pink"
+    },
+    {
+        "Anchor": 1027,
+        "DMC": 3722,
+        "颜色": "#c16363",
+        "颜色名称": "md shell pink"
+    },
+    {
+        "Anchor": 1028,
+        "DMC": 3685,
+        "颜色": "#851531",
+        "颜色名称": "vy dk mauve"
+    },
+    {
+        "Anchor": 1029,
+        "DMC": 915,
+        "颜色": "#90004f",
+        "颜色名称": "dk plum"
+    },
+    {
+        "Anchor": 1030,
+        "DMC": 155,
+        "颜色": "#948db3",
+        "颜色名称": "md dk blue violet"
+    },
+    {
+        "Anchor": 1030,
+        "DMC": 3746,
+        "颜色": "#746896",
+        "颜色名称": "dk blue violet"
+    },
+    {
+        "Anchor": 1031,
+        "DMC": 3753,
+        "颜色": "#cddbe8",
+        "颜色名称": "ul vy lt antique blue"
+    },
+    {
+        "Anchor": 1032,
+        "DMC": 3752,
+        "颜色": "#9ab3cd",
+        "颜色名称": "vy lt antique blue"
+    },
+    {
+        "Anchor": 1033,
+        "DMC": 932,
+        "颜色": "#80a3ba",
+        "颜色名称": "lt antique blue"
+    },
+    {
+        "Anchor": 1034,
+        "DMC": 931,
+        "颜色": "#46728c",
+        "颜色名称": "md antique blue"
+    },
+    {
+        "Anchor": 1035,
+        "DMC": 930,
+        "颜色": "#316274",
+        "颜色名称": "dk antique blue"
+    },
+    {
+        "Anchor": 1036,
+        "DMC": 3750,
+        "颜色": "#1b3e49",
+        "颜色名称": "vy dk antique blue"
+    },
+    {
+        "Anchor": 1037,
+        "DMC": 3756,
+        "颜色": "#e7f9f9",
+        "颜色名称": "ul vy lt baby blue"
+    },
+    {
+        "Anchor": 1038,
+        "DMC": 519,
+        "颜色": "#6fb1c1",
+        "颜色名称": "sky blue"
+    },
+    {
+        "Anchor": 1039,
+        "DMC": 518,
+        "颜色": "#4d91a4",
+        "颜色名称": "lt wedgewood"
+    },
+    {
+        "Anchor": 1040,
+        "DMC": 3023,
+        "颜色": "#aeab8a",
+        "颜色名称": "lt brown gray"
+    },
+    {
+        "Anchor": 1040,
+        "DMC": 647,
+        "颜色": "#959884",
+        "颜色名称": "md beaver gray"
+    },
+    {
+        "Anchor": 1041,
+        "DMC": 844,
+        "颜色": "#31372d",
+        "颜色名称": "ul dk beaver gray"
+    },
+    {
+        "Anchor": 1042,
+        "DMC": 504,
+        "颜色": "#b2d4bd",
+        "颜色名称": "vy lt blue green"
+    },
+    {
+        "Anchor": 1043,
+        "DMC": 14,
+        "颜色": "#d0fbb2",
+        "颜色名称": "apple green pale"
+    },
+    {
+        "Anchor": 1043,
+        "DMC": 369,
+        "颜色": "#d2ebc5",
+        "颜色名称": "vy lt pistachio green"
+    },
+    {
+        "Anchor": 1044,
+        "DMC": 895,
+        "颜色": "#1b5100",
+        "颜色名称": "vy dk hunter green"
+    },
+    {
+        "Anchor": 1045,
+        "DMC": 436,
+        "颜色": "#b58c53",
+        "颜色名称": "tan"
+    },
+    {
+        "Anchor": 1046,
+        "DMC": 435,
+        "颜色": "#a0743e",
+        "颜色名称": "vy lt brown"
+    },
+    {
+        "Anchor": 1047,
+        "DMC": 402,
+        "颜色": "#f7a170",
+        "颜色名称": "vy lt mahogany"
+    },
+    {
+        "Anchor": 1048,
+        "DMC": 3776,
+        "颜色": "#ce7535",
+        "颜色名称": "lt mahogany"
+    },
+    {
+        "Anchor": 1049,
+        "DMC": 301,
+        "颜色": "#af5b2a",
+        "颜色名称": "md mahogany"
+    },
+    {
+        "Anchor": 1049,
+        "DMC": 3826,
+        "颜色": "#b66e2a",
+        "颜色名称": "golden brown"
+    },
+    {
+        "Anchor": 1050,
+        "DMC": 3781,
+        "颜色": "#574d2a",
+        "颜色名称": "dk mocha brown"
+    },
+    {
+        "Anchor": 1060,
+        "DMC": 3811,
+        "颜色": "#b4e0e9",
+        "颜色名称": "vy lt turquoise"
+    },
+    {
+        "Anchor": 1062,
+        "DMC": 598,
+        "颜色": "#82c1cd",
+        "颜色名称": "lt turquoise"
+    },
+    {
+        "Anchor": 1064,
+        "DMC": 597,
+        "颜色": "#57a2b1",
+        "颜色名称": "turquoise"
+    },
+    {
+        "Anchor": 1066,
+        "DMC": 3809,
+        "颜色": "#1e6a79",
+        "颜色名称": "vy dk turquoise"
+    },
+    {
+        "Anchor": 1066,
+        "DMC": 3810,
+        "颜色": "#3a8594",
+        "颜色名称": "dk turquoise"
+    },
+    {
+        "Anchor": 1068,
+        "DMC": 3808,
+        "颜色": "#0b525d",
+        "颜色名称": "ul vy dk turquoise"
+    },
+    {
+        "Anchor": 1070,
+        "DMC": 992,
+        "颜色": "#7ecdaf",
+        "颜色名称": "vy lt aquamarine"
+    },
+    {
+        "Anchor": 1072,
+        "DMC": 992,
+        "颜色": "#4aac88",
+        "颜色名称": "lt aquamarine"
+    },
+    {
+        "Anchor": 1072,
+        "DMC": 992,
+        "颜色": "#4aac88",
+        "颜色名称": "vy lt aquamarine"
+    },
+    {
+        "Anchor": 1074,
+        "DMC": 3814,
+        "颜色": "#228c69",
+        "颜色名称": "aquamarine"
+    },
+    {
+        "Anchor": 1074,
+        "DMC": 3848,
+        "颜色": "#3c8b6e",
+        "颜色名称": "md teal green"
+    },
+    {
+        "Anchor": 1076,
+        "DMC": 3847,
+        "颜色": "#2b6f51",
+        "颜色名称": "dk teal green"
+    },
+    {
+        "Anchor": 1076,
+        "DMC": 991,
+        "颜色": "#0b6d4c",
+        "颜色名称": "dk aquamarine"
+    },
+    {
+        "Anchor": 1080,
+        "DMC": 842,
+        "颜色": "#d9c2a8",
+        "颜色名称": "vy lt beige brown"
+    },
+    {
+        "Anchor": 1082,
+        "DMC": 841,
+        "颜色": "#b39a7d",
+        "颜色名称": "lt beige brown"
+    },
+    {
+        "Anchor": 1084,
+        "DMC": 840,
+        "颜色": "#967954",
+        "颜色名称": "md beige brown"
+    },
+    {
+        "Anchor": 1086,
+        "DMC": 839,
+        "颜色": "#6a4726",
+        "颜色名称": "dk beige brown"
+    },
+    {
+        "Anchor": 1088,
+        "DMC": 938,
+        "颜色": "#3e2200",
+        "颜色名称": "ul dk coffee brown"
+    },
+    {
+        "Anchor": 1089,
+        "DMC": 3843,
+        "颜色": "#0493be",
+        "颜色名称": "electric blue"
+    },
+    {
+        "Anchor": 1089,
+        "DMC": 3845,
+        "颜色": "#04baae",
+        "颜色名称": "md bright turquoise"
+    },
+    {
+        "Anchor": 1090,
+        "DMC": 3846,
+        "颜色": "#44dec7",
+        "颜色名称": "lt bright turquoise"
+    },
+    {
+        "Anchor": 1092,
+        "DMC": 964,
+        "颜色": "#b4f2df",
+        "颜色名称": "lt seagreen"
+    },
+    {
+        "Anchor": 1094,
+        "DMC": 605,
+        "颜色": "#ffaac5",
+        "颜色名称": "vy lt cranberry"
+    },
+    {
+        "Anchor": 1096,
+        "DMC": 3753,
+        "颜色": "#cddbe8",
+        "颜色名称": "ul vy lt antique blue"
+    },
+    {
+        "Anchor": 1098,
+        "DMC": 3801,
+        "颜色": "#f03646",
+        "颜色名称": "vy dk melon"
+    },
+    {
+        "Anchor": 1203,
+        "DMC": 105,
+        "颜色": "#a5765a",
+        "颜色名称": "variegated tan/brown"
+    },
+    {
+        "Anchor": 1203,
+        "DMC": 107,
+        "颜色": "#d6527a",
+        "颜色名称": "variegated carnation"
+    },
+    {
+        "Anchor": 1203,
+        "DMC": 57,
+        "颜色": "#e54a5a",
+        "颜色名称": "variegated red"
+    },
+    {
+        "Anchor": 1204,
+        "DMC": 107,
+        "颜色": "#d6527a",
+        "颜色名称": "variegated carnation"
+    },
+    {
+        "Anchor": 1206,
+        "DMC": 115,
+        "颜色": "#82192a",
+        "颜色名称": "variegated garnet"
+    },
+    {
+        "Anchor": 1209,
+        "DMC": 52,
+        "颜色": "#8c7ab6",
+        "颜色名称": "variegated violet"
+    },
+    {
+        "Anchor": 1209,
+        "DMC": 94,
+        "颜色": "#b5c385",
+        "颜色名称": "variegated khaki green"
+    },
+    {
+        "Anchor": 1210,
+        "DMC": 121,
+        "颜色": "#7bb4d6",
+        "颜色名称": "variegated delft blue"
+    },
+    {
+        "Anchor": 1213,
+        "DMC": 125,
+        "颜色": "#63b47c",
+        "颜色名称": "variegated seafoam green"
+    },
+    {
+        "Anchor": 1213,
+        "DMC": 99,
+        "颜色": "#bd6c7b",
+        "颜色名称": "variegated mauve"
+    },
+    {
+        "Anchor": 1215,
+        "DMC": 92,
+        "颜色": "#c5ce95",
+        "颜色名称": "variegated avocado"
+    },
+    {
+        "Anchor": 1217,
+        "DMC": 103,
+        "颜色": "#426da2",
+        "颜色名称": "variegated royal blue"
+    },
+    {
+        "Anchor": 1217,
+        "DMC": 90,
+        "颜色": "#e6bf4a",
+        "颜色名称": "variegated yellow"
+    },
+    {
+        "Anchor": 1218,
+        "DMC": 106,
+        "颜色": "#f65b3c",
+        "颜色名称": "variegated coral"
+    },
+    {
+        "Anchor": 1218,
+        "DMC": 111,
+        "颜色": "#bd8e22",
+        "颜色名称": "variegated mustard"
+    },
+    {
+        "Anchor": 1218,
+        "DMC": 69,
+        "颜色": "#c48c73",
+        "颜色名称": "variegated terra cotta"
+    },
+    {
+        "Anchor": 1220,
+        "DMC": 51,
+        "颜色": "#cf5232",
+        "颜色名称": "variegated burnt orange"
+    },
+    {
+        "Anchor": 4146,
+        "DMC": 950,
+        "颜色": "#ebc8b3",
+        "颜色名称": "lt desert sand"
+    },
+    {
+        "Anchor": 5975,
+        "DMC": 356,
+        "颜色": "#d37863",
+        "颜色名称": "md terra cotta"
+    },
+    {
+        "Anchor": 5975,
+        "DMC": 3830,
+        "颜色": "#c35a4c",
+        "颜色名称": "terra cotta"
+    },
+    {
+        "Anchor": 8581,
+        "DMC": 3022,
+        "颜色": "#84835c",
+        "颜色名称": "md brown gray"
+    },
+    {
+        "Anchor": 8581,
+        "DMC": 646,
+        "颜色": "#707864",
+        "颜色名称": "dk beaver gray"
+    },
+    {
+        "Anchor": 9046,
+        "DMC": 321,
+        "颜色": "#c32a3c",
+        "颜色名称": "red"
+    },
+    {
+        "Anchor": 9159,
+        "DMC": 3841,
+        "颜色": "#bfdbe7",
+        "颜色名称": "pale baby blue"
+    },
+    {
+        "Anchor": 9159,
+        "DMC": 828,
+        "颜色": "#b9e1e9",
+        "颜色名称": "ul vy very lt blue"
+    },
+    {
+        "Anchor": 9575,
+        "DMC": 758,
+        "颜色": "#eda394",
+        "颜色名称": "vy lt terra cotta"
+    }
+        ];
+
+        const allInputs = ['anchorInput','dmcInput','colorInput','colorNameInput'];
+        const allSelects = ['anchorSelect','dmcSelect','colorSelect','colorNameSelect'];
+
+        const fieldMap = {
+            anchorSelect: { input:'anchorInput', key:'Anchor', dropdown:'anchorDropdown' },
+            dmcSelect: { input:'dmcInput', key:'DMC', dropdown:'dmcDropdown' },
+            colorSelect: { input:'colorInput', key:'颜色', dropdown:'colorDropdown' },
+            colorNameSelect: { input:'colorNameInput', key:'颜色名称', dropdown:'colorNameDropdown' }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const overlay = document.getElementById('overlay');
+
+            // 清空所有输入框
+            function clearAllInputs() {
+                allInputs.forEach(id => document.getElementById(id).value = '');
+            }
+
+            // 清空其他输入框（保留当前输入框）
+            function clearOtherInputs(currentId) {
+                allInputs.forEach(id => {
+                    if(id !== currentId) document.getElementById(id).value = '';
+                });
+            }
+
+            // 重置所有下拉显示文字
+            function resetAllSelectText() {
+                allSelects.forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) el.querySelector('.select-text').textContent = '请选择';
+                });
+            }
+
+            // 获取唯一值
+            function getUnique(key) {
+                return [...new Set(rawData.map(i=>i[key]).filter(v=>v!=null))].sort();
+            }
+
+            // 关闭所有下拉
+            function closeAllDropdowns() {
+                document.querySelectorAll('.select-dropdown').forEach(d=>d.classList.remove('show'));
+                overlay.classList.remove('show');
+            }
+
+            // 初始化下拉
+            function initSelect(selectId, isColor=false) {
+                const btn = document.getElementById(selectId);
+                const text = btn.querySelector('.select-text');
+                const cfg = fieldMap[selectId];
+                const dropdown = document.getElementById(cfg.dropdown);
+                const input = document.getElementById(cfg.input);
+                const vals = getUnique(cfg.key);
+
+                // 生成选项
+                dropdown.innerHTML = '';
+                vals.forEach(v=>{
+                    const o = document.createElement('div');
+                    o.className = 'select-option';
+                    o.dataset.val = v;
+                    if(isColor){
+                        const c = document.createElement('span');
+                        c.className = 'color-option-preview';
+                        c.style.backgroundColor = v.trim();
+                        o.appendChild(c);
+                    }
+                    const t = document.createElement('span');
+                    t.textContent = v;
+                    o.appendChild(t);
+                    dropdown.appendChild(o);
+                });
+
+                // 点击展开
+                btn.onclick = e=>{
+                    e.stopPropagation();
+                    closeAllDropdowns();
+                    const r = btn.getBoundingClientRect();
+                    dropdown.style.left = r.left+'px';
+                    dropdown.style.top = r.bottom+4+'px';
+                    dropdown.style.width = r.width+'px';
+                    dropdown.classList.add('show');
+                    overlay.classList.add('show');
+                };
+
+                // 点击选项（严格按你的逻辑：清空所有 → 填自己 → 筛选）
+                dropdown.onclick = e=>{
+                    e.stopPropagation();
+                    const item = e.target.closest('.select-option');
+                    if(!item) return;
+                    const val = item.dataset.val;
+
+                    // ✅ 选择下拉 → 清空所有输入框
+                    clearAllInputs();
+                    resetAllSelectText();
+
+                    // ✅ 只填自己对应的输入框
+                    input.value = val;
+                    text.textContent = val;
+
+                    closeAllDropdowns();
+                    doFilter();
+                };
+            }
+
+            // 筛选
+            function doFilter() {
+                let res = [...rawData];
+                const a = document.getElementById('anchorInput').value.trim();
+                const d = document.getElementById('dmcInput').value.trim();
+                const c = document.getElementById('colorInput').value.trim();
+                const n = document.getElementById('colorNameInput').value.trim();
+
+                if(a) res = res.filter(i=>String(i.Anchor)===a);
+                if(d) res = res.filter(i=>i.DMC===d);
+                if(c) res = res.filter(i=>i['颜色'].trim()===c.trim());
+                if(n) res = res.filter(i=>i['颜色名称']===n);
+
+                render(res);
+            }
+
+            // 渲染表格
+            function render(data) {
+                const cnt = document.getElementById('resultCount');
+                const emp = document.getElementById('emptyState');
+                const body = document.getElementById('resultTable');
+                cnt.textContent = `当前匹配结果：${data.length} 条`;
+                if(data.length===0){
+                    body.innerHTML='';
+                    emp.classList.add('show');
+                    return;
+                }
+                emp.classList.remove('show');
+                let html='';
+                data.forEach(i=>{
+                    html+=`<tr><td>${i.Anchor}</td><td>${i.DMC}</td><td><span class="color-preview" style="background:${i['颜色'].trim()}"></span></td><td>${i['颜色名称']}</td></tr>`;
+                });
+                body.innerHTML=html;
+            }
+
+            // 输入框事件（严格按你的逻辑：输入 → 清空其他）
+            allInputs.forEach(id=>{
+                const el = document.getElementById(id);
+                el.oninput = ()=>{
+                    clearOtherInputs(id);
+                    doFilter();
+                };
+            });
+
+            overlay.onclick = closeAllDropdowns;
+            document.onclick = closeAllDropdowns;
+
+            // 启动
+            initSelect('anchorSelect');
+            initSelect('dmcSelect');
+            initSelect('colorSelect',true);
+            initSelect('colorNameSelect');
+            render(rawData);
+        });
+    </script>
+</body>
+</html>
