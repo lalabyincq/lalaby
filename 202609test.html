@@ -14,7 +14,8 @@ body{background:#f5f7fa;font-size:14px;color:#333;width:100%}
 ::-webkit-scrollbar-track{background:transparent}
 *{scrollbar-width:thin;scrollbar-color:#cbd5e0 transparent}
 /* 三段式布局容器：手机端撑满宽度，宽屏端限制720px居中 */
-.app-wrap{display:flex;flex-direction:column;height:100vh;width:100%;max-width:720px;margin:0 auto;background:#fff;box-shadow:0 0 10px rgba(0,0,0,.05);overflow:hidden}
+/* dvh=动态视口高度，随地址栏显隐自动调整，解决手机浏览器底部被遮问题；--vh为JS兜底；vh为旧浏览器回退 */
+.app-wrap{display:flex;flex-direction:column;height:100vh;height:100dvh;height:var(--vh,100dvh);width:100%;max-width:720px;margin:0 auto;background:#fff;box-shadow:0 0 10px rgba(0,0,0,.05);overflow:hidden}
 /* ===== 顶部固定头部 ===== */
 .app-header{flex-shrink:0;background:#fff;border-bottom:1px solid #e2e8f0;padding:8px 12px}
 .header-row1{display:flex;align-items:center;gap:8px;margin-bottom:6px}
@@ -3217,6 +3218,13 @@ function getCurrentUserId() { return app.user || window.PLATFORM_USER_ID || ''; 
 
 // ====== 初始化 ======
 function init() {
+    // 移动端视口高度兜底：用 innerHeight 设置 CSS 变量，防止地址栏遮挡底部
+    function setVH(){ document.documentElement.style.setProperty('--vh', window.innerHeight + 'px'); }
+    setVH();
+    window.addEventListener('resize', setVH);
+    window.addEventListener('orientationchange', function(){ setTimeout(setVH, 200); });
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', setVH);
+
     let last = localStorage.getItem('quiz_last_user');
     if (last) { app.user = last; userData = loadUserData(); }
     else { setTimeout(openUserModal, 100); }
