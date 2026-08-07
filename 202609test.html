@@ -6,17 +6,17 @@
 <title>九龙坡支行9月柜面业务考试复习题</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Microsoft YaHei;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden;width:100%}
-body{background:#f5f7fa;font-size:14px;color:#333;width:100%}
+html,body{width:100%}
+body{background:#f5f7fa;font-size:14px;color:#333;width:100%;-webkit-text-size-adjust:100%}
 /* 滚动条样式：不占宽度，防止内容区宽度跳变 */
 ::-webkit-scrollbar{width:6px;height:6px;-webkit-appearance:none}
 ::-webkit-scrollbar-thumb{background:#cbd5e0;border-radius:3px}
 ::-webkit-scrollbar-track{background:transparent}
 *{scrollbar-width:thin;scrollbar-color:#cbd5e0 transparent}
 /* 三段式布局容器：手机端撑满宽度，宽屏端限制720px居中 */
-/* dvh=动态视口高度，随地址栏显隐自动调整，解决手机浏览器底部被遮问题；--vh为JS兜底；vh为旧浏览器回退 */
-.app-wrap{display:flex;flex-direction:column;height:100vh;height:100dvh;height:var(--vh,100dvh);width:100%;max-width:720px;margin:0 auto;background:#fff;box-shadow:0 0 10px rgba(0,0,0,.05);overflow:hidden}
-/* ===== 顶部固定头部 ===== */
+/* dvh+innerHeight都不准时，用100vh基础；底部改成position:fixed绝对钉住浏览器窗口，任何浏览器永不被遮 */
+.app-wrap{display:flex;flex-direction:column;min-height:100vh;width:100%;max-width:720px;margin:0 auto;background:#fff;box-shadow:0 0 10px rgba(0,0,0,.05);position:relative;padding-bottom:72px;box-sizing:border-box}
+/* ===== 头部 ===== */
 .app-header{flex-shrink:0;background:#fff;border-bottom:1px solid #e2e8f0;padding:8px 12px}
 .header-row1{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .user-box{display:flex;align-items:center;gap:4px;background:#edf2f7;border-radius:16px;padding:4px 10px;font-size:12px;cursor:pointer;flex-shrink:0;max-width:120px;overflow:hidden;white-space:nowrap}
@@ -55,7 +55,8 @@ body{background:#f5f7fa;font-size:14px;color:#333;width:100%}
 .q-dot.ellipsis{border:none;background:transparent;cursor:default;color:#a0aec0;width:auto;padding:0 2px}
 .q-stats{width:100%;margin-top:6px;padding-top:6px;border-top:1px dashed #e2e8f0;font-size:11px;color:#718096;display:flex;gap:12px;flex-wrap:wrap}
 /* ===== 内容区（弹性填充） ===== */
-.app-content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 12px;width:100%;scrollbar-gutter:stable}
+/* footer已改成fixed，app-wrap本身padding-bottom:72px预留了底部空间，内容区不需要单独加overflow，整页滚动更稳 */
+.app-content{flex:1;padding:10px 12px;width:100%;box-sizing:border-box}
 .question-card{border:1px solid #e2e8f0;border-radius:6px;padding:12px;width:100%}
 .question-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:4px}
 .question-type{display:inline-block;padding:2px 7px;font-size:11px;border-radius:3px}
@@ -101,7 +102,8 @@ body{background:#f5f7fa;font-size:14px;color:#333;width:100%}
 .mastery-btn.inactive{background:#fff}
 .mastery-label{font-size:11px;color:#718096}
 /* ===== 底部固定导航 ===== */
-.app-footer{flex-shrink:0;background:#fff;border-top:1px solid #e2e8f0;padding:8px 12px;display:flex;gap:8px;align-items:center}
+/* 固定在浏览器窗口最底部：max-width:720px + left/right:0 + margin:auto 完美居中，与app-wrap同宽对齐，任何浏览器永不被遮 */
+.app-footer{position:fixed;z-index:9999;bottom:0;left:0;right:0;max-width:720px;margin:0 auto;background:#fff;border-top:1px solid #e2e8f0;padding:8px 12px;display:flex;gap:8px;align-items:center;box-sizing:border-box}
 .footer-nav-btn{padding:10px 14px;border:1px solid #cbd5e0;border-radius:6px;background:#fff;color:#4a5568;font-size:13px;cursor:pointer;flex-shrink:0;min-width:64px}
 .footer-nav-btn:disabled{opacity:0.4;cursor:not-allowed}
 .footer-submit{flex:1;padding:10px;border:none;border-radius:6px;background:#3182ce;color:#fff;font-size:14px;cursor:pointer}
