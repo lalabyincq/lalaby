@@ -1,0 +1,3687 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>九龙坡支行9月柜面业务考试复习题</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Microsoft YaHei;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;width:100%}
+body{background:#f5f7fa;font-size:14px;color:#333;width:100%}
+/* 滚动条样式：不占宽度，防止内容区宽度跳变 */
+::-webkit-scrollbar{width:6px;height:6px;-webkit-appearance:none}
+::-webkit-scrollbar-thumb{background:#cbd5e0;border-radius:3px}
+::-webkit-scrollbar-track{background:transparent}
+*{scrollbar-width:thin;scrollbar-color:#cbd5e0 transparent}
+/* 三段式布局容器：手机端撑满宽度，宽屏端限制720px居中 */
+.app-wrap{display:flex;flex-direction:column;height:100vh;width:100%;max-width:720px;margin:0 auto;background:#fff;box-shadow:0 0 10px rgba(0,0,0,.05);overflow:hidden}
+/* ===== 顶部固定头部 ===== */
+.app-header{flex-shrink:0;background:#fff;border-bottom:1px solid #e2e8f0;padding:8px 12px}
+.header-row1{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.user-box{display:flex;align-items:center;gap:4px;background:#edf2f7;border-radius:16px;padding:4px 10px;font-size:12px;cursor:pointer;flex-shrink:0;max-width:120px;overflow:hidden;white-space:nowrap}
+.user-box:hover{background:#e2e8f0}
+.user-icon{font-size:14px}
+#userName{overflow:hidden;text-overflow:ellipsis}
+.mode-switch{display:flex;gap:4px;flex:1}
+.mode-btn{flex:1;padding:5px 4px;border:none;border-radius:16px;background:#e0e6ed;color:#4a5568;font-size:12px;cursor:pointer;text-align:center}
+.mode-btn.active{background:#3182ce;color:#fff}
+.module-select{width:100%;padding:5px 8px;border:1px solid #cbd5e0;border-radius:6px;background:#fff;font-size:12px;color:#4a5568;cursor:pointer}
+/* 信息栏（可折叠） */
+.info-bar{flex-shrink:0;background:#f7fafc;border-bottom:1px solid #e2e8f0}
+.info-summary{display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:12px;color:#4a5568;cursor:pointer;flex-wrap:wrap}
+.info-summary:hover{background:#edf2f7}
+.info-summary .arrow{transition:transform .2s;font-size:10px}
+.info-bar.expanded .info-summary .arrow{transform:rotate(90deg)}
+.info-summary .pill{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:1px 8px;font-size:11px}
+.info-summary .pill.active{background:#3182ce;color:#fff;border-color:#3182ce}
+.info-detail{display:none;padding:8px 12px;border-top:1px solid #e2e8f0}
+.info-bar.expanded .info-detail{display:block}
+.filter-row{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:center}
+.filter-row select,.filter-row button{padding:4px 8px;border:1px solid #cbd5e0;border-radius:6px;background:#fff;font-size:11px;cursor:pointer}
+.filter-row button.active{background:#e53e3e;color:#fff;border-color:#e53e3e}
+.filter-row label{font-size:11px;color:#718096;display:flex;align-items:center;gap:3px;cursor:pointer}
+.filter-row select{flex:1;min-width:90px}
+.q-legend{display:flex;gap:8px;font-size:10px;color:#718096;margin-bottom:6px;flex-wrap:wrap}
+/* 题号网格（紧凑，只显示当前题附近+汇总） */
+.q-grid{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.q-dot{width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;border:1px solid #cbd5e0;background:#fff;color:#4a5568;cursor:pointer;user-select:none;flex-shrink:0}
+.q-dot:hover{border-color:#3182ce}
+.q-dot.current{border-color:#3182ce;background:#ebf8ff;color:#2b6cb0;font-weight:bold}
+.q-dot.right{border-color:#38a169;background:#d4f8e8;color:#276749}
+.q-dot.wrong{border-color:#e53e3e;background:#ffe5e5;color:#c53030}
+.q-dot.in-wrong-book{box-shadow:0 0 0 2px #e53e3e}
+.q-dot.recite{border-style:dashed}
+.q-dot.ellipsis{border:none;background:transparent;cursor:default;color:#a0aec0;width:auto;padding:0 2px}
+.q-stats{width:100%;margin-top:6px;padding-top:6px;border-top:1px dashed #e2e8f0;font-size:11px;color:#718096;display:flex;gap:12px;flex-wrap:wrap}
+/* ===== 内容区（弹性填充） ===== */
+.app-content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 12px;width:100%;scrollbar-gutter:stable}
+.question-card{border:1px solid #e2e8f0;border-radius:6px;padding:12px;width:100%}
+.question-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:4px}
+.question-type{display:inline-block;padding:2px 7px;font-size:11px;border-radius:3px}
+.question-type.single{background:#ebf8ff;color:#3182ce}
+.question-type.multi{background:#fef5e7;color:#dd6b20}
+.question-type.judge{background:#e6fffa;color:#319795}
+.question-type.recite{background:#faf5ff;color:#805ad5}
+.question-category{font-size:11px;color:#718096}
+.question-text{margin:8px 0;line-height:1.55;font-size:14px}
+.question-note{font-size:12px;color:#c53030;background:#fff5f5;padding:7px;border-radius:4px;margin:6px 0;display:none;line-height:1.5}
+/* 选项（移动端压缩） */
+.options-list{display:flex;flex-direction:column;gap:6px;margin:10px 0;width:100%}
+.option-item{padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;display:flex;align-items:flex-start;gap:8px;cursor:pointer;transition:all .15s;font-size:13px;line-height:1.4}
+.option-item:hover{border-color:#90cdf4;background:#f7fafc}
+.option-item.selected{background:#ebf8ff;border-color:#3182ce}
+.option-item.correct{background:#d4f8e8;border-color:#38a169;font-weight:bold;cursor:default}
+.option-item.wrong-selected{background:#ffd6d6;border-color:#e53e3e;color:#c53030;font-weight:bold;cursor:default}
+.option-item.disabled{cursor:not-allowed;opacity:0.85}
+.option-item.disabled:hover{border-color:#e2e8f0;background:transparent}
+.option-letter{min-width:20px;height:20px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.option-item.correct .option-letter{background:#38a169;color:#fff}
+.option-item.wrong-selected .option-letter{background:#e53e3e;color:#fff}
+.option-tag{margin-left:auto;font-weight:bold;flex-shrink:0}
+.remove-wrong-btn{width:100%;padding:7px;border:1px solid #38a169;border-radius:6px;background:#fff;color:#38a169;font-size:12px;cursor:pointer;margin-top:6px}
+.remove-wrong-btn:hover{background:#38a169;color:#fff}
+/* 背诵卡片 */
+.recite-card{border:1px solid #e2e8f0;border-radius:6px;padding:12px;width:100%}
+.recite-group-title{font-size:14px;font-weight:bold;color:#553c9a;margin-bottom:8px;display:flex;align-items:center;gap:6px;cursor:pointer}
+.recite-group-title .arrow{transition:transform .2s;font-size:11px}
+.recite-group-title.collapsed .arrow{transform:rotate(-90deg)}
+.recite-items{line-height:1.7;font-size:13px}
+.recite-items.collapsed{display:none}
+.recite-item{padding:5px 0;border-bottom:1px dashed #e2e8f0}
+.recite-item:last-child{border-bottom:none}
+.recite-item .mask{background:#2d3748;color:transparent;border-radius:3px;padding:0 3px;cursor:pointer;user-select:none}
+.recite-item .mask.revealed{background:transparent;color:inherit}
+.recite-toolbar{display:flex;gap:6px;margin-top:8px;align-items:center;flex-wrap:wrap}
+.mastery-dot{display:inline-flex;gap:3px;align-items:center}
+.mastery-btn{width:20px;height:20px;border-radius:50%;border:2px solid #cbd5e0;cursor:pointer;padding:0}
+.mastery-btn.m1{background:#e53e3e;border-color:#e53e3e}
+.mastery-btn.m2{background:#ecc94b;border-color:#ecc94b}
+.mastery-btn.m3{background:#38a169;border-color:#38a169}
+.mastery-btn.inactive{background:#fff}
+.mastery-label{font-size:11px;color:#718096}
+/* ===== 底部固定导航 ===== */
+.app-footer{flex-shrink:0;background:#fff;border-top:1px solid #e2e8f0;padding:8px 12px;display:flex;gap:8px;align-items:center}
+.footer-nav-btn{padding:10px 14px;border:1px solid #cbd5e0;border-radius:6px;background:#fff;color:#4a5568;font-size:13px;cursor:pointer;flex-shrink:0;min-width:64px}
+.footer-nav-btn:disabled{opacity:0.4;cursor:not-allowed}
+.footer-submit{flex:1;padding:10px;border:none;border-radius:6px;background:#3182ce;color:#fff;font-size:14px;cursor:pointer}
+.footer-submit:disabled{background:#a0aec0;cursor:not-allowed}
+.footer-pos{font-size:11px;color:#718096;text-align:center;flex-shrink:0;min-width:50px}
+/* 弹窗 */
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;z-index:100;transition:opacity .2s}
+.modal.active{opacity:1;visibility:visible}
+.modal-content{background:#fff;border-radius:10px;padding:20px;width:90%;max-width:360px;text-align:center}
+.modal-icon{font-size:36px;margin-bottom:10px}
+.modal-icon.correct{color:#38a169}
+.modal-icon.incorrect{color:#e53e3e}
+.modal-msg{margin:8px 0;font-size:14px}
+.modal-answer{background:#f7fafc;padding:8px;border-radius:6px;margin:10px 0;font-size:13px}
+.modal-buttons{display:flex;gap:10px;margin-top:15px}
+.modal-btn{flex:1;padding:9px;border:none;border-radius:6px;cursor:pointer;font-size:14px}
+.modal-btn.primary{background:#3182ce;color:#fff}
+.modal-btn.secondary{background:#e2e8f0;color:#4a5568}
+.user-modal-content{max-width:340px}
+.user-modal-content input{width:100%;padding:10px;border:1px solid #cbd5e0;border-radius:6px;margin:10px 0;font-size:14px}
+.user-modal-content input:focus{outline:none;border-color:#3182ce}
+.user-list{margin:10px 0;max-height:200px;overflow-y:auto}
+.user-item{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border:1px solid #e2e8f0;border-radius:6px;margin-bottom:6px;cursor:pointer}
+.user-item:hover{background:#ebf8ff;border-color:#3182ce}
+.user-item .del{color:#e53e3e;cursor:pointer;font-size:16px;padding:0 4px}
+.empty-hint{text-align:center;color:#a0aec0;padding:20px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="app-wrap">
+    <!-- 顶部固定头部 -->
+    <div class="app-header">
+        <div class="header-row1">
+            <div class="user-box" onclick="openUserModal()">
+                <span class="user-icon">👤</span>
+                <span id="userName">未登录</span>
+            </div>
+            <div class="mode-switch">
+                <button class="mode-btn active" id="mode-test" onclick="switchMode('test')">测试</button>
+                <button class="mode-btn" id="mode-review" onclick="switchMode('review')">复习</button>
+            </div>
+        </div>
+        <select class="module-select" id="moduleSelect" onchange="switchModule(this.value)"></select>
+    </div>
+    <!-- 信息栏（可折叠，默认收起） -->
+    <div class="info-bar" id="infoBar">
+        <div class="info-summary">
+            <span class="arrow" onclick="toggleInfoBar()" style="cursor:pointer">▶</span>
+            <span id="sumPos" onclick="toggleInfoBar()" style="cursor:pointer;flex-shrink:0">第1/0题</span>
+            <input type="range" id="posSlider" min="1" max="1" value="1" oninput="onSliderInput(this.value)" style="flex:1;min-width:60px;height:20px;accent-color:#3182ce">
+            <span class="pill" id="sumWrongBook" onclick="event.stopPropagation();quickToggleWrongBook()" style="cursor:pointer;border-color:#e53e3e;color:#e53e3e;flex-shrink:0">📕错题本(0)</span>
+        </div>
+        <div class="info-detail">
+            <div class="q-legend">
+                <span>🟩对</span><span>🟥错</span><span>⬜未</span><span>🔵当前</span><span>📕错题本</span>
+            </div>
+            <div class="q-grid" id="qgrid"></div>
+            <button class="wrong-book-btn" id="wrongBookBtn" onclick="toggleWrongBook()" style="width:100%;margin-top:8px;padding:8px;border:1px solid #e53e3e;border-radius:6px;background:#fff;color:#e53e3e;font-size:13px;cursor:pointer">📕 只看错题（<span id="wrongCount">0</span>）</button>
+        </div>
+    </div>
+    <!-- 内容区（弹性滚动） -->
+    <div class="app-content" id="contentArea"></div>
+    <!-- 底部固定导航 -->
+    <div class="app-footer">
+        <button class="footer-nav-btn" id="prev" onclick="goQuestion(-1)">＜上一题</button>
+        <button class="footer-submit" id="footerSubmit" onclick="submitAnswer()">确认答案</button>
+        <button class="footer-nav-btn" id="next" onclick="goQuestion(1)">下一题＞</button>
+    </div>
+</div>
+<!-- 答题反馈弹窗 -->
+<div class="modal" id="feedbackModal">
+    <div class="modal-content">
+        <div class="modal-icon" id="fbIcon"></div>
+        <div class="modal-msg" id="fbMsg"></div>
+        <div class="modal-answer" id="fbAnswer"></div>
+        <div class="modal-buttons">
+            <button class="modal-btn secondary" onclick="closeFeedback()">我再看看</button>
+            <button class="modal-btn primary" onclick="closeFeedbackAndNext()">下一题</button>
+        </div>
+    </div>
+</div>
+<!-- 工号弹窗 -->
+<div class="modal" id="userModal">
+    <div class="modal-content user-modal-content">
+        <input type="text" id="userInput" placeholder="请输入工号以保存进度，如0403003" onkeydown="if(event.key==='Enter')confirmUser()" style="margin-top:0">
+        <div class="modal-buttons">
+            <button class="modal-btn secondary" onclick="closeUserModal()">取消</button>
+            <button class="modal-btn primary" onclick="confirmUser()">确定</button>
+        </div>
+    </div>
+</div>
+<script>
+// ====== 题库数据 ======
+const QUIZ_DATA = {
+  "modules": [
+    {
+      "name": "九龙坡支行柜面业务测试题库（现金调缴实施细则）",
+      "single": [
+        {
+          "question": "现金调缴业务办理核心原则（）",
+          "options": {
+            "D": "无需预约直接调款",
+            "C": "先入库后记账",
+            "B": "双人操作、监控全覆盖",
+            "A": "单人操作、全程录像"
+          },
+          "answer": "B",
+          "knowledge": "现金调缴基础规定"
+        },
+        {
+          "question": "人行与本行办理现金存取使用系统为（）",
+          "options": {
+            "D": "反洗钱监测系统",
+            "C": "大额支付系统",
+            "B": "货二代现金交取款系统",
+            "A": "综合业务系统"
+          },
+          "answer": "B",
+          "knowledge": "行外人行调缴系统"
+        },
+        {
+          "question": "现金调缴核算使用会计科目（）",
+          "options": {
+            "D": "其他应收款",
+            "C": "存放同业",
+            "B": "运送中现金",
+            "A": "库存现金"
+          },
+          "answer": "B",
+          "knowledge": "调缴账务核算"
+        },
+        {
+          "question": "本行与总行、人行发行库调缴，在途现金核销时限要求（）",
+          "options": {
+            "A": "T+1日",
+            "B": "当日",
+            "C": "T+3日",
+            "D": "T+7日"
+          },
+          "answer": "B",
+          "knowledge": "运送中现金时限管控"
+        },
+        {
+          "question": "普通行内机构间现金调缴，运送中现金最长核销时限（）",
+          "options": {
+            "A": "当日",
+            "B": "T+1",
+            "C": "T+3日",
+            "D": "年末前"
+          },
+          "answer": "C",
+          "knowledge": "运送中现金时限管控"
+        },
+        {
+          "question": "年末“运送中现金”科目要求（）",
+          "options": {
+            "D": "分支行审批可跨年",
+            "C": "5万元以下可跨年",
+            "B": "不得有余额，禁止跨年度调缴",
+            "A": "可留有小额余额"
+          },
+          "answer": "B",
+          "knowledge": "年末账务管控"
+        },
+        {
+          "question": "调入机构为分支行库/片区库，当日未能清点的调缴款，最晚（）完成确认入账",
+          "options": {
+            "A": "当日",
+            "B": "次日",
+            "C": "T+3",
+            "D": "3个工作日"
+          },
+          "answer": "B",
+          "knowledge": "现金入库清点时限"
+        },
+        {
+          "question": "现金调缴审批人由（）担任",
+          "options": {
+            "D": "库管员",
+            "C": "解款员",
+            "B": "机构负责人/会计主管",
+            "A": "普通现金柜员"
+          },
+          "answer": "B",
+          "knowledge": "岗位职责-调缴审批人"
+        },
+        {
+          "question": "现金调缴计划在“已出库”状态撤销，需要（）审批同意",
+          "options": {
+            "D": "无需审批",
+            "C": "申请+受理双方有权人",
+            "B": "仅受理机构",
+            "A": "仅申请机构"
+          },
+          "answer": "C",
+          "knowledge": "调缴计划撤销规则"
+        },
+        {
+          "question": "行内调缴现金封装要求（）",
+          "options": {
+            "D": "仅大额款项封箱",
+            "C": "无需封签，仅登记数量",
+            "B": "双人加锁、一次性封签/封扣",
+            "A": "单人上锁、普通胶带封口"
+          },
+          "answer": "B",
+          "knowledge": "款箱封装管理"
+        },
+        {
+          "question": "不属于现金调缴不相容岗位的是（）",
+          "options": {
+            "D": "解款员与押运司机",
+            "C": "库管员与调缴复核员",
+            "B": "现金柜员与调缴复核员",
+            "A": "库管员与记账员（网点库除外）"
+          },
+          "answer": "D",
+          "knowledge": "不相容岗位分离"
+        },
+        {
+          "question": "行内调缴清点长短款，差错（）以下为普通差错",
+          "options": {
+            "A": "1万元",
+            "B": "2万元",
+            "C": "5万元",
+            "D": "10万元"
+          },
+          "answer": "B",
+          "knowledge": "差错分级标准"
+        },
+        {
+          "question": "现金差错金额（）以上为重大差错，24小时内书面上报总行",
+          "options": {
+            "A": "2万",
+            "B": "10万",
+            "C": "20万",
+            "D": "50万"
+          },
+          "answer": "C",
+          "knowledge": "差错分级上报要求"
+        },
+        {
+          "question": "长款挂账满（）无法查明，经财务分管行领导审批年终转营业外收入",
+          "options": {
+            "A": "3个月",
+            "B": "半年",
+            "C": "1年",
+            "D": "2年"
+          },
+          "answer": "C",
+          "knowledge": "长短款账务处理"
+        },
+        {
+          "question": "短款挂账期限最长不得超过（）",
+          "options": {
+            "A": "1个月",
+            "B": "3个月",
+            "C": "半年",
+            "D": "1年"
+          },
+          "answer": "A",
+          "knowledge": "长短款账务处理"
+        },
+        {
+          "question": "分支行对辖内机构现金调缴检查频次（）",
+          "options": {
+            "D": "每月抽查",
+            "C": "半年抽查",
+            "B": "每年全覆盖",
+            "A": "每季度全覆盖"
+          },
+          "answer": "B",
+          "knowledge": "监督检查频次"
+        },
+        {
+          "question": "无实物库机构现金调缴操作人是（）",
+          "options": {
+            "D": "解款员",
+            "C": "会计主管",
+            "B": "任一现金柜员",
+            "A": "仅库管员"
+          },
+          "answer": "B",
+          "knowledge": "不同库类型操作权限"
+        }
+      ],
+      "multi": [
+        {
+          "question": "现金调缴分为两大类（）",
+          "options": {
+            "D": "柜面现金整点",
+            "C": "ATM现金调拨",
+            "B": "行外现金调缴",
+            "A": "行内现金调缴"
+          },
+          "answer": "AB",
+          "knowledge": "现金调缴分类"
+        },
+        {
+          "question": "行内现金调缴包含场景（）",
+          "options": {
+            "D": "分支行之间互调",
+            "C": "网点之间互调",
+            "B": "分支行库↔总行库",
+            "A": "网点↔分支行库"
+          },
+          "answer": "ABCD",
+          "knowledge": "行内调缴范围"
+        },
+        {
+          "question": "现金调缴相关岗位包含（）",
+          "options": {
+            "D": "外包清分操作员",
+            "C": "解款员",
+            "B": "业务库记账员、调缴审批人",
+            "A": "现金柜员、库管员、调缴复核员"
+          },
+          "answer": "ABC",
+          "knowledge": "调缴岗位职责"
+        },
+        {
+          "question": "款箱交接管理要求（）",
+          "options": {
+            "D": "封签破损可直接接收，事后报备",
+            "C": "登记《款箱交接登记簿》，双方签字",
+            "B": "查验箱体、锁具、一次性封签完好",
+            "A": "双人交接、清点数量"
+          },
+          "answer": "ABC",
+          "knowledge": "款箱交接规范"
+        },
+        {
+          "question": "调缴关系建立、变更审批要求（）",
+          "options": {
+            "D": "可线下口头建立调缴关系",
+            "C": "系统内完成调缴关系设置后方可发起计划",
+            "B": "分支行与总行调缴关系需分支行分管领导审批",
+            "A": "网点与分支行调缴关系逐级审批"
+          },
+          "answer": "ABC",
+          "knowledge": "调缴关系管理"
+        },
+        {
+          "question": "现金调缴计划三种可撤销状态（）",
+          "options": {
+            "D": "已入库核销",
+            "C": "已出库",
+            "B": "计划成立",
+            "A": "计划发出"
+          },
+          "answer": "ABC",
+          "knowledge": "调缴计划撤销规则"
+        },
+        {
+          "question": "现金调缴差错完整留存资料（）",
+          "options": {
+            "D": "差错书面说明",
+            "C": "现金冠字号码",
+            "B": "原封签、腰条",
+            "A": "全程无剪辑监控录像"
+          },
+          "answer": "ABCD",
+          "knowledge": "差错取证留存要求"
+        },
+        {
+          "question": "业务库类型包含（）",
+          "options": {
+            "D": "网点库、无实物库、不涉及库",
+            "C": "片区分库",
+            "B": "分支行库",
+            "A": "总行库"
+          },
+          "answer": "ABCD",
+          "knowledge": "业务库分类"
+        },
+        {
+          "question": "押运相关备案信息需提前报备调缴行（）",
+          "options": {
+            "D": "押运司机家庭住址",
+            "C": "押运固定线路、到达时间",
+            "B": "运钞车车牌号",
+            "A": "解款员姓名、员工号、照片"
+          },
+          "answer": "ABC",
+          "knowledge": "押运备案管理"
+        },
+        {
+          "question": "现金调缴不相容岗位分离要求（）",
+          "options": {
+            "D": "解款员与押运司机分离",
+            "C": "业务库库管员与业务库记账员（网点库除外）分离",
+            "B": "现金柜员与调缴复核员分离",
+            "A": "现金库管员与调缴复核员分离"
+          },
+          "answer": "ABC",
+          "knowledge": "内控不相容岗位"
+        },
+        {
+          "question": "办理现金调缴禁止行为（）",
+          "options": {
+            "D": "调缴款箱与寄库款箱无区分标识",
+            "C": "单人完成现金清点、封箱、交接",
+            "B": "款箱内放置与业务无关物品",
+            "A": "使用未备案车辆、人员办理调缴款"
+          },
+          "answer": "ABCD",
+          "knowledge": "调缴操作红线"
+        }
+      ],
+      "judge": [
+        {
+          "question": "现金调缴全程执行双人操作、监控全覆盖。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "年末运送中现金不得留有余额，禁止跨年度调缴。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "无实物库机构仅库管员可发起现金调缴计划。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "任一现金柜员均可发起。"
+        },
+        {
+          "question": "调缴款箱只需单人上锁，无需一次性封签。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "双人加锁、一次性封签/封扣。"
+        },
+        {
+          "question": "调缴计划“已出库”状态撤销仅需申请机构审批。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "申请、受理双方有权人共同审批。"
+        },
+        {
+          "question": "运钞车辆、人员发生变动无需提前书面通知对接机构。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "安全保卫部门需提前书面通知。"
+        },
+        {
+          "question": "交接款箱发现封签破损、箱体异常，应当场拒绝交接并上报。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "2万元以上、20万元以下属于较大现金差错，需上报分支行会计部门。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "20万元以上重大差错，24小时内书面上报总行。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "长款挂账满一年无法查明，经审批转入营业外收入；短款挂账最长1个月。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "业务库库管员与业务库记账员岗位必须分离，网点库也不例外。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "网点库不强制分离。"
+        },
+        {
+          "question": "分支行每年对辖内所有机构现金调缴业务全覆盖检查。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "外包清分业务交接核心凭证为《现金预约单》。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "调入机构先记账入库，再开箱清点现金实物。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "先清点核对相符，再办理入库记账。"
+        },
+        {
+          "question": "网点向分支行调领/缴存现金流程操作逻辑对称。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "款箱交接登记簿仅调出机构登记，调入机构无需签字确认。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "交接双方核对无误共同签字。"
+        }
+      ],
+      "recite": [
+        {
+          "group": "1、基础定义与分类",
+          "items": [
+            "1）现金调缴：建立调缴关系机构凭审批指令办理现金实物出入库；分行内调缴、行外调缴",
+            "2）行内：网点↔分支行、分支行↔总行、网点互调、分支行互调",
+            "3）行外：与人行发行库、同业银行、外包清分公司调缴",
+            "4）核心原则：双人操作、全程监控"
+          ]
+        },
+        {
+          "group": "2、系统与封装管理",
+          "items": [
+            "1）人行存取现金使用：货二代现金交取款系统；上交人行现金使用发行基金物流袋封装",
+            "2）款箱标准：双人加锁+一次性封签/封扣；箱内禁放无关物品；调缴款箱与寄库箱明显区分标识"
+          ]
+        },
+        {
+          "group": "3、运送中现金时限（高频考点）",
+          "items": [
+            "本行↔总行、本行↔人行发行库：当日必须核销",
+            "普通行内网点/分支行间调缴：最长T+3日内核销",
+            "年末硬性要求：运送中现金无余额，严禁跨年度调缴",
+            "分支行库收到款箱当日无法清点，最晚次日完成入库确认"
+          ]
+        },
+        {
+          "group": "4、调缴计划撤销三档规则",
+          "items": [
+            "计划发出：申请机构单人审批撤销",
+            "计划成立：申请+受理双方有权人审批",
+            "已出库：双方审批，出库机构系统冲正出库记账"
+          ]
+        },
+        {
+          "group": "5、岗位与不相容分离",
+          "items": [
+            "核心岗位",
+            "现金柜员、库管员、调缴复核员、业务库记账员、调缴审批人（机构负责人/会计主管）、解款员",
+            "强制分离",
+            "现金柜员↔调缴复核员",
+            "库管员↔调缴复核员",
+            "业务库库管员↔业务库记账员（网点库除外）"
+          ]
+        },
+        {
+          "group": "6、差错分级与上报",
+          "items": [
+            "普通差错：≤2万元 → 报网点负责人/会计主管",
+            "较大差错：2万＜金额≤20万 → 同步上报分支行会计部",
+            "重大差错：＞20万 → 24小时书面上报总行",
+            "取证要求：全程无剪辑监控、封签、腰条、冠字号码完整留存"
+          ]
+        },
+        {
+          "group": "7、长短款账务规则",
+          "items": [
+            "长款挂账满1年无法查明，经财务分管行领导审批，年终转营业外收入",
+            "短款挂账期限最长1个月",
+            "调出机构差错：长款划转、短款补足；调入机构差错自行处理"
+          ]
+        },
+        {
+          "group": "8、押运与交接管控",
+          "items": [
+            "解款员、车牌号、线路提前书面备案；未备案人员/车辆禁止交接",
+            "交接流程：核对车辆人员→查验箱体封签→双人清点款箱→《款箱交接登记簿》双方签字；异常当场拒收并上报",
+            "武装押运、专人专车，严守押运线路机密"
+          ]
+        },
+        {
+          "group": "9、三类业务流程要点",
+          "items": [
+            "1）网点↔分支行缴存/调领：先系统发起计划→双方审批→调出机构出库记账、双人封箱押运→调入机构双人清点无误后入库记账",
+            "2）人行行外调缴：货二代系统预约、发行基金袋封装、大额支付报文（联网取现）、凭人行电子回单入库",
+            "3）外包清分：总行统一对接，凭证《现金预约单》，分缴存清分、清分回调两大流程"
+          ]
+        },
+        {
+          "group": "10、监督检查频次",
+          "items": [
+            "总行运营管理部：每年抽查≥10%分支行",
+            "分支行：每年辖内网点全覆盖检查",
+            "内审部门：专项现金调缴审计"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "九龙坡支行柜面业务测试题库（人民币银行结算账户管理办法）",
+      "single": [
+        {
+          "question": "银行结算账户按存款人分为（）",
+          "options": {
+            "D": "Ⅰ/Ⅱ/Ⅲ类户",
+            "C": "核准类、备案类",
+            "B": "单位银行结算账户、个人银行结算账户",
+            "A": "基本户、一般户"
+          },
+          "answer": "B",
+          "knowledge": "账户分类|基础定义"
+        },
+        {
+          "question": "同一存款人在本行仅能开立（）个Ⅰ类个人银行结算账户",
+          "options": {
+            "A": "不限",
+            "B": "1",
+            "C": "3",
+            "D": "5"
+          },
+          "answer": "B",
+          "knowledge": "个人账户数量管控"
+        },
+        {
+          "question": "同一存款人在本行Ⅱ、Ⅲ类户开立数量分别不超过（）个",
+          "options": {
+            "A": "1",
+            "B": "3",
+            "C": "5",
+            "D": "10"
+          },
+          "answer": "C",
+          "knowledge": "个人账户数量管控"
+        },
+        {
+          "question": "下列不属于核准类账户的是（）",
+          "options": {
+            "D": "非验资临时存款账户",
+            "C": "预算单位专用存款账户",
+            "B": "注册验资临时存款账户",
+            "A": "基本存款账户"
+          },
+          "answer": "B",
+          "knowledge": "核准类/备案类账户划分"
+        },
+        {
+          "question": "一般存款账户属于（）账户",
+          "options": {
+            "A": "核准类",
+            "B": "备案类",
+            "C": "专用类",
+            "D": "临时类"
+          },
+          "answer": "B",
+          "knowledge": "核准类/备案类账户划分"
+        },
+        {
+          "question": "临时存款账户有效期原则上最长不超过（）",
+          "options": {
+            "A": "1年",
+            "B": "2年",
+            "C": "3年",
+            "D": "5年"
+          },
+          "answer": "B",
+          "knowledge": "临时账户使用期限"
+        },
+        {
+          "question": "存款人开立备案类账户，开户之日起（）个工作日内向人行备案",
+          "options": {
+            "A": "2",
+            "B": "3",
+            "C": "5",
+            "D": "7"
+          },
+          "answer": "C",
+          "knowledge": "账户备案时限"
+        },
+        {
+          "question": "单位账户正式开立后，非企业账户需满（）个工作日方可付款",
+          "options": {
+            "A": "1",
+            "B": "3",
+            "C": "5",
+            "D": "7"
+          },
+          "answer": "B",
+          "knowledge": "账户启用付款规则"
+        },
+        {
+          "question": "基本存款账户的用途是（）",
+          "options": {
+            "D": "临时经营资金收付",
+            "C": "专项资金专项管理",
+            "B": "日常收付、工资奖金、现金支取",
+            "A": "借款转存、归还"
+          },
+          "answer": "B",
+          "knowledge": "四类单位账户用途"
+        },
+        {
+          "question": "一般存款账户可以办理（）",
+          "options": {
+            "A": "现金支取",
+            "B": "现金缴存",
+            "C": "工资发放",
+            "D": "专用资金支取"
+          },
+          "answer": "B",
+          "knowledge": "四类单位账户用途"
+        },
+        {
+          "question": "收入汇缴专用存款账户规则是（）",
+          "options": {
+            "D": "仅限内部划转，禁止对外收付",
+            "C": "可收可付，按需取现",
+            "B": "只收不付，不得支取现金",
+            "A": "只付不收，可支取现金"
+          },
+          "answer": "B",
+          "knowledge": "专用存款账户使用规则"
+        },
+        {
+          "question": "注册验资临时账户验资期间（）",
+          "options": {
+            "D": "仅能转账付款",
+            "C": "只付不收",
+            "B": "只收不付",
+            "A": "可收可付"
+          },
+          "answer": "B",
+          "knowledge": "验资临时账户管理"
+        },
+        {
+          "question": "单位向个人转账单笔超（）万元，备注事由可免额外付款依据",
+          "options": {
+            "A": "1",
+            "B": "3",
+            "C": "5",
+            "D": "10"
+          },
+          "answer": "C",
+          "knowledge": "单位转个人大额付款规则"
+        },
+        {
+          "question": "代理开立个人账户，未激活前账户状态为（）",
+          "options": {
+            "A": "正常收付",
+            "B": "只收不付",
+            "C": "只付不收",
+            "D": "冻结止付"
+          },
+          "answer": "B",
+          "knowledge": "代理开户激活管控"
+        },
+        {
+          "question": "一年无收付活动单位账户，通知客户（）日内销户，逾期久悬",
+          "options": {
+            "A": "10",
+            "B": "30",
+            "C": "60",
+            "D": "90"
+          },
+          "answer": "B",
+          "knowledge": "久悬账户认定规则"
+        },
+        {
+          "question": "存在久悬账户的单位，网点不得办理（）",
+          "options": {
+            "A": "现金存款",
+            "B": "开户、账户变更",
+            "C": "转账收款",
+            "D": "对账"
+          },
+          "answer": "B",
+          "knowledge": "久悬账户管控措施"
+        },
+        {
+          "question": "账户开立、撤销后，网点需（）个工作日内向人行报送信息",
+          "options": {
+            "A": "2",
+            "B": "3",
+            "C": "5",
+            "D": "7"
+          },
+          "answer": "A",
+          "knowledge": "账户变更撤销报送时限"
+        },
+        {
+          "question": "单位账户档案保管期限为账户撤销后（）",
+          "options": {
+            "A": "10年",
+            "B": "20年",
+            "C": "30年",
+            "D": "永久"
+          },
+          "answer": "A",
+          "knowledge": "账户档案保管期限"
+        },
+        {
+          "question": "总行运营管理部对分支行账户业务监督检查频次（）",
+          "options": {
+            "A": "每月",
+            "B": "每季度",
+            "C": "每半年",
+            "D": "每年"
+          },
+          "answer": "C",
+          "knowledge": "账户监督检查频次"
+        },
+        {
+          "question": "网点负责人/会计主管账户业务自查频次（）",
+          "options": {
+            "A": "每月",
+            "B": "每季不少于1次",
+            "C": "每半年",
+            "D": "每年"
+          },
+          "answer": "B",
+          "knowledge": "账户监督检查频次"
+        },
+        {
+          "question": "以下证件不可用于开立个人账户的是（）",
+          "options": {
+            "D": "港澳台居民居住证",
+            "C": "第一代居民身份证",
+            "B": "军官证（配套单位证明）",
+            "A": "二代居民身份证"
+          },
+          "answer": "C",
+          "knowledge": "个人开户有效身份证件"
+        },
+        {
+          "question": "存款人被列入严重违法失信企业名单，银行应（）",
+          "options": {
+            "A": "简化开户流程",
+            "B": "拒绝开户",
+            "C": "延后开户",
+            "D": "限制转账额度"
+          },
+          "answer": "B",
+          "knowledge": "禁止开户情形"
+        },
+        {
+          "question": "单位撤销账户顺序要求：先销（），最后销基本户",
+          "options": {
+            "D": "仅专用账户",
+            "C": "仅一般账户",
+            "B": "仅临时账户",
+            "A": "专用、一般、临时账户"
+          },
+          "answer": "A",
+          "knowledge": "单位销户顺序规则"
+        },
+        {
+          "question": "存款人未结清银行债务，（）办理销户",
+          "options": {
+            "A": "可以",
+            "B": "不得",
+            "C": "结清一半即可",
+            "D": "出具承诺可"
+          },
+          "answer": "B",
+          "knowledge": "销户限制条件"
+        },
+        {
+          "question": "企业开立基本户，人行系统生成（）替代旧开户许可证",
+          "options": {
+            "C": "机构信用代码",
+            "D": "纳税人识别号",
+            "A": "账户查询密码",
+            "B": "基本存款账户编号"
+          },
+          "answer": "B",
+          "knowledge": "企业账户取消开户许可证规则"
+        }
+      ],
+      "multi": [
+        {
+          "question": "单位银行结算账户按用途分为（）",
+          "options": {
+            "A": "基本存款账户",
+            "B": "一般存款账户",
+            "C": "专用存款账户",
+            "D": "临时存款账户"
+          },
+          "answer": "ABCD",
+          "knowledge": "单位账户分类"
+        },
+        {
+          "question": "核准类银行结算账户包含（）",
+          "options": {
+            "D": "QFII专用存款账户",
+            "C": "预算单位专用存款账户",
+            "B": "非验资临时存款账户",
+            "A": "基本存款账户"
+          },
+          "answer": "ABCD",
+          "knowledge": "核准类/备案类划分"
+        },
+        {
+          "question": "备案类银行结算账户包含（）",
+          "options": {
+            "D": "注册验资临时账户",
+            "C": "个人银行结算账户",
+            "B": "非预算单位专用存款账户",
+            "A": "一般存款账户"
+          },
+          "answer": "ABC",
+          "knowledge": "核准类/备案类划分"
+        },
+        {
+          "question": "可异地开立单位账户的情形有（）",
+          "options": {
+            "D": "异地收入汇缴开立专用户",
+            "C": "异地临时经营开立临时户",
+            "B": "异地借款开立一般户",
+            "A": "注册地与经营地分离开立基本户"
+          },
+          "answer": "ABCD",
+          "knowledge": "异地开户规则"
+        },
+        {
+          "question": "以下专用存款账户不得支取现金（）",
+          "options": {
+            "D": "粮棉油收购资金",
+            "C": "证券交易结算资金",
+            "B": "财政预算外资金账户",
+            "A": "单位银行卡备用金账户"
+          },
+          "answer": "ABC",
+          "knowledge": "专用账户现金支取限制"
+        },
+        {
+          "question": "可转入个人银行结算账户的合法款项包含（）",
+          "options": {
+            "A": "工资奖金",
+            "B": "保险理赔",
+            "C": "个人贷款转存",
+            "D": "继承赠与款项"
+          },
+          "answer": "ABCD",
+          "knowledge": "个人账户入账范围"
+        },
+        {
+          "question": "开户银行有权拒绝开户的情形（）",
+          "options": {
+            "D": "提供真实有效证件、用途清晰",
+            "C": "有证据怀疑用于违法犯罪",
+            "B": "组团批量开立账户",
+            "A": "不配合身份识别、尽职调查"
+          },
+          "answer": "ABC",
+          "knowledge": "拒绝开户情形"
+        },
+        {
+          "question": "严禁开立账户的情形（）",
+          "options": {
+            "D": "正常经营小微企业",
+            "C": "注册地址虚构不存在",
+            "B": "出租出借买卖账户惩戒期内",
+            "A": "证件过期、伪造变造证明文件"
+          },
+          "answer": "ABC",
+          "knowledge": "禁止开户情形"
+        },
+        {
+          "question": "单位开立账户可由代理人办理，需提供资料（）",
+          "options": {
+            "D": "经办人身份证原件",
+            "C": "法人授权委托书",
+            "B": "法人身份证原件",
+            "A": "营业执照等开户基础资料"
+          },
+          "answer": "ABCD",
+          "knowledge": "单位代理开户资料"
+        },
+        {
+          "question": "账户开立后双人审查归档资料包含（）",
+          "options": {
+            "A": "开户申请书",
+            "B": "证照复印件",
+            "C": "法人、经办人身份证件",
+            "D": "印鉴片、账户管理协议"
+          },
+          "answer": "ABCD",
+          "knowledge": "单位账户档案内容"
+        },
+        {
+          "question": "单位销户需交回资料物品（）",
+          "options": {
+            "A": "全部重要空白凭证",
+            "B": "开户许可证",
+            "C": "全部印鉴片",
+            "D": "网银、对公产品解约材料"
+          },
+          "answer": "ABCD",
+          "knowledge": "销户操作要求"
+        },
+        {
+          "question": "临时存款账户可开立的场景（）",
+          "options": {
+            "D": "临时机构、破产清算组",
+            "C": "企业注册/增资验资",
+            "B": "异地临时经营活动",
+            "A": "异地建筑施工项目部"
+          },
+          "answer": "ABCD",
+          "knowledge": "临时账户适用场景"
+        },
+        {
+          "question": "存在异常开户风险，银行需强化尽调、延长审核的情形（）",
+          "options": {
+            "D": "曾出租出借账户被惩戒",
+            "C": "多人共用同一联系电话、地址",
+            "B": "注册地、经营地均异地",
+            "A": "法人不熟悉自身企业业务"
+          },
+          "answer": "ABCD",
+          "knowledge": "异常开户识别管控"
+        },
+        {
+          "question": "银行办理账户变更、撤销后报送人行时限要求（）",
+          "options": {
+            "D": "个人账户变更无需备案",
+            "C": "核准类账户名称变更2个工作日内报送人行核准",
+            "B": "企业账户变更当日系统备案",
+            "A": "单位账户撤销2个工作日内上报"
+          },
+          "answer": "ABC",
+          "knowledge": "账户变更撤销报送规则"
+        },
+        {
+          "question": "账户监督检查主要内容（）",
+          "options": {
+            "D": "账户备案及时性",
+            "C": "多头开户、久悬账户管控",
+            "B": "开户意愿核实记录留存",
+            "A": "开户资料完整性、合规性"
+          },
+          "answer": "ABCD",
+          "knowledge": "账户检查内容"
+        }
+      ],
+      "judge": [
+        {
+          "question": "个体工商户凭营业执照字号开立账户，纳入单位银行结算账户管理。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "企业银行账户实行备案制，不再核发纸质开户许可证，使用基本存款账户编号。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "银行可为身份不明、证件过期客户开立简化账户。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "严禁为证件过期、身份不明客户开户。"
+        },
+        {
+          "question": "审核完毕的单位开户资料可交由客户取回，再次办理无需重新审核。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "资料被客户经手则本次开户无效，需全套重走流程。"
+        },
+        {
+          "question": "一般存款账户可办理现金支取业务。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "一般户仅存现、不得取现。"
+        },
+        {
+          "question": "企业开立账户当日即可办理收付款业务，不受3个工作日限制。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "业务支出专用账户只付不收，现金支取按现金管理规定办理。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "建筑项目工期超过2年，可按施工合同期限设定临时账户有效期，一般不再展期。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "验资成功开立基本户后，无需注销验资临时账户。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "验资转基本户必须同步撤销验资临时户。"
+        },
+        {
+          "question": "单位账户向个人转账5万元以内，无需备注资金用途。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "代理开立个人账户，客户未激活前账户只收不付。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "一年不动户通知客户30日内未销户，系统标记久悬，久悬账户只收不付。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "单位存在久悬账户时，仍可新开立一般存款账户。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "有久悬账户禁止新开、变更账户。"
+        },
+        {
+          "question": "存款人未还清银行贷款，也可申请办理销户。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "未清偿银行债务不得销户。"
+        },
+        {
+          "question": "账户档案自账户撤销之日起保管10年，按年装订专夹保管。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "总行每半年开展一次全行账户业务监督检查，网点主管每季自查不少于1次。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "第一代居民身份证可以作为有效证件开立个人账户。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "开户发现伪造营业执照，应立即停止账户支付并报送人行。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "专用存款账户可随意开立，同一专项资金可多家银行开户。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "同一专项资金仅能开立一个专用户。"
+        },
+        {
+          "question": "注册验资账户资金汇缴人必须与出资人名称保持一致。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        }
+      ],
+      "recite": [
+        {
+          "group": "1、账户大类划分",
+          "items": [
+            "1）按存款人：单位户、个人户（Ⅰ/Ⅱ/Ⅲ）",
+            "2）单位户四类：基本、一般、专用、临时",
+            "3）核准类：基本户、非验资临时户、预算专用户、QFII专户",
+            "4）备案类：一般户、非预算专用户、个人账户"
+          ]
+        },
+        {
+          "group": "2、个人账户核心规则",
+          "items": [
+            "Ⅰ类户本行限1个；Ⅱ、Ⅲ类每户分别≤5个",
+            "Ⅰ类：全功能存取、转账、理财、取现；Ⅱ类限额支付；Ⅲ类仅小额消费缴费",
+            "一代身份证不可开户；代理开户未激活只收不付"
+          ]
+        },
+        {
+          "group": "3、四类单位账户核心用途",
+          "items": [
+            "基本户：主办账户，工资、日常收付、唯一可取现办理工资的单位账户",
+            "一般户：借款转存归还、其他结算；可存现、禁止取现",
+            "专用户：专项资金管理；收入汇缴只收不付，业务支出只付不收；部分专户禁取现",
+            "临时户：临时机构、异地施工、验资；最长2年，验资期间只收不付"
+          ]
+        },
+        {
+          "group": "4、开户启用付款规则",
+          "items": [
+            "非企业单位账户：开立满3个工作日方可对外付款",
+            "四类豁免当日可用：企业账户、验资户转基本户、借款转存一般户、同网点销户重开"
+          ]
+        },
+        {
+          "group": "5、异地开户五类场景",
+          "items": [
+            "注册地经营地分离基本户、异地借款一般户、异地临时经营临时户、异地收入汇缴专用户、自然人异地个人账户"
+          ]
+        },
+        {
+          "group": "6、久悬账户管理",
+          "items": [
+            "一年无收付→通知30日销户→逾期久悬；久悬只收不付；存在久悬不得新开/变更账户；销户顺序：先销一般/专用/临时，最后销基本户"
+          ]
+        },
+        {
+          "group": "7、时限汇总",
+          "items": [
+            "备案类开户：5个工作日内向人行备案",
+            "单位账户变更名称/法人（核准类）：2个工作日内报送人行核准",
+            "单位销户：2个工作日内报送人行",
+            "临时账户最长2年；分支行半年一检查，网点主管每季自查≥1次",
+            "账户档案保管：销户后10年"
+          ]
+        },
+        {
+          "group": "8、禁止开户情形（高频考点）",
+          "items": [
+            "伪造变造证件、地址虚构、证件过期、严重失信企业、涉恐怖名单、出租买卖账户惩戒期内、不配合尽调、组团批量开户"
+          ]
+        },
+        {
+          "group": "9、销户硬性要求",
+          "items": [
+            "结清全部银行债务才可销户",
+            "交回空白凭证、印鉴片、开户许可证、解约网银",
+            "多账户单位：先销一般、专用、临时，再销基本存款账户"
+          ]
+        },
+        {
+          "group": "10、档案与监督",
+          "items": [
+            "单位账户档案专袋分类保管，销户起存10年",
+            "开户执行双人审核制度，杜绝一手清",
+            "动态复核企业账户，异常账户限制交易并2日内告知客户"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "九龙坡支行柜面测试题库（代收代付业务会计操作规程）",
+      "single": [
+        {
+          "question": "代收代付不相容岗位为（）",
+          "options": {
+            "D": "解款员与押运员",
+            "C": "大堂经理与柜员",
+            "B": "经办柜员与复核柜员",
+            "A": "库管员与记账员"
+          },
+          "answer": "B",
+          "knowledge": "代收代付|岗位内控|不相容岗位"
+        },
+        {
+          "question": "办理代收代付，银行（）垫付资金",
+          "options": {
+            "D": "财政业务除外",
+            "C": "大额可申请",
+            "B": "严禁",
+            "A": "可以临时"
+          },
+          "answer": "B",
+          "knowledge": "代收代付基础原则"
+        },
+        {
+          "question": "代收代付业务档案保管期限为（）",
+          "options": {
+            "D": "5年",
+            "C": "10年",
+            "B": "30年",
+            "A": "永久"
+          },
+          "answer": "C",
+          "knowledge": "档案管理"
+        },
+        {
+          "question": "月末代付内部账户有余额，次月（）前打印对账单交客户对账",
+          "options": {
+            "D": "月末",
+            "C": "15日",
+            "B": "10日",
+            "A": "5日"
+          },
+          "answer": "B",
+          "knowledge": "内部账户对账时限"
+        },
+        {
+          "question": "批量开立存单未当日交付，纳入表外（）核算",
+          "options": {
+            "D": "抵押品",
+            "C": "有价单证",
+            "B": "代保管有价值品",
+            "A": "重要空白凭证"
+          },
+          "answer": "B",
+          "knowledge": "批量存单保管核算"
+        },
+        {
+          "question": "财政直补冲正仅允许冲（）账务",
+          "options": {
+            "D": "任意日期",
+            "C": "T+1",
+            "B": "当日",
+            "A": "跨月"
+          },
+          "answer": "B",
+          "knowledge": "财政直补冲正规则"
+        },
+        {
+          "question": "代收签约开立内部账户顺序为（）",
+          "options": {
+            "D": "先开户后签三方协议",
+            "C": "直接签协议无需内部户",
+            "B": "先预签约生成内部账户再改签约状态",
+            "A": "先签协议再预签约"
+          },
+          "answer": "B",
+          "knowledge": "代收签约流程"
+        },
+        {
+          "question": "代付从单位结算账户发起，汇总清单除公章还需加盖（）",
+          "options": {
+            "D": "合同专用章",
+            "C": "财务主管章",
+            "B": "预留印鉴",
+            "A": "法人私章"
+          },
+          "answer": "B",
+          "knowledge": "批量代付资料要求"
+        },
+        {
+          "question": "批量代付至他行卡，退汇资金退回（）",
+          "options": {
+            "D": "网点过渡户",
+            "C": "总行归集户",
+            "B": "委托人内部/结算账户",
+            "A": "收款人账户"
+          },
+          "answer": "B",
+          "knowledge": "跨行代付退汇规则"
+        },
+        {
+          "question": "签约代扣解约可凭（）办理",
+          "options": {
+            "D": "单位证明",
+            "C": "仅户口本",
+            "B": "本人身份证或签约卡折",
+            "A": "仅银行卡"
+          },
+          "answer": "B",
+          "knowledge": "代扣解约办理要件"
+        },
+        {
+          "question": "批量存单客户自取模式，网点何时打印存单（）",
+          "options": {
+            "D": "月末集中打印",
+            "C": "次日统一打印",
+            "B": "客户本人到场领取时",
+            "A": "批量提交当日"
+          },
+          "answer": "B",
+          "knowledge": "批量存单两种领取模式"
+        },
+        {
+          "question": "批量代收代付传输数据必须采用总行认可（）方式加密",
+          "options": {
+            "D": "U盘直拷无加密",
+            "C": "普通邮件",
+            "B": "加密客户端/专线/指定加密文件",
+            "A": "微信传输"
+          },
+          "answer": "B",
+          "knowledge": "数据传输安全"
+        },
+        {
+          "question": "委托人终止代收代付关系，网点操作（）",
+          "options": {
+            "D": "冻结内部账户",
+            "C": "直接删除签约信息",
+            "B": "办理解约",
+            "A": "仅封存资料"
+          },
+          "answer": "B",
+          "knowledge": "委托关系终止处理"
+        },
+        {
+          "question": "发现代收代付可疑交易，逐级上报（）",
+          "options": {
+            "D": "审计部",
+            "C": "运营管理部",
+            "B": "总行反洗钱监测中心",
+            "A": "分支行行长"
+          },
+          "answer": "B",
+          "knowledge": "反洗钱上报要求"
+        },
+        {
+          "question": "高风险客户存在洗钱隐患，网点应（）",
+          "options": {
+            "D": "仅加强对账",
+            "C": "限制单笔额度",
+            "B": "立即终止业务合作",
+            "A": "提高手续费"
+          },
+          "answer": "B",
+          "knowledge": "高风险客户管控"
+        },
+        {
+          "question": "批量开立存单交接清单一式（）份，双方签字",
+          "options": {
+            "D": "4",
+            "C": "3",
+            "B": "2",
+            "A": "1"
+          },
+          "answer": "B",
+          "knowledge": "存单交接资料"
+        },
+        {
+          "question": "财政直补资金核算科目为（）",
+          "options": {
+            "D": "运送中现金",
+            "C": "存放同业",
+            "B": "委托及代理业务",
+            "A": "库存现金"
+          },
+          "answer": "B",
+          "knowledge": "财政直补账务科目"
+        },
+        {
+          "question": "委托人首次代办代收代付，需提供（）",
+          "options": {
+            "D": "单位介绍信",
+            "C": "仅法人身份证",
+            "B": "法人+代理人身份证+授权书",
+            "A": "仅代理人身份证"
+          },
+          "answer": "B",
+          "knowledge": "代办身份核验规则"
+        },
+        {
+          "question": "每日日终代收资金系统自动清算至（）",
+          "options": {
+            "D": "财政专户",
+            "C": "客户个人账户",
+            "B": "对应归集机构/总行清算中心",
+            "A": "网点内部户"
+          },
+          "answer": "B",
+          "knowledge": "代收资金日终清算"
+        },
+        {
+          "question": "批量代付、代收明细清单留存份数（）",
+          "options": {
+            "D": "仅电子存档无纸质",
+            "C": "委托人自行打印",
+            "B": "网点单份留存",
+            "A": "一式两份，双方各执一份"
+          },
+          "answer": "A",
+          "knowledge": "业务结果资料管理"
+        }
+      ],
+      "multi": [
+        {
+          "question": "代收代付业务按收付方向分为（）",
+          "options": {
+            "D": "转账汇款",
+            "C": "现金缴存",
+            "B": "代付业务",
+            "A": "代收业务"
+          },
+          "answer": "AB",
+          "knowledge": "业务基础分类"
+        },
+        {
+          "question": "代收业务包含类型（）",
+          "options": {
+            "D": "批量存单代付",
+            "C": "财政直补",
+            "B": "签约代扣代收",
+            "A": "单笔代收"
+          },
+          "answer": "AB",
+          "knowledge": "代收细分类型"
+        },
+        {
+          "question": "代付业务包含类型（）",
+          "options": {
+            "D": "财政直补代付",
+            "C": "批量开立存单",
+            "B": "批量代付",
+            "A": "单笔代付"
+          },
+          "answer": "ABCD",
+          "knowledge": "代付细分类型"
+        },
+        {
+          "question": "批量代收/代付委托人必须提交资料（）",
+          "options": {
+            "D": "对公账户代付加预留印鉴",
+            "C": "清单加盖单位公章/协议印章",
+            "B": "纸质汇总清单（总笔、总金额）",
+            "A": "加密电子明细数据"
+          },
+          "answer": "ABCD",
+          "knowledge": "批量业务资料要件"
+        },
+        {
+          "question": "批量存单两种领取模式（）",
+          "options": {
+            "D": "柜员代为分发",
+            "C": "邮寄送达",
+            "B": "客户本人到场自取打印",
+            "A": "委托单位统一领取"
+          },
+          "answer": "AB",
+          "knowledge": "存单领取管理"
+        },
+        {
+          "question": "签约代扣解除办理条件（）",
+          "options": {
+            "D": "仅口头申请",
+            "C": "代理人持双方证件",
+            "B": "本人有效身份证件",
+            "A": "本人持签约卡折"
+          },
+          "answer": "ABC",
+          "knowledge": "代扣解约规则"
+        },
+        {
+          "question": "代付协议必须明确条款（）",
+          "options": {
+            "D": "余款退回规则",
+            "C": "异议反馈时限",
+            "B": "差错、失败处理方式",
+            "A": "账务处理时限"
+          },
+          "answer": "ABCD",
+          "knowledge": "代付协议必备内容"
+        },
+        {
+          "question": "代收代付各级监督检查主体（）",
+          "options": {
+            "D": "内审专项审计",
+            "C": "总行运营管理部抽查",
+            "B": "分支行会计部门抽查",
+            "A": "网点负责人/会计主管不定期查"
+          },
+          "answer": "ABCD",
+          "knowledge": "监督检查体系"
+        },
+        {
+          "question": "批量开立存单失败原因分为（）",
+          "options": {
+            "D": "客户账户冻结",
+            "C": "系统故障",
+            "B": "柜员上传操作失误",
+            "A": "委托人数据错误"
+          },
+          "answer": "AB",
+          "knowledge": "批量业务失败排查"
+        },
+        {
+          "question": "财政直补冲正业务要求（）",
+          "options": {
+            "D": "跨月账务可批量冲回",
+            "C": "双人核对、复核授权",
+            "B": "冲正数据仅金额为负，其余字段一致",
+            "A": "仅冲当日账务"
+          },
+          "answer": "ABC",
+          "knowledge": "财政直补冲正管控"
+        },
+        {
+          "question": "办理代收代付禁止行为（）",
+          "options": {
+            "D": "代客户垫付代付款项",
+            "C": "单人完成代收代付无复核",
+            "B": "无加密渠道传输批量文件",
+            "A": "修改客户原始代发明细数据"
+          },
+          "answer": "ABCD",
+          "knowledge": "操作红线"
+        },
+        {
+          "question": "网点代收代付工作职责包含（）",
+          "options": {
+            "D": "批量数据加密传输",
+            "C": "客户咨询投诉处置",
+            "B": "资料专夹保管、内部账户对账",
+            "A": "业务受理与账务处理"
+          },
+          "answer": "ABC",
+          "knowledge": "营业机构岗位职责"
+        },
+        {
+          "question": "总行运营管理部代收代付职责（）",
+          "options": {
+            "D": "网点日常对账",
+            "C": "统一开立全辖代收代付委托关系",
+            "B": "全行业务指导、抽查监督",
+            "A": "制度制定维护"
+          },
+          "answer": "AB",
+          "knowledge": "总行部门职责"
+        },
+        {
+          "question": "单笔代付收款要求正确的有（）",
+          "options": {
+            "D": "柜员建立代付台账定期核对",
+            "C": "可直接转账至任意第三方账户",
+            "B": "代办需单位说明+双方身份证件",
+            "A": "原则本人持证件办理"
+          },
+          "answer": "ABD",
+          "knowledge": "单笔代付收款核验"
+        },
+        {
+          "question": "代收代付客户信息与资料管理要求（）",
+          "options": {
+            "D": "可疑交易及时上报总行反洗钱中心",
+            "C": "高风险客户强化尽调",
+            "B": "业务资料交接双方签字确认",
+            "A": "分类专夹保管，保管10年"
+          },
+          "answer": "ABCD",
+          "knowledge": "档案与反洗钱管理"
+        }
+      ],
+      "judge": [
+        {
+          "question": "经办柜员与复核柜员为代收代付不相容岗位，必须分离。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "办理代付业务资金不足时，网点可临时垫款完成发放。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "严禁银行垫付任何代付资金。"
+        },
+        {
+          "question": "批量代收代付数据必须使用总行认可加密方式传输，禁止明文传输。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "网点柜员可根据客户要求自行修改批量代付明细数据。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "任何人员不得修改委托人原始数据。"
+        },
+        {
+          "question": "代收业务必须先预签约生成内部账户，再完善签约状态。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "月末代付内部账户有余额，次月10日前打印对账单交由客户对账。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "批量存单未当日交付，按份纳入表外“代保管有价值品”管理。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "财政直补冲正可任意冲销跨月发放账务。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "仅允许冲当日账务，跨月不予冲正。"
+        },
+        {
+          "question": "批量代付汇至他行账户失败，资金原路退回委托人账户。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "客户解除代扣签约只能本人持银行卡办理，不允许代办。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "代理人持双方有效证件可代办解约。"
+        },
+        {
+          "question": "代收代付全套业务资料专夹保管，保管期限10年。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "发现代收代付可疑交易，留存资料后无需上报。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "必须逐级上报总行反洗钱监测中心。"
+        },
+        {
+          "question": "批量存单、代付明细清单均一式两份，交接双方签字各留存一份。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "高风险客户核实存在洗钱风险，网点可继续合作并限额办理。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "应立即终止业务合作。"
+        },
+        {
+          "question": "日终系统自动将代收资金清算至对应归集机构账户。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "委托人代办代收代付业务，第二次办理仅提供代理人身份证即可。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "签约代扣仅需银行与付款人两方签订协议，无需委托人参与。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "可三方协议或银行与付款人代扣协议。"
+        },
+        {
+          "question": "批量开立存单客户自取模式，批量提交时统一打印全部存单存放网点。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "客户到场领取时才打印存单。"
+        },
+        {
+          "question": "网点负责人对代收代付业务开展不定期检查。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "代付协议无需约定差错、余款退回相关条款。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "代付协议必须明确差错处理、余款退回规则。"
+        }
+      ],
+      "recite": [
+        {
+          "group": "1、基础分类",
+          "items": [
+            "1）代收：单笔代收、签约代扣代收",
+            "2）代：单笔代付、批量代付、批量开立存单、财政直补代付",
+            "3）岗位分离：经办柜员≠复核柜员（不相容）"
+          ]
+        },
+        {
+          "group": "2、四大硬性原则（高频考点）",
+          "items": [
+            "严格按委托协议办理",
+            "银行严禁垫付资金",
+            "收付双方经济纠纷银行不担责",
+            "批量数据必须总行认可加密方式传输，任何人不得修改客户原始数据"
+          ]
+        },
+        {
+          "group": "3、签约开户规则",
+          "items": [
+            "代收：先预签约生成内部账户→再修改签约状态",
+            "代付：结算账户发起先签约；内部账户发起先预签约生成户再签协议"
+          ]
+        },
+        {
+          "group": "4、批量业务统一资料要求",
+          "items": [
+            "加密电子明细 + 纸质汇总清单（总金额、总笔数）+ 单位公章；对公结算账户代付额外加盖预留印鉴；业务结果清单一式两份双方签字留存。"
+          ]
+        },
+        {
+          "group": "5、批量开立存单两种领取模式",
+          "items": [
+            "单位领取：批量提交即打印存单，登记交接清单双人签字，未交付纳入表外代保管有价值品",
+            "客户自取：暂不打印，客户本人携证件到场时现场打印"
+          ]
+        },
+        {
+          "group": "6、内部账户对账规则",
+          "items": [
+            "月末有余额→次月10日前打印对账单；客户核对无误加盖指定印章当月返还网点归档。"
+          ]
+        },
+        {
+          "group": "7、财政直补&冲正要点",
+          "items": [
+            "核算科目：委托及代理业务",
+            "冲正限制：仅当日账务可冲，跨月不允许",
+            "冲正数据仅金额改为负数，其余字段完全一致，复核授权后方可处理",
+            "跨行代付失败资金退回委托人内部/结算账户"
+          ]
+        },
+        {
+          "group": "8、代办身份核验规则",
+          "items": [
+            "首次代办：法人/负责人身份证 + 代理人身份证 + 授权委托书",
+            "非首次代办：仅代理人身份证即可",
+            "代理人变更：重新提供全套法人、代理人证件+授权书"
+          ]
+        },
+        {
+          "group": "9、档案与保管",
+          "items": [
+            "代收代付全部业务资料分类专夹保管，保管期限10年；所有资料交接必须双方签字确认。"
+          ]
+        },
+        {
+          "group": "10、反洗钱与风险管控",
+          "items": [
+            "落实客户身份识别，留存身份、交易资料",
+            "可疑交易逐级上报总行反洗钱监测中心",
+            "核实为高洗钱风险客户，立即终止业务合作"
+          ]
+        },
+        {
+          "group": "11、监督检查层级",
+          "items": [
+            "网点负责人/会计主管：不定期自查",
+            "分支行会计部：辖内抽查",
+            "总行运营管理部：全行抽查",
+            "内审部门：专项审计"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "九龙坡支行柜面业务测试题库（移动展业管理办法）",
+      "single": [
+        {
+          "question": "移动展业设备组成是移动智能终端连接（）",
+          "options": {
+            "A": "密码器",
+            "B": "移动背夹",
+            "C": "U盾",
+            "D": "读卡器"
+          },
+          "answer": "B",
+          "knowledge": "移动展业设备定义"
+        },
+        {
+          "question": "移动背夹不包含以下哪项功能（）",
+          "options": {
+            "A": "二代身份证读取",
+            "B": "指纹识别",
+            "C": "现金点钞",
+            "D": "刷卡"
+          },
+          "answer": "C",
+          "knowledge": "移动背夹功能"
+        },
+        {
+          "question": "移动展业资料实行（）管理，无特殊规定不留纸质资料",
+          "options": {
+            "A": "全纸质",
+            "B": "无纸化电子影像",
+            "C": "纸质+电子双存档",
+            "D": "仅留存客户签字纸质单"
+          },
+          "answer": "B",
+          "knowledge": "无纸化管理规定"
+        },
+        {
+          "question": "不属于移动展业服务模式的是（）",
+          "options": {
+            "A": "厅堂模式",
+            "B": "单人外拓模式",
+            "C": "双人外拓模式",
+            "D": "线上自助模式"
+          },
+          "answer": "D",
+          "knowledge": "三种展业模式划分"
+        },
+        {
+          "question": "单人外拓模式外出时，严禁携带（）",
+          "options": {
+            "A": "移动终端",
+            "B": "重要空白凭证",
+            "C": "身份证阅读器",
+            "D": "指纹背夹"
+          },
+          "answer": "B",
+          "knowledge": "外拓风险管控"
+        },
+        {
+          "question": "移动展业设备采购主体为（）",
+          "options": {
+            "A": "各营业网点",
+            "B": "分支行会计部",
+            "C": "总行运营管理部",
+            "D": "分支行科技部"
+          },
+          "answer": "C",
+          "knowledge": "设备采购管理"
+        },
+        {
+          "question": "设备临时调剂使用期限最长不超过（）",
+          "options": {
+            "A": "1个月",
+            "B": "3个月",
+            "C": "6个月",
+            "D": "12个月"
+          },
+          "answer": "B",
+          "knowledge": "设备临时调剂规则"
+        },
+        {
+          "question": "每日营业终了，闲置移动展业设备需存放于（）",
+          "options": {
+            "A": "柜台桌面",
+            "B": "监控范围内保险柜/加锁柜",
+            "C": "员工私人抽屉",
+            "D": "客户洽谈室"
+          },
+          "answer": "B",
+          "knowledge": "设备日常保管要求"
+        },
+        {
+          "question": "外出办理个人开户业务，必须执行（）上门",
+          "options": {
+            "A": "单人",
+            "B": "双人",
+            "C": "三人",
+            "D": "不限人数"
+          },
+          "answer": "B",
+          "knowledge": "外拓开户风控要求"
+        },
+        {
+          "question": "移动展业当日办理业务账务归属（）",
+          "options": {
+            "A": "次日机构",
+            "B": "操作员所属机构当日账务",
+            "C": "总行统一归集",
+            "D": "分支行汇总账户"
+          },
+          "answer": "B",
+          "knowledge": "业务账务归属规则"
+        },
+        {
+          "question": "《移动展业设备申请登记表》会计档案保管期限为（）",
+          "options": {
+            "A": "永久",
+            "B": "30年",
+            "C": "10年",
+            "D": "5年"
+          },
+          "answer": "C",
+          "knowledge": "档案保管期限"
+        },
+        {
+          "question": "移动展业电子业务影像保管期限参照（）执行",
+          "options": {
+            "A": "个人账户档案",
+            "B": "会计凭证及附件",
+            "C": "开户资料",
+            "D": "久悬账户资料"
+          },
+          "answer": "B",
+          "knowledge": "电子档案保管规则"
+        },
+        {
+          "question": "单人/双人外拓模式展业申请审批人为（）",
+          "options": {
+            "A": "普通柜员",
+            "B": "机构负责人/会计主管",
+            "C": "支行行长",
+            "D": "总行运营部"
+          },
+          "answer": "B",
+          "knowledge": "外拓展业申请审批权限"
+        },
+        {
+          "question": "移动展业故障首先联系（）处理设备、网络问题",
+          "options": {
+            "A": "总行审计部",
+            "B": "分支行科技部门",
+            "C": "消保部门",
+            "D": "人力部"
+          },
+          "answer": "B",
+          "knowledge": "故障处置流程"
+        },
+        {
+          "question": "分支行对辖内网点移动展业检查频次要求（）",
+          "options": {
+            "A": "每季度全覆盖",
+            "B": "每年全覆盖",
+            "C": "每月抽查",
+            "D": "半年一次抽查"
+          },
+          "answer": "B",
+          "knowledge": "监督检查频次"
+        },
+        {
+          "question": "移动展业设备遵循资产管理原则（）",
+          "options": {
+            "D": "总行采购、客户保管",
+            "C": "分支行采购、总行统一使用",
+            "B": "网点自主采购、总行统一保管",
+            "A": "统一采购、分级管理、谁使用谁负责"
+          },
+          "answer": "A",
+          "knowledge": "设备资产管理原则"
+        },
+        {
+          "question": "以下哪种行为属于违规操作（）",
+          "options": {
+            "D": "外出双人携带凭证加锁保管",
+            "C": "私自破解设备操作系统权限",
+            "B": "设备仅用于办理银行业务",
+            "A": "仅通过总行指定渠道下载展业APP"
+          },
+          "answer": "C",
+          "knowledge": "设备安全管理红线"
+        },
+        {
+          "question": "移动展业外拓携带重要空白凭证仅限（）模式",
+          "options": {
+            "A": "厅堂模式",
+            "B": "单人外拓",
+            "C": "双人外拓",
+            "D": "全部模式均可"
+          },
+          "answer": "C",
+          "knowledge": "重要空白凭证外拓管控"
+        },
+        {
+          "question": "移动展业业务接入统筹管理部门是（）",
+          "options": {
+            "A": "分支行会计部",
+            "B": "总行运营管理部",
+            "C": "数字金融部",
+            "D": "分支行市场部"
+          },
+          "answer": "B",
+          "knowledge": "业务接入职责分工"
+        },
+        {
+          "question": "设备维修时，陪同人员为（），并留存维修人员证件",
+          "options": {
+            "A": "业务操作员",
+            "B": "网点设备管理员",
+            "C": "大堂经理",
+            "D": "客户经理"
+          },
+          "answer": "B",
+          "knowledge": "设备维修管理"
+        }
+      ],
+      "multi": [
+        {
+          "question": "移动展业三种服务模式包含（）",
+          "options": {
+            "A": "厅堂模式",
+            "B": "单人外拓模式",
+            "C": "双人外拓模式",
+            "D": "线上视频模式"
+          },
+          "answer": "ABC",
+          "knowledge": "展业模式分类"
+        },
+        {
+          "question": "移动展业操作人员分为（），岗位可兼容",
+          "options": {
+            "A": "业务管理员",
+            "B": "设备管理员",
+            "C": "业务操作员",
+            "D": "档案管理员"
+          },
+          "answer": "ABC",
+          "knowledge": "操作人员岗位划分"
+        },
+        {
+          "question": "分支行会计部门移动展业工作职责（）",
+          "options": {
+            "C": "收集业务接入需求",
+            "D": "设备软件升级、网络配置",
+            "A": "辖内设备统一管理",
+            "B": "业务监督检查、风险处置"
+          },
+          "answer": "ABC",
+          "knowledge": "分支行会计部职责"
+        },
+        {
+          "question": "移动展业可联网核查的有效身份证件包含（）",
+          "options": {
+            "C": "港澳居民居住证",
+            "D": "台湾居民居住证",
+            "A": "二代居民身份证",
+            "B": "外国人永久居留身份证"
+          },
+          "answer": "ABCD",
+          "knowledge": "外拓业务有效证件范围"
+        },
+        {
+          "question": "移动展业设备交接、领用归还均需登记《移动展业设备申请登记表》，适用场景（）",
+          "options": {
+            "C": "跨分支行临时调剂",
+            "D": "网点内部日常交接",
+            "A": "网点向分支行领用设备",
+            "B": "网点间临时调剂"
+          },
+          "answer": "ABC",
+          "knowledge": "设备领用调剂登记要求"
+        },
+        {
+          "question": "移动展业设备保管模式分为（）",
+          "options": {
+            "C": "客户经理私人保管",
+            "D": "总行统一保管",
+            "A": "分支行集中保管",
+            "B": "营业机构分散保管"
+          },
+          "answer": "AB",
+          "knowledge": "设备两类保管模式"
+        },
+        {
+          "question": "外出外拓现金、重空、印章管理要求（）",
+          "options": {
+            "D": "单人外拓可随身携带重空随意放置",
+            "C": "返程后监控内双人清点入库",
+            "B": "双人外拓重空单独复点加锁保管",
+            "A": "外出前监控下双人复点、双人上锁入箱"
+          },
+          "answer": "ABC",
+          "knowledge": "外拓现金重空管控"
+        },
+        {
+          "question": "移动展业禁止行为有（）",
+          "options": {
+            "D": "私自拍摄留存客户身份证、隐私资料",
+            "C": "设备用于游戏、娱乐等非工作用途",
+            "B": "向外部人员泄露APP下载地址",
+            "A": "安装非本行第三方APP、破解系统权限"
+          },
+          "answer": "ABCD",
+          "knowledge": "设备使用禁令"
+        },
+        {
+          "question": "移动展业客户投诉分层处置流程（）",
+          "options": {
+            "D": "直接引导客户向银保监投诉",
+            "C": "仍未解决上报总行业务管理部门",
+            "B": "无法解决上报分支行会计部门",
+            "A": "网点现场沟通解释"
+          },
+          "answer": "ABC",
+          "knowledge": "消保投诉处理机制"
+        },
+        {
+          "question": "移动展业电子档案包含以下哪些电子资料（）",
+          "options": {
+            "C": "身份证件影印件",
+            "D": "业务交易流水",
+            "A": "客户业务确认电子签名",
+            "B": "现场环境影像"
+          },
+          "answer": "ABCD",
+          "knowledge": "无纸化电子档案范围"
+        },
+        {
+          "question": "移动展业故障处置正确做法（）",
+          "options": {
+            "D": "自行拆机维修设备硬件故障",
+            "C": "系统故障联系总行运营管理部排查",
+            "B": "设备网络故障启用备用设备、备用网卡",
+            "A": "先向客户做好解释，控制业务风险"
+          },
+          "answer": "ABC",
+          "knowledge": "故障处理规范"
+        },
+        {
+          "question": "业务接入全流程包含（）",
+          "options": {
+            "C": "开发、UAT验收测试",
+            "D": "上线落地实施",
+            "A": "机构提出业务需求",
+            "B": "总行多部门评估会签"
+          },
+          "answer": "ABCD",
+          "knowledge": "业务接入实施流程"
+        },
+        {
+          "question": "移动展业收集客户信息需遵守规则（）",
+          "options": {
+            "D": "可留存客户全部通讯录、社交信息",
+            "C": "客户信息严格保密，禁止泄露出售",
+            "B": "不收集无关客户信息",
+            "A": "遵循合法、合理、必要原则"
+          },
+          "answer": "ABC",
+          "knowledge": "消费者权益保护-客户信息管理"
+        },
+        {
+          "question": "设备报废、盘点、报损处置依据制度（）",
+          "options": {
+            "C": "采购管理办法",
+            "D": "员工处罚办法",
+            "A": "实物资产管理办法",
+            "B": "移动展业管理办法"
+          },
+          "answer": "AB",
+          "knowledge": "设备全生命周期管理"
+        },
+        {
+          "question": "移动展业开展业务必须落实反洗钱要求（）",
+          "options": {
+            "D": "简化小微企业客户尽调流程",
+            "C": "大额、可疑交易及时上报",
+            "B": "留存客户身份电子资料",
+            "A": "客户身份识别、联网核查"
+          },
+          "answer": "ABC",
+          "knowledge": "移动展业反洗钱管理"
+        }
+      ],
+      "judge": [
+        {
+          "question": "移动背夹集成身份证读取、指纹、刷卡、密码键盘功能。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "移动展业全部业务均打印纸质单据归档，不允许无纸化。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "实行无纸化电子影像存档，特殊规定除外。"
+        },
+        {
+          "question": "单人外出移动展业禁止携带重要空白凭证。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "办理企业、个人账户外拓开户，单人上门即可办理。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "外拓开户必须双人上门。"
+        },
+        {
+          "question": "移动展业当日业务全部纳入操作员所属机构当日账务。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "移动展业设备由各网点自主采购，总行不统一采购。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "总行运营管理部集中统一采购。"
+        },
+        {
+          "question": "设备临时调剂借用期限最长不得超过3个月。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "营业终了闲置移动展业设备随意放在柜台即可，无需上锁保管。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "必须存放监控内保险柜、加锁柜。"
+        },
+        {
+          "question": "可通过网络第三方渠道下载移动展业业务APP。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "仅允许总行指定地址下载。"
+        },
+        {
+          "question": "移动展业设备严禁私自破解操作系统、安装无关娱乐软件。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "《移动展业设备申请登记表》保管期限为10年。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "厅堂模式展业申请需操作员本人发起；外拓申请可他人代为发起。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "质保期外设备维修费用由使用机构自行承担。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "分支行每年对辖内所有网点开展移动展业全覆盖检查。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "移动展业可以违背客户意愿搭售其他金融产品。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "严禁搭售，充分尊重客户自主选择权。"
+        },
+        {
+          "question": "设备管理员岗位变动，无需移交移动展业设备资产。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "必须完整办理设备移交并更新系统使用人。"
+        },
+        {
+          "question": "双人外拓模式携带重要空白凭证，外出前后双人清点、加锁保管。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "移动展业电子影像档案保管参照会计凭证及附件标准执行。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "发生客户可疑交易，操作员可自行留存无需上报总行反洗钱中心。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "必须逐级上报可疑交易线索。"
+        },
+        {
+          "question": "跨分支行设备调拨仅需双方网点沟通，不用分支行会计部门审批。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "跨分支调剂、调拨需分支行会计部门负责人审批。"
+        }
+      ],
+      "recite": [
+        {
+          "group": "1、基础定义与模式",
+          "items": [
+            "1）移动展业设备=智能终端+移动背夹；背夹：身份证读取、指纹、刷卡、密码键盘",
+            "2）管理模式：无纸化电子影像存档，无特殊规定不留纸质资料",
+            "3）三类展业模式",
+            "厅堂模式：网点内单人办理；本人发起展业申请",
+            "单人外拓：单人外出，严禁携带重要空白凭证",
+            "双人外拓：两人外出，可携带重空，全程双人清点加锁保管"
+          ]
+        },
+        {
+          "group": "2、设备资产管理规则",
+          "items": [
+            "1）总原则：统一采购、分级管理、谁使用谁负责；总行运营管理部集中采购",
+            "2）领用/调剂：全部填写《移动展业设备申请登记表》并审批；临时调剂最长3个月",
+            "3）保管两类模式：分支行集中保管 / 网点分散保管；每日终了入监控保险柜上锁",
+            "4）维修：质保期供应商免费修；超质保使用机构付费；设备管理员全程陪同、留存维修人员证件",
+            "5）盘点、报废、调拨统一执行实物资产管理办法"
+          ]
+        },
+        {
+          "group": "3、操作人员分工（岗位可兼容）",
+          "items": [
+            "业务管理员：统筹业务、收集需求",
+            "设备管理员：采购申请、验收、日常保管、设备移交维修",
+            "业务操作员：业务办理、外出设备保管、业务前设备自检"
+          ]
+        },
+        {
+          "group": "4、业务办理核心风控",
+          "items": [
+            "1）开户外拓硬性要求：双人上门；身份证件仅限二代身份证、永居证、港澳台居住证",
+            "2）展业申请：厅堂本人发起；单人/双人外拓可代办申请，机构负责人/会计主管审批",
+            "3）现金、重空、印章：外出前后监控下双人复点、双人上锁；返程双人清点入库",
+            "4）账务：当日业务归入操作员所属机构当日账务",
+            "5）反洗钱：必做联网核查、身份识别；可疑交易逐级上报总行反洗钱中心"
+          ]
+        },
+        {
+          "group": "5、档案保管期限",
+          "items": [
+            "1）电子业务影像：参照会计凭证及附件保管标准",
+            "2）《移动展业设备申请登记表》：保管10年"
+          ]
+        },
+        {
+          "group": "6、设备使用红线（高频考点）",
+          "items": [
+            "禁止破解系统权限、第三方渠道下载APP",
+            "禁止外传APP安装包、下载地址给外部人员",
+            "禁止设备用于游戏、娱乐等非工作事项",
+            "禁止私自拍摄、留存客户身份证、隐私信息",
+            "单人外拓严禁携带重要空白凭证"
+          ]
+        },
+        {
+          "group": "7、故障、投诉处置流程",
+          "items": [
+            "1）故障：先安抚客户→设备/网络故障换备用设备网络；系统故障联系分支行科技、总行运营管理部",
+            "2）客户投诉：网点沟通→上报分支行会计部→无法解决上报总行业务管理部门"
+          ]
+        },
+        {
+          "group": "8、监督检查频次",
+          "items": [
+            "分支行：每年对全部网点移动展业全覆盖检查",
+            "总行运营管理部：纳入案件风险排查，不定期抽查"
+          ]
+        },
+        {
+          "group": "9、消费者权益保护要点",
+          "items": [
+            "尊重客户自主选择权，不得搭售产品、附加不合理条件",
+            "采集客户信息遵循合法、合理、必要，严禁泄露、出售客户信息",
+            "业务办理清晰揭示产品风险，通俗讲解业务规则"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "九龙坡支行柜面业务测试题库（小面额人民币预约兑换细则）",
+      "single": [
+        {
+          "question": "小面额人民币定义为（）各面额人民币。",
+          "options": {
+            "A": "5元（含）以下",
+            "B": "10元（含）以下",
+            "C": "20元（含）以下",
+            "D": "1元（含）以下"
+          },
+          "answer": "B",
+          "knowledge": "小面额人民币定义"
+        },
+        {
+          "question": "客户小面额兑换预约成功后，受理机构应在（）个工作日内完成兑换。",
+          "options": {
+            "A": "3",
+            "B": "5",
+            "C": "7",
+            "D": "8"
+          },
+          "answer": "B",
+          "knowledge": "预约兑换时限"
+        },
+        {
+          "question": "特殊情况无法按期兑换，协商后最长可延长至（）个工作日兑换。",
+          "options": {
+            "A": "5",
+            "B": "6",
+            "C": "8",
+            "D": "10"
+          },
+          "answer": "C",
+          "knowledge": "预约兑换时限"
+        },
+        {
+          "question": "小面额兑换金额或张数超过（），客户需提供身份证原件、用途。",
+          "options": {
+            "A": "3000元/3000张",
+            "B": "5000元/5000张",
+            "C": "10000元/10000张",
+            "D": "2000元/2000张"
+          },
+          "answer": "B",
+          "knowledge": "大额预约资料要求"
+        },
+        {
+          "question": "《小面额人民币预约兑换登记表》、证件复印件专夹保管，保管期限（）。",
+          "options": {
+            "A": "永久",
+            "B": "30年",
+            "C": "10年",
+            "D": "20年"
+          },
+          "answer": "C",
+          "knowledge": "现金业务档案保管"
+        },
+        {
+          "question": "分支行会计部门对辖内网点小面额兑换业务每年检查次数不少于（）。",
+          "options": {
+            "A": "1次",
+            "B": "2次",
+            "C": "4次",
+            "D": "12次"
+          },
+          "answer": "A",
+          "knowledge": "监督检查频次"
+        },
+        {
+          "question": "网点负责人/会计主管对本机构小面额业务每季检查不少于（）。",
+          "options": {
+            "A": "0次",
+            "B": "1次",
+            "C": "2次",
+            "D": "3次"
+          },
+          "answer": "B",
+          "knowledge": "监督检查频次"
+        },
+        {
+          "question": "客户超预约时间前来兑换，当日备付不足的，正确处理方式（）。",
+          "options": {
+            "A": "直接拒绝办理",
+            "B": "现场调配现金",
+            "C": "重新办理预约",
+            "D": "引导至主办银行"
+          },
+          "answer": "C",
+          "knowledge": "逾期预约兑换处理"
+        },
+        {
+          "question": "负责制定、维护小面额兑换细则，统筹全行管理指导的部门是（）。",
+          "options": {
+            "A": "分支行会计部",
+            "B": "总行运营管理部",
+            "C": "集中作业中心",
+            "D": "网点会计主管"
+          },
+          "answer": "B",
+          "knowledge": "部门职责分工"
+        },
+        {
+          "question": "负责所辖网点小面额人民币调缴工作的是（）。",
+          "options": {
+            "A": "总行运营管理部",
+            "B": "集中作业中心",
+            "C": "网点柜员",
+            "D": "分支行消保部门"
+          },
+          "answer": "B",
+          "knowledge": "部门职责分工"
+        }
+      ],
+      "multi": [
+        {
+          "question": "小面额人民币包含以下哪些券别（）。",
+          "options": {
+            "A": "10元",
+            "B": "5元",
+            "C": "1元",
+            "D": "5角",
+            "E": "1角"
+          },
+          "answer": "ABCDE",
+          "knowledge": "小面额人民币定义"
+        },
+        {
+          "question": "小面额人民币兑换预约渠道包含（）。",
+          "options": {
+            "A": "网点柜面",
+            "B": "客服电话",
+            "C": "本行微银行公众号",
+            "D": "手机银行转账预约"
+          },
+          "answer": "ABC",
+          "knowledge": "预约方式"
+        },
+        {
+          "question": "小面额主办网点/主办银行需公示的标识分为（）。",
+          "options": {
+            "A": "机构标识",
+            "B": "窗口标识",
+            "C": "信息标识",
+            "D": "收费标准标识"
+          },
+          "answer": "ABC",
+          "knowledge": "公示标识管理"
+        },
+        {
+          "question": "营业网点公示的信息标识需包含内容（）。",
+          "options": {
+            "A": "预约兑换方式",
+            "B": "预约兑换时限",
+            "C": "服务投诉电话",
+            "D": "网点负责人联系方式"
+          },
+          "answer": "ABC",
+          "knowledge": "公示标识管理"
+        },
+        {
+          "question": "大额小面额兑换（超5000元/5000张），代理兑换需提供证件有（）。",
+          "options": {
+            "A": "预约人身份证原件",
+            "B": "代理人身份证原件",
+            "C": "户口本",
+            "D": "证件复印件（非身份证留存）"
+          },
+          "answer": "ABD",
+          "knowledge": "大额兑换核验要求"
+        },
+        {
+          "question": "小面额兑换监督检查内容包含（）。",
+          "options": {
+            "A": "小面额备付数量",
+            "B": "公示标识落实情况",
+            "C": "预约兑换流程执行",
+            "D": "预约资料归档保管"
+          },
+          "answer": "ABCD",
+          "knowledge": "监督检查内容"
+        },
+        {
+          "question": "客户投诉小面额兑换业务，层级处置流程正确的有（）。",
+          "options": {
+            "D": "直接引导客户向人民银行投诉",
+            "C": "分支行仍无法解决上报总行运营+消保部门",
+            "B": "无法解决上报分支行处理",
+            "A": "网点负责人第一责任人，先行沟通解释"
+          },
+          "answer": "ABC",
+          "knowledge": "消费者权益保护-投诉处理"
+        },
+        {
+          "question": "营业机构在小面额备付不足时，合规操作要求（）。",
+          "options": {
+            "D": "备付不足可直接拒绝客户兑换需求",
+            "C": "本行网点均无法满足的，内部调拨现金兑付",
+            "B": "可协调其他网点作为承兑机构办理",
+            "A": "必须受理客户预约，不得推诿拒绝"
+          },
+          "answer": "ABC",
+          "knowledge": "预约受理基本规定"
+        }
+      ],
+      "judge": [
+        {
+          "question": "小面额人民币仅指1元及以下零钱。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "10元（含）以下均属于小面额人民币。"
+        },
+        {
+          "question": "网点每日营业前小面额备付金额不低于当地人行规定标准，根据季节动态调整。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "小面额主办网点无需挂牌公示专属标识。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "主办网点必须在营业场所显著位置挂牌公示机构标识。"
+        },
+        {
+          "question": "网点无需单独设立兑换窗口，可任意窗口办理大小面额、残损币兑换。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "必须设立专属兑换窗口并张贴兑换业务标识。"
+        },
+        {
+          "question": "客户预约后如需更改券别、兑换时间，柜员在预约登记表做好双方协商记录即可。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "网点无需专人每日查看公众号预约信息，客户到店再处理即可。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "需专人每日盯守线上预约，主动联系客户确认信息。"
+        },
+        {
+          "question": "跨网点承兑兑换，承兑机构登记完整登记表、加盖业务章扫描给受理机构留存。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        },
+        {
+          "question": "办理小面额兑换可随意收集客户家庭住址、职业等无关信息。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "不得收集无关信息，客户信息严禁外泄。"
+        },
+        {
+          "question": "总行仅每年开展一次小面额兑换专项现场检查。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "B",
+          "knowledge": "",
+          "note": "总行采取不定期抽查模式。"
+        },
+        {
+          "question": "客户使用居民身份证办理大额兑换，无需留存身份证复印件。",
+          "options": {
+            "A": "正确",
+            "B": "错误"
+          },
+          "answer": "A",
+          "knowledge": "",
+          "note": ""
+        }
+      ],
+      "recite": [
+        {
+          "group": "核心知识点汇总",
+          "items": [
+            "小面额定义：10元（含）以下，10/5/1元、5角、1角。",
+            "预约渠道：柜面、电话、微银行公众号。",
+            "预约基础时限：5个工作日内完成；特殊协商最长延至8个工作日。",
+            "大额标准：兑换≥5000元/≥5000张，需核验身份证、登记用途；代理需双人证件，非身份证留存复印件。",
+            "档案保管：预约登记表、证件复印件专夹按年装订，保管10年。",
+            "三方职责",
+            "总行运营管理部：制度制定、全行统筹管理、主城调缴；",
+            "分支行会计部：辖内网点指导、培训、年度检查≥1次；",
+            "网点：备付、预约兑换、公示、每季自查≥1次。",
+            "三类公示标识",
+            "机构标识（主办网点挂牌）、窗口标识（兑换窗口专属贴纸）、信息标识（预约方式、时限、投诉电话）。",
+            "备付不足处理",
+            "不得拒预约；协调就近网点承兑；无可调配网点则内部调拨现金；客户逾期未兑、当日无库存需重新预约。",
+            "投诉处置顺序：网点负责人沟通→分支行处理→总行运营+消保协同处置。",
+            "消保红线：不收集无关客户信息、严禁泄露客户预约证件及联系方式。"
+          ]
+        }
+      ]
+    }
+  ]
+}
+// ====== 全局状态 ======
+let app = {
+    mode: "test",
+    moduleIdx: 0,
+    filteredList: [],
+    pos: 0,
+    selected: [],
+    maskOn: false,
+    wrongBookOnly: false,
+    user: null
+};
+let ALL_QUESTIONS = [];
+let ALL_RECITE = [];
+(function buildAllQuestions(){
+    let qid = 0, rid = 0;
+    QUIZ_DATA.modules.forEach((mod, mi) => {
+        mod.single.forEach(q => { q.qid = qid++; q.type = 'single'; q.moduleIdx = mi; ALL_QUESTIONS.push(q); });
+        mod.multi.forEach(q => { q.qid = qid++; q.type = 'multi'; q.moduleIdx = mi; ALL_QUESTIONS.push(q); });
+        mod.judge.forEach(q => { q.qid = qid++; q.type = 'judge'; q.moduleIdx = mi; ALL_QUESTIONS.push(q); });
+        mod.recite.forEach(g => { g.rid = rid++; g.moduleIdx = mi; g.moduleName = mod.name; ALL_RECITE.push(g); });
+    });
+})();
+
+// ====== 用户/存储层（工号分片） ======
+const ROOT_KEY = 'quiz_users_list';
+function getStorageKey(base) {
+    let uid = app.user || (window.PLATFORM_USER_ID || '') || 'guest';
+    return 'quiz_' + base + '_' + uid;
+}
+function getUserList() {
+    try { return JSON.parse(localStorage.getItem(ROOT_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveUserList(list) { localStorage.setItem(ROOT_KEY, JSON.stringify(list)); }
+function loadUserData() {
+    let raw = localStorage.getItem(getStorageKey('data'));
+    if (raw) { try { return JSON.parse(raw); } catch(e) {} }
+    return { answered: {}, userAnswers: {}, wrongBook: {}, reciteMastery: {}, reciteRevealed: {} };
+}
+function saveUserData() { localStorage.setItem(getStorageKey('data'), JSON.stringify(userData)); }
+let userData = { answered:{}, userAnswers:{}, wrongBook:{}, reciteMastery:{}, reciteRevealed:{} };
+function getCurrentUserId() { return app.user || window.PLATFORM_USER_ID || ''; }
+
+// ====== 初始化 ======
+function init() {
+    let last = localStorage.getItem('quiz_last_user');
+    if (last) { app.user = last; userData = loadUserData(); }
+    else { setTimeout(openUserModal, 100); }
+    renderModuleBar();
+    applyFilter();
+    updateUserBox();
+}
+
+// ====== 用户弹窗 ======
+function openUserModal() {
+    $('userModal').classList.add('active');
+    $('userInput').value = '';
+    setTimeout(() => $('userInput').focus(), 100);
+}
+function closeUserModal() { $('userModal').classList.remove('active'); }
+function selectUser(u) {
+    app.user = u;
+    userData = loadUserData();
+    localStorage.setItem('quiz_last_user', u);
+    // 确保用户在列表里（防止程序化调用遗漏）
+    let list = getUserList();
+    if (!list.includes(u)) { list.push(u); saveUserList(list); }
+    closeUserModal();
+    updateUserBox();
+    applyFilter();
+}
+function confirmUser() {
+    let u = $('userInput').value.trim();
+    if (!u) { alert('请输入工号'); return; }
+    let list = getUserList();
+    if (!list.includes(u)) { list.push(u); saveUserList(list); }
+    selectUser(u);
+}
+function updateUserBox() { $('userName').textContent = app.user ? app.user : '未登录'; }
+
+// ====== 模块栏（下拉框） ======
+function renderModuleBar() {
+    let sel = $('moduleSelect');
+    sel.innerHTML = QUIZ_DATA.modules.map((m, i) => {
+        let short = shortName(m.name);
+        return `<option value="${i}">${i+1}. ${short}</option>`;
+    }).join('');
+    sel.value = app.moduleIdx;
+}
+function shortName(full) {
+    let m = full.match(/[（(](.+?)[）)]/);
+    return m ? m[1] : full.slice(0, 8);
+}
+function switchModule(i) {
+    app.moduleIdx = parseInt(i);
+    app.pos = 0;
+    // 错题本模式下切模块，先退出错题本
+    if (app.wrongBookOnly) { app.wrongBookOnly = false; syncWrongBookBtn(); }
+    applyFilter();
+    // 自动跳到本模块第一个未做的题
+    jumpToFirstUnanswered();
+}
+
+// ====== 信息栏折叠 ======
+function toggleInfoBar() {
+    $('infoBar').classList.toggle('expanded');
+}
+
+// ====== 筛选 ======
+function applyFilter() {
+    let list = [];
+    if (app.wrongBookOnly) {
+        // 错题本模式：跨模块显示所有错题
+        ALL_QUESTIONS.forEach(q => {
+            if (userData.wrongBook[q.qid]) list.push({kind:'question', qid:q.qid, ref:q});
+        });
+    } else {
+        ALL_QUESTIONS.forEach(q => {
+            if (q.moduleIdx !== app.moduleIdx) return;
+            list.push({kind:'question', qid:q.qid, ref:q});
+        });
+        ALL_RECITE.forEach(g => { if (g.moduleIdx === app.moduleIdx) list.push({kind:'recite', rid:g.rid, ref:g}); });
+    }
+    app.filteredList = list;
+    app.pos = 0;
+    app.selected = [];
+    renderAll();
+}
+
+// ====== 模式切换 ======
+function switchMode(m) {
+    app.mode = m;
+    app.pos = 0;
+    app.selected = [];
+    if (app.wrongBookOnly) { app.wrongBookOnly = false; syncWrongBookBtn(); }
+    ['test','review'].forEach(x => $('mode-' + x).classList.toggle('active', x === m));
+    applyFilter();
+    jumpToFirstUnanswered();
+}
+
+// ====== 渲染主流程 ======
+function renderAll() {
+    let list = app.filteredList;
+    if (list.length === 0) {
+        $('contentArea').innerHTML = '<div style="text-align:center;color:#a0aec0;padding:40px">暂无错题<br><span style="font-size:12px">继续加油！</span></div>';
+        updateSummary(0, 0);
+        updateFooter();
+        renderQGrid();
+        updateStats();
+        return;
+    }
+    if (app.pos >= list.length) app.pos = list.length - 1;
+    if (app.pos < 0) app.pos = 0;
+    let item = list[app.pos];
+    if (item.kind === 'question') renderQuestion(item.ref);
+    else renderRecite(item.ref);
+    updateSummary(app.pos + 1, list.length);
+    updateFooter();
+    renderQGrid();
+    updateStats();
+}
+
+function renderQuestion(q) {
+    app.selected = (userData.userAnswers[q.qid] || []).slice();
+    let already = userData.answered[q.qid] !== undefined;
+    let typeName = {single:'单选题', multi:'多选题', judge:'判断题'}[q.type];
+    let optsHtml = '';
+    let keys = ['A','B','C','D','E'];
+    let ansArr = String(q.answer).split('');
+    keys.forEach(k => {
+        if (!q.options[k]) return;
+        let isCorrect = ansArr.includes(k);
+        let isUserSel = app.selected.includes(k);
+        let cls = 'option-item';
+        let tag = '';
+        if (app.mode === 'review') {
+            cls += ' disabled';
+            if (isCorrect) { cls += ' correct'; tag = '<span class="option-tag" style="color:#38a169">✓</span>'; }
+        } else if (app.mode === 'test' && already) {
+            cls += ' disabled';
+            if (isCorrect) { cls += ' correct'; tag = '<span class="option-tag" style="color:#38a169">✓</span>'; }
+            else if (isUserSel) { cls += ' wrong-selected'; tag = '<span class="option-tag" style="color:#c53030">✗</span>'; }
+        } else if (isUserSel) { cls += ' selected'; }
+        optsHtml += `<div class="${cls}" data-k="${k}" ${(!already && app.mode==='test') ? 'onclick="onOptionClick(\''+k+'\')"' : ''}><span class="option-letter">${k}</span><span>${q.options[k]}</span>${tag}</div>`;
+    });
+    // 移除原题内提交按钮（提交按钮已移到底部固定栏）
+    let extraBtn = '';
+    if (app.mode === 'test' && userData.wrongBook[q.qid]) {
+        extraBtn = `<button class="remove-wrong-btn" onclick="removeFromWrongBook(${q.qid})">✓ 已掌握，移出错题本</button>`;
+    }
+    let noteHtml = q.note ? `<div class="question-note" style="display:block">💡 ${q.note}</div>` : '';
+    let moduleTag = app.wrongBookOnly && q.moduleIdx !== undefined ? `<span style="font-size:11px;color:#3182ce;background:#ebf8ff;border-radius:3px;padding:1px 6px;flex-shrink:0">模块${q.moduleIdx+1}</span>` : '';
+    $('contentArea').innerHTML = `<div class="question-card"><div class="question-meta"><span class="question-type ${q.type}">${typeName}</span>${moduleTag}<span class="question-category">${q.knowledge || ''}</span></div><div class="question-text">${q.question}</div>${noteHtml}<div class="options-list">${optsHtml}</div>${extraBtn}</div>`;
+}
+
+function renderRecite(g) {
+    let mastery = userData.reciteMastery[g.rid] || 0;
+    let revealed = userData.reciteRevealed[g.rid] || [];
+    let itemsHtml = g.items.map((item, ii) => {
+        let html = app.maskOn ? maskText(item, g.rid, ii, revealed) : item;
+        return `<div class="recite-item">${html}</div>`;
+    }).join('');
+    let masteryHtml = app.mode !== 'recite' ? '' : `<div class="recite-toolbar"><span class="mastery-label">熟练度：</span><span class="mastery-dot"><button class="mastery-btn m1 ${mastery!==1?'inactive':''}" title="需反复" onclick="setMastery(${g.rid},1)"></button><button class="mastery-btn m2 ${mastery!==2?'inactive':''}" title="复习中" onclick="setMastery(${g.rid},2)"></button><button class="mastery-btn m3 ${mastery!==3?'inactive':''}" title="已掌握" onclick="setMastery(${g.rid},3)"></button></span><span class="mastery-label">${['','需反复','复习中','已掌握'][mastery]||'未标记'}</span></div>`;
+    $('contentArea').innerHTML = `<div class="recite-card"><div class="recite-group-title" onclick="toggleReciteCollapse(this)"><span class="arrow">▼</span><span>${g.group}</span><span style="font-size:11px;color:#a0aec0;font-weight:normal;margin-left:auto">${g.items.length}条</span></div><div class="recite-items">${itemsHtml}</div>${masteryHtml}</div>`;
+}
+
+function maskText(text, rid, itemIdx, revealed) {
+    let pattern = /(\d+(?:\.\d+)?\s*(?:元|万元|万元以下|个工作日|个工作日内|日|天|月|个月|年|年以下|%|％|张|个|次|人|类|户|种类)|[ⅠⅡⅢⅣⅤ]+类?|[Tt]\+\d+)/g;
+    let matches = [], m, lastIdx = 0, result = '';
+    while ((m = pattern.exec(text)) !== null) {
+        result += text.slice(lastIdx, m.index);
+        let key = rid + '_' + itemIdx + '_' + matches.length;
+        let isRevealed = revealed.includes(key);
+        if (isRevealed) result += `<span class="mask revealed" onclick="revealMask('${rid}','${key}')">${m[0]}</span>`;
+        else result += `<span class="mask" onclick="revealMask('${rid}','${key}')">${'■'.repeat(Math.min(m[0].length, 4))}</span>`;
+        lastIdx = m.index + m[0].length;
+        matches.push(m[0]);
+    }
+    result += text.slice(lastIdx);
+    return result;
+}
+
+function revealMask(rid, key) {
+    if (!userData.reciteRevealed[rid]) userData.reciteRevealed[rid] = [];
+    if (!userData.reciteRevealed[rid].includes(key)) { userData.reciteRevealed[rid].push(key); saveUserData(); }
+    let item = app.filteredList[app.pos];
+    if (item && item.kind === 'recite') renderRecite(item.ref);
+}
+
+function toggleReciteCollapse(el) {
+    el.classList.toggle('collapsed');
+    el.nextElementSibling.classList.toggle('collapsed');
+}
+
+function setMastery(rid, level) {
+    userData.reciteMastery[rid] = level;
+    saveUserData();
+    let item = app.filteredList[app.pos];
+    if (item && item.kind === 'recite') renderRecite(item.ref);
+    renderQGrid();
+}
+
+// ====== 选项点击 ======
+function onOptionClick(k) {
+    let item = app.filteredList[app.pos];
+    if (!item || item.kind !== 'question') return;
+    let q = item.ref;
+    if (q.type === 'single' || q.type === 'judge') app.selected = [k];
+    else if (q.type === 'multi') {
+        if (app.selected.includes(k)) app.selected = app.selected.filter(x => x !== k);
+        else app.selected.push(k);
+    }
+    document.querySelectorAll('.option-item').forEach(el => el.classList.toggle('selected', app.selected.includes(el.dataset.k)));
+    updateFooter();
+}
+
+// ====== 提交答案 ======
+function submitAnswer() {
+    let item = app.filteredList[app.pos];
+    if (!item || item.kind !== 'question') return;
+    let q = item.ref;
+    let already = userData.answered[q.qid] !== undefined;
+    if (already) { goQuestion(1); return; } // 已答时底部按钮变成"下一题"，直接下一题
+    if (app.selected.length === 0) return;
+    let userAns = app.selected.slice().sort().join('');
+    let realAns = String(q.answer).split('').sort().join('');
+    let isRight = userAns === realAns;
+    userData.answered[q.qid] = isRight;
+    userData.userAnswers[q.qid] = app.selected.slice();
+    if (!isRight) userData.wrongBook[q.qid] = true;
+    saveUserData();
+    renderQuestion(q);
+    updateFooter();
+    $('fbIcon').className = 'modal-icon ' + (isRight ? 'correct' : 'incorrect');
+    $('fbIcon').textContent = isRight ? '✓' : '✗';
+    $('fbMsg').textContent = isRight ? getRandomEncouragement() : '仔细看看正确答案';
+    $('fbAnswer').textContent = '正确答案：' + q.answer;
+    $('feedbackModal').classList.add('active');
+}
+function closeFeedback() { $('feedbackModal').classList.remove('active'); }
+function closeFeedbackAndNext() { $('feedbackModal').classList.remove('active'); goQuestion(1); }
+function getRandomEncouragement() {
+    const arr = ['太棒了！继续加油~','正确！掌握得很扎实','非常好！知识点理解到位','厉害！保持这个状态','完美！这道题答得很棒','稳了，这题拿捏了','完全正确','满分作答','正解，被你找到了','高手，一眼就看穿','回答精准，无可挑剔','可以啊，全答对','答对了，真的很棒'];
+    return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// ====== 错题本 ======
+function toggleWrongBook() {
+    app.wrongBookOnly = !app.wrongBookOnly;
+    applyFilter();
+    if (!app.wrongBookOnly) jumpToFirstUnanswered();
+}
+function removeFromWrongBook(qid) {
+    delete userData.wrongBook[qid];
+    saveUserData();
+    let item = app.filteredList[app.pos];
+    if (item && item.kind === 'question') renderQuestion(item.ref);
+    renderQGrid();
+    updateSummary(app.pos + 1, app.filteredList.length);
+    updateFooter();
+}
+
+// ====== 遮罩（保留接口，无UI入口） ======
+function toggleMask() {
+    app.maskOn = !app.maskOn;
+    let item = app.filteredList[app.pos];
+    if (item && item.kind === 'recite') renderRecite(item.ref);
+}
+
+// ====== 题号网格（只显示当前题附近+汇总） ======
+function renderQGrid() {
+    let grid = $('qgrid');
+    let list = app.filteredList;
+    let cur = app.pos;
+    let html = '';
+    if (list.length === 0) {
+        html = '<div style="font-size:11px;color:#a0aec0;padding:4px">暂无题目</div>';
+    } else {
+        // 显示范围：当前题前2题到后2题，前面/后面用省略号
+        let start = Math.max(0, cur - 2);
+        let end = Math.min(list.length, cur + 3);
+        if (start > 0) html += '<div class="q-dot ellipsis">…</div>';
+        for (let i = start; i < end; i++) {
+            let item = list[i];
+            let cls = 'q-dot';
+            let title = '';
+            if (i === cur) cls += ' current';
+            if (item.kind === 'question') {
+                let qid = item.qid;
+                let ans = userData.answered[qid];
+                if (ans === true) cls += ' right';
+                else if (ans === false) cls += ' wrong';
+                if (userData.wrongBook[qid]) cls += ' in-wrong-book';
+                title = item.ref.question.slice(0, 30);
+            } else {
+                cls += ' recite';
+                let mst = userData.reciteMastery[item.rid];
+                if (mst === 3) cls += ' right';
+                else if (mst === 1) cls += ' wrong';
+                title = item.ref.group;
+            }
+            html += `<div class="${cls}" title="${title}" onclick="jumpTo(${i})">${i+1}</div>`;
+        }
+        if (end < list.length) html += '<div class="q-dot ellipsis">…</div>';
+    }
+    // 汇总统计
+    let rightCnt = 0, wrongCnt = 0, unansCnt = 0;
+    list.forEach(item => {
+        if (item.kind === 'question') {
+            let a = userData.answered[item.qid];
+            if (a === true) rightCnt++;
+            else if (a === false) wrongCnt++;
+            else unansCnt++;
+        } else {
+            let mst = userData.reciteMastery[item.rid];
+            if (mst === 3) rightCnt++;
+            else if (mst === 1) wrongCnt++;
+            else unansCnt++;
+        }
+    });
+    html += `<div class="q-stats">共${list.length}题 ｜ 🟩${rightCnt} ｜ 🟥${wrongCnt} ｜ ⬜${unansCnt}</div>`;
+    grid.innerHTML = html;
+    syncWrongBookBtn();
+}
+function updateWrongCount() { let el = $('wrongCount'); if (el) el.textContent = Object.keys(userData.wrongBook || {}).length; }
+function jumpTo(i) { app.pos = i; app.selected = []; renderAll(); }
+
+// ====== 导航 ======
+function goQuestion(dir) {
+    let np = app.pos + dir;
+    if (np < 0 || np >= app.filteredList.length) return;
+    app.pos = np;
+    app.selected = [];
+    renderAll();
+}
+
+// ====== 跳转到当前筛选列表中第一个未做的题 ======
+function jumpToFirstUnanswered() {
+    let list = app.filteredList;
+    if (!list || list.length === 0) return;
+    let firstIdx = list.findIndex(item => {
+        if (item.kind === 'question') return userData.answered[item.qid] === undefined;
+        return true; // 背诵知识点默认算未做
+    });
+    if (firstIdx === -1) firstIdx = 0; // 全部做完了就回到第1题
+    app.pos = firstIdx;
+    app.selected = [];
+    renderAll();
+}
+
+// ====== 同步两个错题本按钮的状态（详情区+摘要区） ======
+function syncWrongBookBtn() {
+    let count = Object.keys(userData.wrongBook || {}).length;
+    // 详情区按钮
+    let detailBtn = $('wrongBookBtn');
+    if (detailBtn) {
+        if (app.wrongBookOnly) {
+            detailBtn.innerHTML = '← 返回全部题目';
+            detailBtn.style.background = '#e53e3e';
+            detailBtn.style.color = '#fff';
+        } else {
+            detailBtn.innerHTML = '📕 只看错题（<span id="wrongCount">' + count + '</span>）';
+            detailBtn.style.background = '#fff';
+            detailBtn.style.color = '#e53e3e';
+        }
+    }
+    // 摘要区按钮
+    let sumBtn = $('sumWrongBook');
+    if (sumBtn) {
+        if (app.wrongBookOnly) {
+            sumBtn.textContent = '📕返回全部(' + count + ')';
+            sumBtn.style.background = '#e53e3e';
+            sumBtn.style.color = '#fff';
+        } else {
+            sumBtn.textContent = '📕错题本(' + count + ')';
+            sumBtn.style.background = '#fff';
+            sumBtn.style.color = '#e53e3e';
+        }
+    }
+    updateWrongCount();
+}
+
+// ====== 摘要区错题本按钮快捷切换 ======
+function quickToggleWrongBook() {
+    app.wrongBookOnly = !app.wrongBookOnly;
+    applyFilter();
+    if (!app.wrongBookOnly) jumpToFirstUnanswered();
+}
+
+// ====== 顶部信息栏摘要更新 ======
+function updateSummary(curNo, total) {
+    let posText = total > 0 ? `第${curNo}/${total}题` : '无题目';
+    if (app.wrongBookOnly) posText = '错题本 ' + posText;
+    $('sumPos').textContent = posText;
+    // 同步滑块
+    let slider = $('posSlider');
+    if (slider) {
+        slider.max = Math.max(1, total);
+        slider.value = Math.min(Math.max(1, curNo), total > 0 ? total : 1);
+        slider.disabled = total <= 0;
+    }
+    syncWrongBookBtn();
+}
+
+// ====== 摘要行滑块拖动跳题 ======
+function onSliderInput(val) {
+    let idx = parseInt(val) - 1;
+    if (idx < 0 || idx >= app.filteredList.length) return;
+    app.pos = idx;
+    app.selected = [];
+    let item = app.filteredList[app.pos];
+    if (item && item.kind === 'question') renderQuestion(item.ref);
+    else if (item && item.kind === 'recite') renderRecite(item.ref);
+    // 实时更新进度文字，但不调用renderAll（避免重置滑块焦点）
+    $('sumPos').textContent = (app.wrongBookOnly ? '错题本 ' : '') + `第${idx+1}/${app.filteredList.length}题`;
+    $('prev').disabled = app.pos <= 0;
+    $('next').disabled = app.pos >= app.filteredList.length - 1;
+    // 更新底部提交按钮状态
+    let submitBtn = $('footerSubmit');
+    if (item && item.kind === 'question' && app.mode === 'test') {
+        let already = userData.answered[item.qid] !== undefined;
+        submitBtn.disabled = already ? false : (app.selected.length === 0);
+        submitBtn.textContent = already ? '下一题' : '确认答案';
+    } else if (item && item.kind === 'recite') {
+        submitBtn.disabled = true; submitBtn.textContent = '知识点';
+    } else if (app.mode === 'review') {
+        submitBtn.disabled = true; submitBtn.textContent = '复习模式';
+    }
+    renderQGrid();
+}
+
+// ====== 底部按钮状态更新 ======
+function updateFooter() {
+    let list = app.filteredList;
+    let item = list[app.pos];
+    $('prev').disabled = app.pos <= 0;
+    $('next').disabled = app.pos >= list.length - 1;
+    let submitBtn = $('footerSubmit');
+    if (!item) { submitBtn.disabled = true; submitBtn.textContent = '确认答案'; return; }
+    if (item.kind === 'recite') {
+        // 背诵知识点：底部按钮显示提示，用上一题/下一题导航
+        submitBtn.disabled = true;
+        submitBtn.textContent = '知识点';
+    } else if (app.mode === 'review') {
+        submitBtn.disabled = true;
+        submitBtn.textContent = '复习模式';
+    } else if (app.mode === 'test') {
+        let already = userData.answered[item.qid] !== undefined;
+        if (already) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = '下一题';
+        } else {
+            submitBtn.disabled = app.selected.length === 0;
+            submitBtn.textContent = '确认答案';
+        }
+    }
+}
+
+// ====== 统计 ======
+function updateStats() {
+    let answeredCount = 0, rightCount = 0;
+    Object.values(userData.answered).forEach(v => { if (v === true) { rightCount++; answeredCount++; } else if (v === false) answeredCount++; });
+    // 统计区已合并到信息栏摘要，这里不再单独更新
+}
+
+// ====== 工具 ======
+function $(id) { return document.getElementById(id); }
+
+// 启动
+init();
+</script>
+</body>
+</html>
