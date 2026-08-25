@@ -141,8 +141,8 @@ body{background:#f5f7fa;font-size:14px;color:#333;width:100%;-webkit-text-size-a
 /* 模态层加宽以容纳导入区 */
 .user-modal-content{max-width:360px}
 </style>
-<script src="https://cdn.bootcdn.net/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script>window.XLSX||document.write('<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"><\/script>')</script>
+<script src="https://cdn.bootcdn.net/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
+        onerror="this.remove();var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';s.onerror=function(){console.error('SheetJS CDN 全部失败')};document.head.appendChild(s)"></script>
 </head>
 <body>
 <div class="app-wrap">
@@ -219,8 +219,8 @@ body{background:#f5f7fa;font-size:14px;color:#333;width:100%;-webkit-text-size-a
 // 全局缓存 key：quiz_data_v1（不按工号分片，题库为公共内容）
 const QUIZ_KEY = 'quiz_data_v1';
 const QUIZ_VER_KEY = 'quiz_data_ver';
-// 服务器端题库文件（部署到 GitHub Pages 时与本 HTML 同目录）
-const QUIZ_XLSX_URL = '题库模版.xlsx';
+// 服务器端题库文件（部署到 GitHub Pages 时与本 HTML 同目录，建议英文名避免 URL 编码问题）
+const QUIZ_XLSX_URL = 'quiz.xlsx';
 // 题库版本号：更新服务器题库后改此版本号，访问者下次访问会自动重新拉取并清除旧答题记录
 const QUIZ_XLSX_VER = 'v2';
 let QUIZ_DATA = loadQuizData();
