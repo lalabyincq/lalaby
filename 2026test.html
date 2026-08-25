@@ -130,19 +130,10 @@ body{background:#f5f7fa;font-size:14px;color:#333;width:100%;-webkit-text-size-a
 .user-item:hover{background:#ebf8ff;border-color:#3182ce}
 .user-item .del{color:#e53e3e;cursor:pointer;font-size:16px;padding:0 4px}
 .empty-hint{text-align:center;color:#a0aec0;padding:20px;font-size:13px}
-/* 导入题库区（工号弹窗内） */
-.import-box{margin-bottom:10px}
-.import-status{font-size:11px;color:#71809a;margin-bottom:6px;text-align:center;line-height:1.5}
-.import-status.warn{color:#dd6b20}
-.import-status.ok{color:#38a169}
-.import-btn{width:100%;padding:9px;border:1px dashed #3182ce;border-radius:6px;background:#ebf8ff;color:#2b6cb0;font-size:12px;cursor:pointer;transition:all .15s}
-.import-btn:hover{background:#d6ecff}
-.import-btn input{display:none}
-/* 模态层加宽以容纳导入区 */
-.user-modal-content{max-width:360px}
+.user-modal-content{max-width:320px}
 </style>
-<script src="https://cdn.bootcdn.net/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
-        onerror="this.remove();var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';s.onerror=function(){console.error('SheetJS CDN 全部失败')};document.head.appendChild(s)"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"
+        onerror="this.remove();var s=document.createElement('script');s.src='https://cdn.bootcdn.net/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onerror=function(){console.error('SheetJS CDN 全部失败，请检查网络连接')};document.head.appendChild(s)"></script>
 </head>
 <body>
 <div class="app-wrap">
@@ -200,13 +191,6 @@ body{background:#f5f7fa;font-size:14px;color:#333;width:100%;-webkit-text-size-a
 <!-- 工号弹窗 -->
 <div class="modal" id="userModal">
     <div class="modal-content user-modal-content">
-        <div class="import-box" id="importBox">
-            <div class="import-status" id="quizStatus">尚未导入题库</div>
-            <label class="import-btn">
-                📂 导入题库(.xlsx)
-                <input type="file" id="quizFileInput" accept=".xlsx,.xls" onchange="importQuizFile(this)">
-            </label>
-        </div>
         <input type="text" id="userInput" placeholder="请输入工号以保存进度，如0403003" onkeydown="if(event.key==='Enter')confirmUser()" style="margin-top:0">
         <div class="modal-buttons">
             <button class="modal-btn secondary" onclick="closeUserModal()">取消</button>
@@ -253,49 +237,76 @@ function autoLoadQuiz() {
     // 标记是否需要清除用户答题记录：之前有缓存但版本号变化（qid 会失效）
     let needReset = !!cached && cachedVer !== QUIZ_XLSX_VER;
     // 无缓存 / 旧版本：显示加载中提示
-    if (!cached || cachedVer !== QUIZ_XLSX_VER) {
+    let showLoading = !cached || cachedVer !== QUIZ_XLSX_VER;
+    if (showLoading) {
         let el = document.getElementById('contentArea');
         if (el && (!QUIZ_DATA.modules.length || (QUIZ_DATA.modules.length === 1 && !QUIZ_DATA.modules[0].single.length))) {
-            el.innerHTML = '<div style="text-align:center;color:#3182ce;padding:40px;line-height:2">⏳ 正在加载题库...<br><span style="font-size:12px;color:#a0aec0">首次访问需从服务器拉取题库，请稍候</span></div>';
+            el.innerHTML = '<div style="text-align:center;color:#3182ce;padding:40px;line-height:2">⏳ 正在加载题库...<br><span id="loadSub" style="font-size:12px;color:#a0aec0">正在连接服务器，请稍候</span></div>';
         }
     }
-    fetch(QUIZ_XLSX_URL + '?v=' + encodeURIComponent(QUIZ_XLSX_VER))
-        .then(r => {
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            return r.arrayBuffer();
-        })
-        .then(buf => {
-            let wb = XLSX.read(new Uint8Array(buf), { type: 'array' });
-            let parsed = parseXlsxQuiz(wb);
-            let m0 = parsed.modules[0];
-            let cnt = m0.single.length + m0.multi.length + m0.judge.length;
-            if (cnt === 0 && m0.recite.length === 0) {
-                throw new Error('服务器题库为空');
+    // SheetJS 守护：若 XLSX 未就绪，等待重试（最多 15 次，每次 400ms，共 6 秒）
+    if (typeof XLSX === 'undefined') {
+        let retry = 0;
+        let timer = setInterval(() => {
+            retry++;
+            let sub = document.getElementById('loadSub');
+            if (sub) sub.textContent = 'SheetJS 加载中... (' + retry + '/15)';
+            if (typeof XLSX !== 'undefined') {
+                clearInterval(timer);
+                doFetch(needReset, showLoading);
+            } else if (retry >= 15) {
+                clearInterval(timer);
+                let el = document.getElementById('contentArea');
+                if (el) {
+                    el.innerHTML = '<div style="text-align:center;color:#e53e3e;padding:40px;line-height:2">加载超时：SheetJS 未能加载<br><span style="font-size:12px;color:#3182ce">请检查网络连接，或点击右上角 👤 图标手动导入题库</span></div>';
+                }
+                updateQuizStatus();
             }
-            saveQuizData(parsed);
-            setQuizVer(QUIZ_XLSX_VER);
-            QUIZ_DATA = parsed;
-            rebuildAllQuestions();
-            if (needReset) {
-                // 版本变化：旧 qid 已失效，清除所有工号的答题记录（错题/进度/熟练度）
-                resetAllUserData();
-            }
-            renderModuleBar();
-            applyFilter();
-            updateQuizStatus();
-            if (needReset) {
-                updateWrongCount();
-                updateUserBox();
-            }
-        })
-        .catch(err => {
-            console.warn('自动加载题库失败:', err.message);
-            updateQuizStatus();
-            let el = document.getElementById('contentArea');
-            if (el && (!QUIZ_DATA.modules.length || (QUIZ_DATA.modules.length === 1 && !QUIZ_DATA.modules[0].single.length))) {
-                el.innerHTML = '<div style="text-align:center;color:#a0aec0;padding:40px;line-height:2">题库自动加载失败<br><span style="font-size:12px;color:#3182ce">请点击右上角 👤 图标，手动导入 .xlsx 题库文件</span></div>';
-            }
-        });
+        }, 400);
+        return;
+    }
+    doFetch(needReset, showLoading);
+
+    function doFetch(needReset, showLoading) {
+        fetch(QUIZ_XLSX_URL + '?v=' + encodeURIComponent(QUIZ_XLSX_VER))
+            .then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                let sub = document.getElementById('loadSub');
+                if (sub) sub.textContent = '题库下载完成，正在解析...';
+                return r.arrayBuffer();
+            })
+            .then(buf => {
+                let wb = XLSX.read(new Uint8Array(buf), { type: 'array' });
+                let parsed = parseXlsxQuiz(wb);
+                let m0 = parsed.modules[0];
+                let cnt = m0.single.length + m0.multi.length + m0.judge.length;
+                if (cnt === 0 && m0.recite.length === 0) {
+                    throw new Error('服务器题库为空');
+                }
+                saveQuizData(parsed);
+                setQuizVer(QUIZ_XLSX_VER);
+                QUIZ_DATA = parsed;
+                rebuildAllQuestions();
+                if (needReset) {
+                    resetAllUserData();
+                }
+                renderModuleBar();
+                applyFilter();
+                updateQuizStatus();
+                if (needReset) {
+                    updateWrongCount();
+                    updateUserBox();
+                }
+            })
+            .catch(err => {
+                console.warn('自动加载题库失败:', err.message);
+                updateQuizStatus();
+                let el = document.getElementById('contentArea');
+                if (el && (!QUIZ_DATA.modules.length || (QUIZ_DATA.modules.length === 1 && !QUIZ_DATA.modules[0].single.length))) {
+                    el.innerHTML = '<div style="text-align:center;color:#e53e3e;padding:40px;line-height:2">题库加载失败<br><span style="font-size:12px;color:#71809a">错误：' + err.message + '</span><br><span style="font-size:12px;color:#3182ce">请点击右上角 👤 图标，手动导入 .xlsx 题库文件</span></div>';
+                }
+            });
+    }
 }
 
 // 工具：单元格转字符串，数字 9.0 -> "9"
@@ -439,24 +450,13 @@ function importQuizFile(input) {
     input.value = '';  // 清空以便重复选择同一文件
 }
 
-// 更新工号弹窗内的题库状态显示
+// 更新题库状态（开发者调试用，控制台可调用查看题库加载情况）
 function updateQuizStatus() {
-    let el = document.getElementById('quizStatus');
-    if (!el) return;
-    if (!QUIZ_DATA.modules.length) {
-        el.textContent = '尚未导入题库';
-        el.className = 'import-status warn';
-        return;
-    }
     let m = QUIZ_DATA.modules[0];
+    if (!m) { console.info('[题库状态] 未加载'); return; }
     let q = m.single.length + m.multi.length + m.judge.length;
-    if (q === 0 && m.recite.length === 0) {
-        el.textContent = '尚未导入题库';
-        el.className = 'import-status warn';
-    } else {
-        el.textContent = '已导入：' + q + ' 道题，' + m.recite.length + ' 组背诵';
-        el.className = 'import-status ok';
-    }
+    let r = m.recite ? m.recite.length : 0;
+    console.info('[题库状态] 已加载：' + q + ' 道题，' + r + ' 组背诵');
 }
 // ====== 全局状态 ======
 let app = {
