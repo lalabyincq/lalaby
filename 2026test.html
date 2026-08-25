@@ -221,8 +221,8 @@ const QUIZ_KEY = 'quiz_data_v1';
 const QUIZ_VER_KEY = 'quiz_data_ver';
 // 服务器端题库文件（部署到 GitHub Pages 时与本 HTML 同目录）
 const QUIZ_XLSX_URL = '题库模版.xlsx';
-// 题库版本号：更新服务器题库后改此版本号，访问者下次访问会自动重新拉取
-const QUIZ_XLSX_VER = 'v1';
+// 题库版本号：更新服务器题库后改此版本号，访问者下次访问会自动重新拉取并清除旧答题记录
+const QUIZ_XLSX_VER = 'v2';
 let QUIZ_DATA = loadQuizData();
 function loadQuizData() {
     try {
@@ -250,6 +250,8 @@ function autoLoadQuiz() {
         updateQuizStatus();
         return;
     }
+    // 标记是否需要清除用户答题记录：之前有缓存但版本号变化（qid 会失效）
+    let needReset = !!cached && cachedVer !== QUIZ_XLSX_VER;
     // 无缓存 / 旧版本：显示加载中提示
     if (!cached || cachedVer !== QUIZ_XLSX_VER) {
         let el = document.getElementById('contentArea');
@@ -274,9 +276,17 @@ function autoLoadQuiz() {
             setQuizVer(QUIZ_XLSX_VER);
             QUIZ_DATA = parsed;
             rebuildAllQuestions();
+            if (needReset) {
+                // 版本变化：旧 qid 已失效，清除所有工号的答题记录（错题/进度/熟练度）
+                resetAllUserData();
+            }
             renderModuleBar();
             applyFilter();
             updateQuizStatus();
+            if (needReset) {
+                updateWrongCount();
+                updateUserBox();
+            }
         })
         .catch(err => {
             console.warn('自动加载题库失败:', err.message);
@@ -413,10 +423,13 @@ function importQuizFile(input) {
             setQuizVer('manual');  // 标记为手动导入，防止 autoLoadQuiz 覆盖
             QUIZ_DATA = parsed;
             rebuildAllQuestions();
+            resetAllUserData();   // 题库变化，清除所有工号的旧答题记录（qid 已失效）
             renderModuleBar();
             applyFilter();
             updateQuizStatus();
-            alert('导入成功！共 ' + cnt + ' 道题（单选' + m0.single.length + ' / 多选' + m0.multi.length + ' / 判断' + m0.judge.length + '），背诵 ' + rcnt + ' 组。');
+            updateWrongCount();
+            updateUserBox();
+            alert('导入成功！共 ' + cnt + ' 道题（单选' + m0.single.length + ' / 多选' + m0.multi.length + ' / 判断' + m0.judge.length + '），背诵 ' + rcnt + ' 组。\n（已清除旧答题记录和错题本）');
         } catch(err) {
             console.error(err);
             alert('解析失败：' + err.message);
@@ -489,6 +502,14 @@ function loadUserData() {
 function saveUserData() { localStorage.setItem(getStorageKey('data'), JSON.stringify(userData)); }
 let userData = { answered:{}, userAnswers:{}, wrongBook:{}, reciteMastery:{}, reciteRevealed:{} };
 function getCurrentUserId() { return app.user || window.PLATFORM_USER_ID || ''; }
+// 题库内容变化时清除所有工号的答题记录（qid 已失效，错题/进度/熟练度都需重置）
+// 保留工号列表本身（用户不必重新输入工号）
+function resetAllUserData() {
+    let users = getUserList();
+    users.forEach(u => { localStorage.removeItem('quiz_data_' + u); });
+    localStorage.removeItem('quiz_data_guest');
+    userData = { answered:{}, userAnswers:{}, wrongBook:{}, reciteMastery:{}, reciteRevealed:{} };
+}
 
 // ====== 初始化 ======
 function init() {
