@@ -1161,10 +1161,10 @@ function openCompare(){
     h += pair.map(cmpHead).join("");
     h += '<div style="grid-column:1/-1;">' + titles.map(t =>
       '<div class="cmprow">' + pair.map((c,i) =>
-        '<div class="cell"><h4>' + esc(t) + '</h4>' + cellBody(maps[i][t], c) + '</div>'
+        '<div class="cell"><h4>' + esc(t) + ' <small style="color:var(--tx3);font-weight:normal;">（' + esc(c.slug) + '）</small></h4>' + cellBody(maps[i][t], c) + '</div>'
       ).join("") + '</div>').join("") +
       '<div class="cmprow">' + pair.map(c =>
-        '<div class="cell"><h4>概述</h4>' + cellBody({body:c.overview,placeholder:isPlaceholder(c.overview)}, c) + '</div>'
+        '<div class="cell"><h4>概述 <small style="color:var(--tx3);font-weight:normal;">（' + esc(c.slug) + '）</small></h4>' + cellBody({body:c.overview,placeholder:isPlaceholder(c.overview)}, c) + '</div>'
       ).join("") + '</div></div>';
   } else {
     h += pair.map(cmpColFull).join("");
@@ -1186,10 +1186,11 @@ function cellBody(sec, card){
   return (sec.placeholder ? '<p style="color:var(--tx3);">（待补）</p>' : mdHtml(sec.body, card));
 }
 function cmpColFull(c){
+  const tag = '<small style="color:var(--tx3);font-weight:normal;">（' + esc(c.slug) + '）</small>';
   let h = '<div class="cmpcol"><h2 data-open="' + escAttr(c.uid) + '">' + esc(c.slug) + "</h2>" +
     '<div class="cmeta">' + esc(coordLine(c)) + " · " + esc(c.series.join("/")) + "</div>" +
-    "<h4>概述</h4>" + cellBody({body:c.overview,placeholder:isPlaceholder(c.overview)}, c);
-  for (const s of c.sections) h += "<h4>" + esc(s.title) + "</h4>" + cellBody(s, c);
+    "<h4>概述 " + tag + "</h4>" + cellBody({body:c.overview,placeholder:isPlaceholder(c.overview)}, c);
+  for (const s of c.sections) h += "<h4>" + esc(s.title) + " " + tag + "</h4>" + cellBody(s, c);
   return h + "</div>";
 }
 
