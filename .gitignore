@@ -1,0 +1,11 @@
+# 自测与开发脚本（不进仓库）
+.trae/
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# 临时
+*.tmp
+*.bak
+~*

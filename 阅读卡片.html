@@ -1,0 +1,2080 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>阅读卡片</title>
+<!--
+  阅读卡片 · 卡片库的只读投影（与 录入卡片.html 各司其职：录入管摩擦，阅读管对照）
+  v1 2026-09-20：
+    - 书架：系列筛选 / 标签聚合 / 全文搜索 / 年份排序
+    - 阅读：Markdown 渲染、图片懒加载、[[双链]]跳转、自动反向链接、断链标"待写"
+    - 双卡对比：同系列按维度逐行对齐，跨系列并排
+    - 数据体检：断链（待写线索）、缺图、待补小节
+    - 数据源：本地项目文件夹（只读）/ GitHub 私有库（令牌沿用录入工具的 localStorage nb-gh）
+  v2 2026-09-20 可视化三视图：
+    - 时间轴：年份排序的纵向轴，按系列着色（负年/区间/"N世纪"走同一投影启发式）
+    - 关系图谱：零依赖力学布局，卡片圆点可点可拖，断链以红色虚线节点标出（=待写卡片）
+    - 维度矩阵：卡片 × 维度填充情况一览（● 已写 / 待 占位 / – 未涉及）
+  v3 2026-09-20 文件夹记忆：
+    - 首次选择的项目文件夹句柄存入 IndexedDB（与录入卡片共享）；同会话再开自动连接，跨会话点一下「继续使用」即可，不再翻目录树
+    - 浏览器安全模型不允许网页感知自身路径或凭路径开目录，句柄授权是纯前端唯一免选方案
+  v4 2026-09-20 录入功能并入（录入卡片.html 的完整结构化表单成为本页的编辑视图）：
+    - 书架首页「+ 新增卡片」；阅读页「编辑此卡」直接进表单，保存覆盖原文件后自动刷新回到卡片
+    - 系列/坐标/维度页签/标签/拖图压缩/实时预览/示例/系列管理/收件箱/复制文本全部保留；本地文件夹与 GitHub 两种写通道
+  铁律：本工具阅读侧只读不写；写入只发生在编辑视图并由按钮显式触发。卡片是母本，本页只是投影。零依赖单文件，file:// 与 GitHub Pages 均可。
+-->
+<style>
+  :root{--bg:#ffffff;--bg2:#f5f4f0;--line:#d9d7cf;--line2:#b4b2a9;--tx:#2c2c2a;--tx2:#5f5e5a;--tx3:#888780;--ac:#185fa5;--ac-bg:#e6f1fb;--ok:#0f6e56;--ok-bg:#e1f5ee;--warn:#993c1d;--warn-bg:#faece7;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",sans-serif;font-size:13px;color:var(--tx);background:var(--bg2);line-height:1.7;}
+  header{background:var(--bg);border-bottom:0.5px solid var(--line);padding:10px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:5;}
+  header h1{font-size:15px;font-weight:500;margin:0;}
+  header .spacer{flex:1;}
+  button{font:inherit;cursor:pointer;background:transparent;border:0.5px solid var(--line2);border-radius:6px;padding:5px 12px;color:var(--tx);}
+  button:hover{border-color:var(--ac);color:var(--ac);}
+  button.primary{background:var(--ac);border-color:var(--ac);color:#fff;}
+  button.primary:hover{opacity:.9;color:#fff;}
+  button:disabled{opacity:.4;cursor:not-allowed;}
+  select,input{font:inherit;color:var(--tx);background:var(--bg);border:0.5px solid var(--line2);border-radius:6px;padding:5px 8px;}
+  #srcStatus{font-size:12px;color:var(--tx3);border:0.5px solid var(--line);border-radius:99px;padding:2px 10px;}
+  #srcStatus.on{color:var(--ok);border-color:var(--ok);}
+  main{max-width:1180px;margin:0 auto;padding:16px 24px 60px;}
+  .card{background:var(--bg);border:0.5px solid var(--line);border-radius:10px;padding:14px 16px;}
+  .chip{display:inline-block;border:0.5px solid var(--line2);border-radius:99px;padding:1px 11px;font-size:12px;margin:0 6px 6px 0;cursor:pointer;background:var(--bg);color:var(--tx2);user-select:none;}
+  .chip:hover{border-color:var(--ac);color:var(--ac);}
+  .chip.on{background:var(--ac-bg);border-color:var(--ac);color:var(--ac);}
+  .chip .n{color:var(--tx3);font-size:11px;margin-left:3px;}
+  .chip.on .n{color:var(--ac);}
+  .tag{background:var(--ac-bg);color:var(--ac);border-radius:99px;padding:0 9px;font-size:11.5px;margin:2px 5px 2px 0;display:inline-block;cursor:pointer;}
+  .tag:hover{text-decoration:underline;}
+  .badge{display:inline-block;font-size:11px;border-radius:4px;padding:0 7px;margin-left:6px;}
+  .badge.warn{background:var(--warn-bg);color:var(--warn);}
+  .badge.info{background:var(--bg2);color:var(--tx3);}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;}
+  .pcard{background:var(--bg);border:0.5px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;}
+  .pcard:hover{border-color:var(--ac);}
+  .pcard .ttl{font-size:14px;font-weight:500;color:var(--ac);cursor:pointer;}
+  .pcard .ttl:hover{text-decoration:underline;}
+  .pcard .meta{font-size:11.5px;color:var(--tx3);}
+  .pcard .ov{font-size:12.5px;color:var(--tx2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+  .pcard .foot{margin-top:auto;display:flex;align-items:center;flex-wrap:wrap;gap:4px;}
+  .pcard input.cmp{width:auto;margin-right:4px;}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+  .toolbar input[type=search]{flex:1;min-width:200px;}
+  .filterwrap{margin-bottom:12px;}
+  .filterwrap .lab{font-size:11.5px;color:var(--tx3);margin:6px 0 2px;}
+  details.health{margin-bottom:14px;background:var(--bg);border:0.5px solid var(--line);border-radius:10px;padding:8px 14px;}
+  details.health summary{cursor:pointer;font-size:12.5px;color:var(--tx2);}
+  details.health .hrow{font-size:12.5px;padding:4px 0;border-bottom:0.5px dashed var(--line);}
+  details.health .hrow:last-child{border-bottom:none;}
+  details.health button.linklike{border:none;padding:0;color:var(--ac);}
+  .empty{text-align:center;color:var(--tx3);padding:70px 20px;}
+  .empty .big{font-size:15px;color:var(--tx2);margin-bottom:14px;}
+  .empty button{margin:0 8px 10px;}
+  /* 阅读页 */
+  .reader{max-width:820px;margin:0 auto;background:var(--bg);border:0.5px solid var(--line);border-radius:10px;padding:22px 28px;}
+  .reader h2{font-size:21px;margin:0 0 6px;}
+  .reader .rmeta{font-size:12px;color:var(--tx3);border-bottom:0.5px solid var(--line);padding-bottom:10px;margin-bottom:14px;}
+  .reader h3{font-size:15px;margin:22px 0 6px;padding-left:9px;border-left:3px solid var(--ac);}
+  .reader p{margin:7px 0;}
+  .reader ul{margin:7px 0;padding-left:22px;}
+  .reader blockquote{margin:7px 0;padding:4px 12px;border-left:3px solid var(--line2);color:var(--tx2);background:var(--bg2);border-radius:0 6px 6px 0;}
+  .reader code{background:var(--bg2);border-radius:4px;padding:0 5px;font-size:12px;font-family:Consolas,monospace;}
+  .reader figure{margin:12px 0;}
+  .reader figure img{max-width:100%;border-radius:8px;border:0.5px solid var(--line);display:block;background:var(--bg2);min-height:120px;}
+  .reader figure img.missing{outline:2px dashed var(--warn);padding:20px;min-height:auto;}
+  .reader figcaption{font-size:12px;color:var(--tx3);margin-top:5px;}
+  .wikilink{border:none;background:var(--ac-bg);color:var(--ac);border-radius:5px;padding:0 6px;font-size:inherit;cursor:pointer;}
+  .wikilink:hover{text-decoration:underline;color:var(--ac);}
+  .wikilink.broken{background:var(--warn-bg);color:var(--warn);cursor:default;text-decoration:none;}
+  .wikilink.broken em{font-style:normal;font-size:10.5px;margin-left:3px;}
+  .backlinks{margin-top:26px;border-top:0.5px solid var(--line);padding-top:12px;}
+  .backlinks .bl{font-size:12.5px;padding:5px 0;}
+  /* 对比页 */
+  .cmpwrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;align-items:start;}
+  .cmpcol{background:var(--bg);border:0.5px solid var(--line);border-radius:10px;padding:14px 18px;}
+  .cmpcol h2{font-size:17px;margin:0 0 2px;color:var(--ac);cursor:pointer;}
+  .cmpcol h2:hover{text-decoration:underline;}
+  .cmpcol .cmeta{font-size:11.5px;color:var(--tx3);border-bottom:0.5px solid var(--line);padding-bottom:8px;margin-bottom:8px;}
+  .cmprow{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;border-bottom:0.5px dashed var(--line);padding:10px 0;}
+  .cmprow h4,.cmpcol h4{margin:10px 0 4px;font-size:13px;color:var(--tx2);}
+  .cmprow .cell p{margin:5px 0;font-size:12.5px;}
+  .cmprow .cell img,.cmpcol img{max-width:100%;border-radius:6px;border:0.5px solid var(--line);}
+  .cmpcol figure{margin:8px 0;}
+  .cmpcol figcaption{font-size:12px;color:var(--tx3);}
+  #ghPanel{border:0.5px solid var(--line);border-radius:8px;padding:6px 12px;background:var(--bg);}
+  #ghPanel summary{cursor:pointer;font-size:12px;color:var(--tx2);}
+  #ghPanel .row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;align-items:center;}
+  #ghPanel input{width:auto;min-width:150px;}
+  #ghStatus{font-size:12px;}
+  #loadMsg{font-size:12px;color:var(--tx3);margin:8px 0;}
+  /* 视图切换 */
+  .vtabs{display:flex;gap:4px;border-bottom:0.5px solid var(--line);margin-bottom:14px;flex-wrap:wrap;}
+  .vtabs button{border:none;border-bottom:2px solid transparent;border-radius:0;padding:7px 14px;font-size:13px;color:var(--tx2);}
+  .vtabs button.on{color:var(--ac);border-bottom-color:var(--ac);font-weight:500;}
+  /* 时间轴 */
+  .tl{position:relative;margin:8px 0 0 6px;padding-left:26px;border-left:2px solid var(--line);}
+  .tl .item{position:relative;padding:7px 0 7px 8px;}
+  .tl .item::before{content:"";position:absolute;left:-33px;top:14px;width:10px;height:10px;border-radius:50%;background:var(--dot,var(--ac));border:2px solid var(--bg);}
+  .tl .item .yr{font-size:12.5px;color:var(--tx3);min-width:92px;display:inline-block;}
+  .tl .item .nm{font-size:13.5px;color:var(--ac);cursor:pointer;}
+  .tl .item .nm:hover{text-decoration:underline;}
+  .tl .item .se{font-size:11px;color:var(--tx3);margin-left:8px;}
+  /* 图谱 */
+  #graphBox{background:var(--bg);border:0.5px solid var(--line);border-radius:10px;overflow:hidden;}
+  #graphSvg{display:block;width:100%;height:62vh;min-height:380px;cursor:grab;background:
+    radial-gradient(circle at 1px 1px, var(--line) 1px, transparent 0);background-size:22px 22px;}
+  #graphSvg:active{cursor:grabbing;}
+  #graphSvg line{stroke:var(--line2);stroke-width:1;opacity:.75;}
+  #graphSvg circle.node{stroke:#fff;stroke-width:1.5;cursor:pointer;touch-action:none;}
+  #graphSvg circle.node.broken{fill:var(--warn);stroke:var(--warn);stroke-dasharray:3 2;cursor:help;}
+  #graphSvg text{font-size:11px;fill:var(--tx2);pointer-events:none;}
+  #graphSvg text.broken{fill:var(--warn);}
+  .glegend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--tx3);padding:8px 4px;}
+  .glegend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px;}
+  .glegend i.broken{border:1.5px dashed var(--warn);background:var(--warn);border-radius:50%;}
+  /* 矩阵 */
+  .matrixwrap{overflow-x:auto;border:0.5px solid var(--line);border-radius:10px;background:var(--bg);}
+  table.matrix{border-collapse:collapse;font-size:12px;white-space:nowrap;}
+  table.matrix th,table.matrix td{border:0.5px solid var(--line);padding:5px 9px;text-align:center;}
+  table.matrix thead th{background:var(--bg2);font-weight:500;color:var(--tx2);position:sticky;top:0;}
+  table.matrix th.rowh,table.matrix td.rowh{text-align:left;position:sticky;left:0;background:var(--bg);font-weight:500;color:var(--ac);cursor:pointer;z-index:1;}
+  table.matrix thead th.rowh{z-index:2;background:var(--bg2);}
+  table.matrix td.yes{color:var(--ok);}
+  table.matrix td.todo{color:var(--warn);}
+  table.matrix td.no{color:var(--line2);}
+  .mlegend{font-size:11.5px;color:var(--tx3);padding:6px 2px;}
+  /* ===== v4：编辑视图（原录入卡片表单，样式隔离在 #editView / 其弹窗内） ===== */
+  #editView{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,0.7fr);gap:16px;max-width:1400px;margin:0 auto;align-items:start;}
+  #editView textarea{resize:vertical;min-height:64px;}
+  #editView textarea,#editView input{width:100%;}
+  #editView label{display:block;font-size:11px;color:var(--tx3);margin:8px 0 3px;}
+  #editView .etbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;}
+  #editView .etbar select{width:auto;min-width:160px;}
+  #editView .chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;border:0.5px solid var(--line2);border-radius:6px;padding:4px 6px;min-height:32px;}
+  #editView .chips input{border:none;flex:1;min-width:90px;outline:none;padding:2px 4px;}
+  #editView .chip{background:var(--ac-bg);color:var(--ac);border-radius:99px;padding:1px 9px;font-size:12px;white-space:nowrap;}
+  #editView .chip b{cursor:pointer;margin-left:4px;font-weight:400;}
+  .dimtabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:0.5px solid var(--line);padding-bottom:6px;margin-bottom:8px;}
+  .dimtabs button{border:none;padding:4px 10px;border-radius:6px;font-size:12px;}
+  .dimtabs button.on{background:var(--ac-bg);color:var(--ac);}
+  .dimtabs button .dot{color:var(--ok);margin-left:3px;}
+  .serrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;border:0.5px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px;}
+  .serrow label{display:block;font-size:11px;color:var(--tx3);margin:8px 0 3px;}
+  .serrow .s-del{align-self:end;color:var(--warn);border-color:var(--warn);font-size:11px;padding:4px 10px;}
+  #drop{border:1.5px dashed var(--line2);border-radius:8px;padding:12px;text-align:center;color:var(--tx3);margin:8px 0;cursor:pointer;}
+  #drop.over{border-color:var(--ac);color:var(--ac);background:var(--ac-bg);}
+  .imgrow{display:flex;gap:8px;align-items:flex-start;padding:8px;border:0.5px solid var(--line);border-radius:8px;margin-bottom:6px;background:var(--bg);}
+  .imgrow img{width:52px;height:40px;object-fit:cover;border-radius:4px;background:var(--bg2);}
+  .imgrow .meta{flex:1;}
+  .imgrow .meta input{margin-bottom:4px;}
+  .imgrow .del{align-self:center;color:var(--warn);border-color:var(--warn);}
+  #preview{font-family:Consolas,monospace;font-size:11.5px;white-space:pre-wrap;word-break:break-all;background:var(--bg2);border:0.5px solid var(--line);border-radius:8px;padding:10px;max-height:660px;overflow:auto;line-height:1.7;}
+  #status{margin-top:10px;font-size:12px;min-height:18px;}
+  #status.ok{color:var(--ok);} #status.err{color:var(--warn);}
+  .hint{font-size:11px;color:var(--tx3);margin-top:6px;}
+  .duo{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,0.8fr);gap:10px;align-items:start;}
+  .axrow{display:flex;gap:10px;flex-wrap:wrap;}
+  .axrow>div{min-width:130px;}
+  .exbox{background:var(--bg2);border:0.5px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--tx2);}
+  .exbox .exq{color:var(--warn);margin:0 0 5px;}
+  .exbox .exbody{white-space:pre-wrap;margin:0;line-height:1.7;}
+  .exbox .extag{display:inline-block;font-size:11px;color:var(--tx3);border:0.5px solid var(--line);border-radius:99px;padding:0 8px;margin-bottom:5px;}
+  #editCardBtn{float:right;}
+  @media (max-width:700px){.duo{grid-template-columns:1fr;}}
+  @media (max-width:900px){
+    main{padding:12px;}
+    .cmpwrap{grid-template-columns:1fr;}
+    .reader{padding:16px;}
+    #editView{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<noscript>
+  <div style="background:#FCEBEB;border:0.5px solid #A32D2D;color:#791F1F;padding:12px 20px;font-size:13px;">
+    本页需要 JavaScript。请用 Edge / Chrome 打开（电脑双击本文件，或访问 GitHub Pages 网址）。
+  </div>
+</noscript>
+
+<header>
+  <h1>阅读卡片</h1>
+  <button id="homeBtn" style="display:none;">← 返回书架</button>
+  <span class="spacer"></span>
+  <span id="srcStatus">未连接数据源</span>
+  <button id="pickBtn">选择项目文件夹</button>
+  <details id="ghPanel">
+    <summary id="ghSummary">GitHub 主库</summary>
+    <div class="row">
+      <input id="ghRepo" placeholder="用户名/仓库名（建议私有）">
+      <input id="ghBranch" placeholder="分支 main" style="width:90px;">
+      <input id="ghBase" placeholder="库内根目录，如 编年卡片" style="width:140px;">
+      <input id="ghToken" type="password" placeholder="细粒度 PAT" style="min-width:180px;">
+      <button id="ghSave" class="primary">保存并连接</button>
+      <button id="ghTestBtn" title="只测试，不读取卡片">测试连接</button>
+      <span id="ghStatus"></span>
+    </div>
+    <div style="font-size:11px;color:var(--tx3);padding-bottom:6px;">令牌只存本机浏览器 localStorage（键 nb-gh，与录入卡片共享）；阅读不触网写入，仅编辑视图保存卡片时才提交仓库，PAT 需 Contents 读写权限。</div>
+  </details>
+  <button id="reloadBtn" style="display:none;">刷新</button>
+  <button id="newCardBtn" class="primary" style="display:none;">+ 新增卡片</button>
+</header>
+
+<main>
+  <div id="loadMsg"></div>
+
+  <!-- 空状态 -->
+  <div id="emptyView" class="empty card">
+    <div class="big">连接卡片库开始阅读</div>
+    <div style="margin-bottom:16px;">
+      <button class="primary" id="emptyPick">选择本机项目文件夹</button>
+      <button class="primary" id="reconnectBtn" style="display:none;">继续使用「<span id="reconnectName"></span>/」</button>
+      <button id="emptyGh">配置 GitHub 主库</button>
+    </div>
+    <div style="font-size:12px;">电脑：选择「编年卡片」项目文件夹（推荐，图片直接读取）；手机/任意设备：用 GitHub 私有库。<br>本工具只读不写，卡片母本不会被修改。</div>
+  </div>
+
+  <!-- 书架及其同库视图 -->
+  <div id="homeView" style="display:none;">
+    <details class="health" id="healthPanel"><summary id="healthSummary">数据体检</summary><div id="healthBody"></div></details>
+
+    <nav class="vtabs" id="viewTabs">
+      <button data-pane="shelf" class="on">书架</button>
+      <button data-pane="timeline">时间轴</button>
+      <button data-pane="graph">关系图谱</button>
+      <button data-pane="matrix">维度矩阵</button>
+    </nav>
+
+    <!-- 书架 -->
+    <div id="shelfPane">
+      <div class="toolbar">
+        <input type="search" id="searchInput" placeholder="搜索：关键词 / 标签 / 概述 / 正文……">
+        <select id="sortSel">
+          <option value="yearAsc">按年份 早→晚</option>
+          <option value="yearDesc">按年份 晚→早</option>
+          <option value="updated">按更新日期</option>
+        </select>
+        <button id="cmpGoBtn" disabled>对比所选（<span id="cmpN">0</span>/4）</button>
+      </div>
+
+      <div class="filterwrap">
+        <div class="lab">系列</div>
+        <div id="seriesFilter"></div>
+        <div class="lab">标签（点选多个，取交集；点卡片上的标签也能筛）</div>
+        <div id="tagFilter"></div>
+      </div>
+
+      <div class="grid" id="cardGrid"></div>
+    </div>
+
+    <!-- 时间轴 -->
+    <div id="timelinePane" style="display:none;">
+      <div class="tl" id="timelineBox"></div>
+    </div>
+
+    <!-- 关系图谱 -->
+    <div id="graphPane" style="display:none;">
+      <div class="glegend" id="graphLegend"></div>
+      <div id="graphBox"><svg id="graphSvg" viewBox="0 0 960 600" preserveAspectRatio="xMidYMid meet"></svg></div>
+    </div>
+
+    <!-- 维度矩阵 -->
+    <div id="matrixPane" style="display:none;">
+      <div class="mlegend">● 已写维度　<span style="color:var(--warn);">待</span> 留了待补占位　– 该卡未涉及此维度；点卡片名打开阅读。</div>
+      <div class="matrixwrap"><table class="matrix" id="matrixBox"></table></div>
+    </div>
+  </div>
+
+  <!-- 阅读 -->
+  <div id="readerView" style="display:none;">
+    <div class="reader" id="readerBox"></div>
+  </div>
+
+  <!-- 对比 -->
+  <div id="compareView" style="display:none;">
+    <div class="cmpwrap" id="cmpBox"></div>
+  </div>
+
+  <!-- v4：编辑视图（原录入卡片的结构化表单） -->
+  <div id="editView" style="display:none;">
+    <div class="card" id="formCard">
+      <div class="etbar">
+        <select id="tplSel" title="选择研究系列">
+          <option value="chronicle">系列：编年卡片</option>
+          <option value="interaction">系列：交互设计</option>
+          <option value="vangogh">系列：梵高研究</option>
+        </select>
+        <button id="exBtn" type="button" title="填入该系列的完整示范卡片，照着改">载入示例</button>
+        <button id="seriesBtn" type="button" title="自定义系列：改名、改必填坐标与推荐维度、新增或删除系列">系列管理</button>
+        <span style="flex:1;"></span>
+        <button id="editBackBtn" type="button">← 返回（不保存）</button>
+      </div>
+
+      <div id="axes"></div>
+
+      <div id="exBanner" style="display:none;background:#FAECE7;border:0.5px solid #D85A30;border-radius:8px;padding:8px 10px;margin:8px 0;font-size:12px;color:#712B13;">
+        当前是<b>示例内容</b>（不会自动写入任何文件）——把它当填空示范：照着结构和具体程度改成你的内容；图片区拖一张你自己的图试试；或点「清空」从头写。
+      </div>
+
+      <div id="editBanner" style="display:none;background:#E7F0FA;border:0.5px solid var(--ac);border-radius:8px;padding:8px 10px;margin:8px 0;font-size:12px;color:#123C63;">
+        正在编辑已有卡片：<b id="editPath"></b><span id="editImgs" style="color:var(--tx2);"></span>
+        <button id="exitEditBtn" type="button" style="margin-left:8px;font-size:11px;padding:2px 8px;">退出编辑（清空表单）</button>
+      </div>
+
+      <label>概述（三句话以内：这个卡片最突出的面貌是什么？）</label>
+      <div class="duo">
+        <textarea id="overview" rows="4" placeholder="三句话以内，说出这个卡片最突出的面貌"></textarea>
+        <div class="exbox"><span class="extag">示例</span><p class="exbody" id="overviewEx"></p></div>
+      </div>
+
+      <label>标签（输入后回车添加，已有标签会自动补全）</label>
+      <div class="chips" id="chips"><input id="tagInput" list="tagList" placeholder="如：商业化城市"></div>
+      <datalist id="tagList"></datalist>
+
+      <div style="border:0.5px solid var(--line);border-radius:8px;margin-top:10px;overflow:hidden;">
+        <div style="display:flex;align-items:stretch;">
+          <div class="dimtabs" id="dimTabs" style="border-bottom:0.5px solid var(--line);border-radius:0;flex:1;min-width:0;overflow-x:auto;"></div>
+          <button id="addDimBtn" type="button" title="添加维度：任何卡片都可以用维度池里的任何维度" style="border:none;border-left:0.5px solid var(--line);border-radius:0;background:var(--bg);font-size:12px;padding:0 10px;white-space:nowrap;">＋ 维度</button>
+        </div>
+        <div class="duo" style="padding:8px 10px;">
+          <textarea id="dimText" rows="8" placeholder="写 2-5 句'当时的常态'，求具体：有数据、有名物、有例证"></textarea>
+          <div class="exbox"><span class="extag">示例</span><p class="exq" id="dimHint"></p><p class="exbody" id="dimExample"></p></div>
+        </div>
+      </div>
+
+      <div id="drop">把图片拖到这里，或点击选择（可多张）<input id="fileInput" type="file" accept="image/*" multiple hidden></div>
+      <div id="imgList"></div>
+
+      <div style="display:flex;justify-content:space-between;align-items:baseline;">
+        <label style="margin:8px 0 3px;">关系（双链，每行一条）</label>
+        <button id="linkPick" type="button" style="font-size:11px;padding:2px 8px;margin:8px 0 3px;">+ 从库中选卡</button>
+      </div>
+      <div class="duo">
+        <textarea id="links" rows="3" placeholder="参见 [[另一张卡片]]：一句话说明为什么相关"></textarea>
+        <div class="exbox"><span class="extag">示例</span><p class="exbody" id="linksEx"></p></div>
+      </div>
+
+      <label>来源（至少一条，哪怕是"《梦粱录》卷十三"）</label>
+      <div class="duo">
+        <textarea id="source" rows="3"></textarea>
+        <div class="exbox"><span class="extag">示例</span><p class="exbody" id="sourceEx"></p></div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+        <button class="primary" id="saveBtn" type="button">保存卡片</button>
+        <button id="inboxBtn" type="button">先存入收件箱</button>
+        <button id="copyBtn" type="button">复制文本</button>
+        <button id="resetBtn" type="button">清空</button>
+      </div>
+      <div id="status"></div>
+      <p class="hint">保存时自动创建 卡片/系列/坐标/卡片.md 与 图/；图片自动按规范改名。数据永远只存在你的文件夹（或 GitHub 仓库）里。</p>
+    </div>
+
+    <div class="card">
+      <label style="margin-top:0;">将生成的文件（实时预览）</label>
+      <div id="preview">（开始填写后此处显示卡片内容）</div>
+    </div>
+  </div>
+</main>
+
+<!-- v4：编辑视图弹窗（选卡/加维度/系列管理/消息） -->
+<div id="pickModal" style="display:none;position:fixed;inset:0;background:rgba(40,40,36,.4);z-index:60;align-items:center;justify-content:center;">
+  <div style="background:var(--bg);border:0.5px solid var(--line);border-radius:12px;padding:16px 18px;width:min(540px,92vw);max-height:72vh;display:flex;flex-direction:column;gap:10px;">
+    <b style="font-weight:500;">选择要插入的卡片</b>
+    <div id="pickList" style="overflow:auto;border:0.5px solid var(--line);border-radius:8px;max-height:52vh;"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;"><button id="pickCancel" type="button">取消</button></div>
+  </div>
+</div>
+
+<div id="dimModal" style="display:none;position:fixed;inset:0;background:rgba(40,40,36,.4);z-index:65;align-items:center;justify-content:center;">
+  <div style="background:var(--bg);border:0.5px solid var(--line);border-radius:12px;padding:16px 18px;width:min(520px,92vw);display:flex;flex-direction:column;gap:10px;">
+    <b style="font-weight:500;">添加维度</b>
+    <input id="dimNameInput" placeholder="输入维度名，或点下方维度池里的词（用词与池一致才能跨卡聚合）">
+    <div id="dimPoolChips" style="display:flex;flex-wrap:wrap;gap:6px;max-height:40vh;overflow:auto;"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button id="dimAdd" type="button" class="primary">添加</button>
+      <button id="dimCancel" type="button">取消</button>
+    </div>
+  </div>
+</div>
+
+<div id="serModal" style="display:none;position:fixed;inset:0;background:rgba(40,40,36,.4);z-index:68;align-items:center;justify-content:center;">
+  <div style="background:var(--bg);border:0.5px solid var(--line);border-radius:12px;padding:16px 18px;width:min(780px,94vw);max-height:86vh;overflow:auto;display:flex;flex-direction:column;gap:10px;">
+    <b style="font-weight:500;">系列管理</b>
+    <p class="hint" style="margin:0;line-height:1.7;">系列 = 一套「必填坐标 + 推荐维度」的透镜。这里的修改会写入库内纯文本 <b>模板/系列配置.md</b>（随时可手工编辑，不绑定本工具）。<br>注意：<b>改系列名不会自动改写已有卡片</b>——旧卡片的 系列 字段保留旧名，仍可检索，需要的话以后再批量替换；删除系列也不动任何卡片文件。</p>
+    <div id="serRows"></div>
+    <div><button id="serAdd" type="button">＋ 新增系列</button></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button id="serCancel" type="button">取消</button>
+      <button id="serSave" type="button" class="primary">保存并写入配置文件</button>
+    </div>
+  </div>
+</div>
+
+<div id="msgModal" style="display:none;position:fixed;inset:0;background:rgba(40,40,36,.4);z-index:70;align-items:center;justify-content:center;">
+  <div style="background:var(--bg);border:0.5px solid var(--line);border-radius:12px;padding:18px 20px;width:min(460px,92vw);display:flex;flex-direction:column;gap:12px;">
+    <b id="msgTitle" style="font-weight:500;">提示</b>
+    <div id="msgText" style="font-size:13px;color:var(--tx2);line-height:1.7;white-space:pre-wrap;"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+      <button id="msgAction" type="button" class="primary" style="display:none;">操作</button>
+      <button id="msgClose" type="button">知道了</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ================= 状态 ================= */
+let source = null;                 // {type:"local", root} | {type:"gh"}
+let cards = [];                    // 解析后的卡片
+let slugIndex = {};                // slug -> card（uid=path）
+let backlinks = {};                // slug -> [card...]
+let knownImages = new Set();       // 库内实际存在的图片路径（root 相对 / 含 GitHub 库内根目录）
+let localImgHandles = new Map();   // 本地：路径 -> FileHandle
+let imgUrlCache = new Map();       // 路径 -> objectURL
+
+let fSeries = "全部";
+let fTags = new Set();
+let chosen = new Set();            // 对比所选 uid
+let curReaderUid = null;
+
+/* ================= 小工具 ================= */
+const $ = id => document.getElementById(id);
+function esc(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function escAttr(s){ return esc(s).replace(/"/g,"&quot;"); }
+function setMsg(s){ $("loadMsg").textContent = s || ""; }
+
+/* ================= GitHub 配置（与录入卡片共用 nb-gh） ================= */
+let gh = { repo:"", branch:"main", base:"编年卡片", token:"" };
+try { Object.assign(gh, JSON.parse(localStorage.getItem("nb-gh") || "{}")); } catch(e){}
+function fillGhForm(){
+  $("ghRepo").value = gh.repo || "";
+  $("ghBranch").value = gh.branch || "main";
+  $("ghBase").value = gh.base || "";
+  $("ghToken").value = gh.token || "";
+  $("ghSummary").textContent = gh.repo ? "GitHub 主库：" + gh.repo : "GitHub 主库（未配置）";
+}
+function ghStatus(m, ok){ const el=$("ghStatus"); el.textContent=m||""; el.style.color = (ok===false || ok==="err") ? "var(--warn)" : "var(--ok)"; }
+function ghHeaders(){ return { "Authorization":"Bearer "+gh.token, "Accept":"application/vnd.github+json" }; }
+function ghApiUrl(p){ return "https://api.github.com/repos/" + gh.repo + "/contents/" + p.split("/").map(encodeURIComponent).join("/"); }
+function ghRawUrl(p){ return "https://raw.githubusercontent.com/" + gh.repo + "/" + (gh.branch||"main") + "/" + p.split("/").map(encodeURIComponent).join("/"); }
+/* v4：编辑视图的 GitHub 写通道 */
+function utf8ToB64(str){
+  const bytes = new TextEncoder().encode(str); let bin = "";
+  for (let i=0;i<bytes.length;i+=0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i+0x8000));
+  return btoa(bin);
+}
+function fileB64(file){
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(file); });
+}
+async function ghPut(path, b64, message){
+  let sha = null;
+  const g = await fetch(ghApiUrl(path), { headers: ghHeaders() });
+  if (g.ok) sha = (await g.json()).sha;
+  else if (g.status !== 404) throw new Error("GitHub 读取失败：" + g.status + "（检查仓库名/令牌）");
+  const res = await fetch(ghApiUrl(path), {
+    method:"PUT", headers:{ ...ghHeaders(), "Content-Type":"application/json" },
+    body: JSON.stringify({ message, content:b64, branch:gh.branch||"main", ...(sha?{sha}:{}) })
+  });
+  if (!res.ok){ const t = await res.text(); throw new Error("GitHub 写入失败：" + res.status + " " + t.slice(0,140)); }
+}
+async function ghCardExists(path){
+  const res = await fetch(ghApiUrl(path), { headers: ghHeaders() });
+  if (res.ok) return true;
+  if (res.status === 404) return false;
+  throw new Error("GitHub 检查失败：" + res.status);
+}
+async function ghGetText(path){
+  const res = await fetch(ghApiUrl(path), { headers: ghHeaders() });
+  if (!res.ok) throw new Error("GitHub 读取失败 " + res.status);
+  const j = await res.json();
+  const bin = atob((j.content||"").replace(/\n/g,""));
+  const bytes = new Uint8Array(bin.length);
+  for (let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+
+/* ================= 解析层 ================= */
+/* 年份排序键：取首个整数（支持负年）；"N世纪" -> (N-1)*100。纯投影层启发式，不回写数据 */
+function yearKey(y){
+  if (!y) return null;
+  let m = String(y).match(/(-?\d+)\s*世纪/);
+  if (m) return (parseInt(m[1],10) - 1) * 100;
+  m = String(y).match(/-?\d+/);
+  return m ? parseInt(m[0],10) : null;
+}
+function isPlaceholder(txt){
+  const t = (txt||"").trim();
+  return !t || t.indexOf("待补") >= 0 || t.indexOf("待完善") >= 0;
+}
+function parseCard(txt, path){
+  const card = {
+    path, uid: path,
+    fsDir: path.replace(/\/卡片\.md$/, ""),
+    repoDir: path.replace(/\/卡片\.md$/, ""),
+    slug: path.split("/").slice(-2,-1)[0] || "",
+    fields: {}, arrays: {}, tags: [], series: [], update: "",
+    overview: "", sections: [], links: [], imgRefs: [],
+    placeholders: [], yearKey: null
+  };
+  const ym = txt.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (ym){
+    let key = null;
+    for (const line of ym[1].split(/\r?\n/)){
+      const li = line.match(/^\s+-\s*(.*)$/);
+      if (li && key){ (card.arrays[key] = card.arrays[key] || []).push(li[1].trim()); continue; }
+      const kv = line.match(/^([^:#]+):\s*(.*)$/);
+      if (!kv) continue;
+      key = kv[1].trim();
+      const v = kv[2].trim();
+      const fm = v.match(/^\[(.*)\]$/);
+      if (fm) card.arrays[key] = fm[1].split(",").map(s=>s.trim()).filter(Boolean);
+      else card.fields[key] = v;
+    }
+  }
+  card.tags = card.arrays["标签"] || [];
+  card.series = card.arrays["系列"] || [];
+  card.update = card.fields["更新"] || "";
+  card.yearKey = yearKey(card.fields["年份"]);
+
+  const body = ym ? txt.slice(ym[0].length) : txt;
+  const buf = {}; const order = []; let cur = null;
+  for (const line of body.split(/\r?\n/)){
+    const h = line.match(/^#{1,2}\s+(.+?)\s*$/);
+    if (h){ cur = h[1]; if (!(cur in buf)){ buf[cur]=""; order.push(cur);} }
+    else if (cur) buf[cur] += line + "\n";
+  }
+  card.overview = (buf["概述"]||"").trim();
+  for (const t of order){
+    if (t === "概述") continue;
+    const b = (buf[t]||"").trim();
+    card.sections.push({ title:t, body:b, placeholder:isPlaceholder(b) });
+    if (isPlaceholder(b)) card.placeholders.push(t);
+  }
+  if (isPlaceholder(card.overview)) card.placeholders.unshift("概述");
+
+  const linkRe = /\[\[([^\[\]|]+?)(?:\|[^\]]+)?\]\]/g; let m;
+  const whole = card.overview + "\n" + card.sections.map(s=>s.body).join("\n");
+  while ((m = linkRe.exec(whole))) { const sl = m[1].trim(); if (!card.links.includes(sl)) card.links.push(sl); }
+  const imgRe = /!\[[^\]]*\]\(([^)]+)\)/g;
+  while ((m = imgRe.exec(whole))) {
+    let p = m[1].trim();
+    if (p.indexOf("://") >= 0) continue;               // 网络图不管
+    p = p.replace(/^\.\//, "");
+    if (!card.imgRefs.includes(p)) card.imgRefs.push(p);
+  }
+  card.missingImgs = card.imgRefs.filter(ref => {
+    const p = (source && source.type === "gh" ? card.repoDir : card.fsDir) + "/" + ref;
+    return !knownImages.has(p);
+  });
+  return card;
+}
+
+/* 入库：rawItems=[{path, txt, dirHandle?}]；knownImages/localImgHandles 已先行填充 */
+function ingest(rawItems){
+  cards = rawItems.map(it => {
+    const c = parseCard(it.txt, it.path);
+    if (it.repoDir) c.repoDir = it.repoDir;
+    c.missingImgs = c.imgRefs.filter(ref => {
+      const p = (source && source.type === "gh" ? c.repoDir : c.fsDir) + "/" + ref;
+      return !knownImages.has(p);
+    });
+    return c;
+  });
+  cards.sort((a,b)=> (a.yearKey==null?1:0)-(b.yearKey==null?1:0) || (a.yearKey||0)-(b.yearKey||0) || a.slug.localeCompare(b.slug));
+  slugIndex = {}; for (const c of cards) if (!(c.slug in slugIndex)) slugIndex[c.slug] = c;
+  backlinks = {};
+  for (const c of cards) for (const sl of c.links)
+    if (slugIndex[sl] && slugIndex[sl].uid !== c.uid) (backlinks[sl] = backlinks[sl] || []).push(c);
+  chosen = new Set();
+  graphDirty = true;
+}
+
+/* ================= 数据装载：本地 / GitHub ================= */
+/* ---- v3：项目文件夹句柄记忆（IndexedDB；与录入卡片共用库 nb-folder / 键 root） ---- */
+let _idbPromise;
+function idbOpen(){
+  if (_idbPromise) return _idbPromise;
+  _idbPromise = new Promise(res => {
+    try {
+      const q = indexedDB.open("nb-folder", 1);
+      q.onupgradeneeded = () => { try { q.result.createObjectStore("kv"); } catch(e){} };
+      q.onsuccess = () => res(q.result);
+      q.onerror = () => { _idbPromise = null; res(null); };
+    } catch(e){ _idbPromise = null; res(null); }
+  });
+  return _idbPromise;
+}
+async function idbGet(k){
+  const db = await idbOpen(); if (!db) return null;
+  return new Promise(res => { try { const r = db.transaction("kv").objectStore("kv").get(k); r.onsuccess = () => res(r.result || null); r.onerror = () => res(null); } catch(e){ res(null); } });
+}
+async function idbPut(k, v){
+  const db = await idbOpen(); if (!db) return;
+  return new Promise(res => { try { const tx = db.transaction("kv","readwrite"); tx.objectStore("kv").put(v, k); tx.oncomplete = () => res(); tx.onerror = () => res(); } catch(e){ res(); } });
+}
+async function idbDel(k){
+  const db = await idbOpen(); if (!db) return;
+  return new Promise(res => { try { const tx = db.transaction("kv","readwrite"); tx.objectStore("kv").delete(k); tx.oncomplete = () => res(); tx.onerror = () => res(); } catch(e){ res(); } });
+}
+async function permState(h, mode){   // 老内核无权限 API：当作已授权，读盘失败再走 catch
+  try { return h.queryPermission ? await h.queryPermission({ mode }) : "granted"; }
+  catch(e){ return "prompt"; }
+}
+async function askPerm(h, mode){    // 必须由用户点击触发；浏览器弹的是轻量授权条，不是目录树
+  try { return h.requestPermission ? (await h.requestPermission({ mode }) === "granted") : true; }
+  catch(e){ return false; }
+}
+
+async function readLocalRoot(root){
+  source = { type:"local", root };
+  setMsg("正在读取本地卡片……");
+  const items = [], images = new Set(); localImgHandles.clear();
+  const cardRoot = await root.getDirectoryHandle("卡片");
+  for await (const [, sh] of cardRoot.entries()){
+    if (sh.kind !== "directory") continue;
+    for await (const [, dh] of sh.entries()){
+      if (dh.kind !== "directory") continue;
+      let fh = null;
+      try { fh = await dh.getFileHandle("卡片.md"); } catch(e){ continue; }
+      const dirRel = "卡片/" + sh.name + "/" + dh.name;
+      const txt = await (await fh.getFile()).text();
+      items.push({ path: dirRel + "/卡片.md", txt });
+      try {
+        const imgDir = await dh.getDirectoryHandle("图");
+        for await (const [, ih] of imgDir.entries()){
+          if (ih.kind !== "file") continue;
+          const p = dirRel + "/图/" + ih.name;
+          images.add(p); localImgHandles.set(p, ih);
+        }
+      } catch(e){ /* 无 图/ 目录 */ }
+    }
+  }
+  knownImages = images;
+  finishLoad(items, "已连接本地文件夹：" + root.name);
+  idbPut("root", root);             // 读取成功才记住
+}
+async function pickLocal(){
+  if (!window.showDirectoryPicker){ setMsg("此浏览器不支持选择文件夹，请用电脑版 Edge/Chrome，或改用 GitHub 主库。"); return; }
+  try {
+    const root = await window.showDirectoryPicker({ mode:"read" });
+    await readLocalRoot(root);
+  } catch(e){
+    if (e.name !== "AbortError") setMsg("读取文件夹失败：" + e.message + "（确认选择的是「编年卡片」项目根目录）");
+  }
+}
+/* 跨会话一键重连：点击后申请授权（不弹目录树），失败则清掉失效记忆 */
+async function reconnectLocal(h){
+  if (await permState(h, "read") !== "granted" && !(await askPerm(h, "read"))){
+    setMsg("已取消授权；需要时可重新选择项目文件夹。"); return;
+  }
+  try { await readLocalRoot(h); $("reconnectBtn").style.display = "none"; }
+  catch(e){
+    await idbDel("root");
+    $("reconnectBtn").style.display = "none";
+    setMsg("记住的文件夹打不开（可能已移动或云盘未就绪），请重新选择项目文件夹。");
+  }
+}
+async function loadGh(){
+  if (!gh.repo || !gh.token){ $("ghPanel").open = true; ghStatus("先填仓库与令牌", false); return; }
+  source = { type:"gh" };
+  try {
+    setMsg("正在读取 GitHub 卡片目录……");
+    const bp = gh.base ? gh.base.replace(/\/+$/,"") + "/" : "";
+    const treeRes = await fetch("https://api.github.com/repos/" + gh.repo + "/git/trees/" + (gh.branch||"main") + "?recursive=1", { headers: ghHeaders() });
+    if (!treeRes.ok) throw new Error("目录读取失败 " + treeRes.status + "（检查仓库名/分支/令牌）");
+    const tree = (await treeRes.json()).tree || [];
+    knownImages = new Set();
+    for (const x of tree){
+      if (x.type !== "blob" || !x.path.startsWith(bp + "卡片/")) continue;
+      if (x.path.endsWith("/卡片.md")) continue;
+      if (x.path.includes("/图/")) knownImages.add(x.path);
+    }
+    const mdPaths = tree.filter(x => x.type==="blob" && x.path.startsWith(bp + "卡片/") && x.path.endsWith("/卡片.md")).map(x=>x.path);
+    const items = [];
+    for (let i=0;i<mdPaths.length;i++){
+      setMsg("读取卡片 " + (i+1) + " / " + mdPaths.length + "……");
+      try {
+        const txt = await ghGetText(mdPaths[i]);
+        const localRel = bp ? mdPaths[i].slice(bp.length) : mdPaths[i];
+        items.push({ path: localRel, repoDir: mdPaths[i].replace(/\/卡片\.md$/,""), txt });
+      } catch(e){}
+    }
+    finishLoad(items, "已连接 GitHub：" + gh.repo);
+    ghStatus("连接成功", true);
+  } catch(e){ setMsg(e.message); ghStatus(e.message, false); }
+}
+function finishLoad(items, statusText){
+  $("newCardBtn").style.display = "";   // v4：连上数据源即可新增（空库也能建第一张）
+  loadSeriesConfig();                  // v4：系列注册表以库内 模板/系列配置.md 为准
+  if (!items.length){ setMsg("数据源里没有找到卡片（需要 卡片/系列/坐标/卡片.md 结构）。点右上角「+ 新增卡片」建第一张。"); return; }
+  ingest(items);
+  setMsg("");
+  $("srcStatus").textContent = statusText;
+  $("srcStatus").classList.add("on");
+  $("reloadBtn").style.display = "";
+  $("emptyView").style.display = "none";
+  renderHome();
+  show("homeView");
+  if (curPane !== "shelf") switchPane(curPane);   // 刷新数据时重渲染当前分析视图
+  if (location.hash) {
+    const sl = decodeURIComponent(location.hash.replace(/^#\/?/, ""));
+    if (slugIndex[sl]) openCard(slugIndex[sl].uid);
+  }
+}
+
+/* ================= Markdown 渲染（只覆盖库内实测语法，未识别原样转义） ================= */
+function wikiHtml(slug, label){
+  const c = slugIndex[slug];
+  const text = label || slug;
+  if (c) return '<button class="wikilink" data-slug="' + escAttr(slug) + '">' + esc(text) + "</button>";
+  return '<span class="wikilink broken" title="库里还没有这张卡片——一个待写线索">' + esc(text) + "<em>待写</em></span>";
+}
+function inline(s){
+  let t = esc(s);
+  t = t.replace(/`([^`]+)`/g, (m,c)=>"<code>"+c+"</code>");
+  t = t.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  t = t.replace(/\[\[([^\[\]|]+?)(?:\|([^\]]+))?\]\]/g, (m, sl, al)=>wikiHtml(sl.trim(), al?al.trim():""));
+  return t;
+}
+function figureHtml(card, ref, alt, caption){
+  const missing = card.missingImgs.includes(ref);
+  const cap = caption ? inline(caption) : esc(alt || ref);
+  return '<figure><img class="lazyimg' + (missing ? " missing" : "") + '" data-uid="' + escAttr(card.uid) + '" data-ref="' + escAttr(ref) + '" alt="' + escAttr(alt||ref) + '" title="' + escAttr((missing ? "图片文件缺失：" : "") + ref) + '"><figcaption>' + cap + (missing ? '（图片缺失）' : '') + '</figcaption></figure>';
+}
+function mdHtml(md, card){
+  const lines = (md||"").replace(/\r/g,"").split("\n");
+  const out = [];
+  let i = 0;
+  while (i < lines.length){
+    const line = lines[i];
+    const img = line.match(/^\s*!\[(.*?)\]\((.*?)\)\s*$/);
+    if (img){
+      const cap = []; let j = i + 1;
+      while (j < lines.length && /^\s*>\s?/.test(lines[j])){ cap.push(lines[j].replace(/^\s*>\s?/,"")); j++; }
+      out.push(figureHtml(card, img[2].trim().replace(/^\.\//,""), img[1], cap.join(" ").trim()));
+      i = j; continue;
+    }
+    if (/^#{1,4}\s+/.test(line)){ out.push("<h4>" + inline(line.replace(/^#{1,4}\s+/,"")) + "</h4>"); i++; continue; }
+    if (/^\s*>\s?/.test(line)){
+      const q = [];
+      while (i < lines.length && /^\s*>\s?/.test(lines[i])){ q.push(lines[i].replace(/^\s*>\s?/,"")); i++; }
+      out.push("<blockquote>" + inline(q.join(" ")) + "</blockquote>"); continue;
+    }
+    if (/^\s*[-*]\s+/.test(line)){
+      const items = [];
+      while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])){ items.push(lines[i].replace(/^\s*[-*]\s+/,"")); i++; }
+      out.push("<ul>" + items.map(x=>"<li>"+inline(x)+"</li>").join("") + "</ul>"); continue;
+    }
+    if (!line.trim()){ i++; continue; }
+    const p = [];
+    while (i < lines.length && lines[i].trim() && !/^\s*[!>#]/.test(lines[i]) && !/^\s*[-*]\s/.test(lines[i])){ p.push(lines[i].trim()); i++; }
+    if (p.length) out.push("<p>" + p.map(inline).join("<br>") + "</p>");
+  }
+  return out.join("\n");
+}
+
+/* ================= 图片懒加载 ================= */
+async function resolveImgUrl(card, ref){
+  const key = (source && source.type==="gh" ? card.repoDir : card.fsDir) + "/" + ref;
+  if (imgUrlCache.has(key)) return imgUrlCache.get(key);
+  let blob = null;
+  if (source.type === "local"){
+    const h = localImgHandles.get(key);
+    if (!h) throw new Error("missing");
+    blob = await h.getFile();
+  } else {
+    const res = await fetch(ghRawUrl(key), { headers: ghHeaders() });
+    if (res.ok){ blob = await res.blob(); }
+    else {
+      // 回退 Contents API（base64，≤1MB）
+      const j = await (await fetch(ghApiUrl(key), { headers: ghHeaders() })).json();
+      if (!j.content) throw new Error("img404");
+      const bin = atob(j.content.replace(/\n/g,""));
+      const arr = new Uint8Array(bin.length);
+      for (let i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
+      blob = new Blob([arr]);
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  imgUrlCache.set(key, url);
+  return url;
+}
+function materializeImages(container){
+  container.querySelectorAll("img.lazyimg").forEach(async img => {
+    const card = cards.find(c => c.uid === img.dataset.uid);
+    if (!card) return;
+    try { img.src = await resolveImgUrl(card, img.dataset.ref); }
+    catch(e){ img.classList.add("missing"); img.title = "图片缺失：" + img.dataset.ref; }
+  });
+}
+
+/* ================= 视图切换 ================= */
+function show(view){
+  for (const v of ["emptyView","homeView","readerView","compareView","editView"]) $(v).style.display = v === view ? "" : "none";
+  $("homeBtn").style.display = (view === "readerView" || view === "compareView" || view === "editView") ? "" : "none";
+}
+$("homeBtn").onclick = () => goHome();
+function goHome(){
+  curReaderUid = null;
+  location.hash = "";
+  renderHome();
+  show("homeView");
+}
+
+/* ================= 系列配色（书架/时间轴/图谱共用） ================= */
+const PALETTE = ["#185fa5","#0f6e56","#993c1d","#7a4fb5","#b5730a","#4a7a8c","#a8437a"];
+function seriesColorOf(name){ const i = allSeries().indexOf(name); return PALETTE[(i < 0 ? 0 : i) % PALETTE.length]; }
+function cardColor(c){ return c.series.length ? seriesColorOf(c.series[0]) : PALETTE[0]; }
+
+/* ================= 视图页签 ================= */
+let curPane = "shelf";
+let graphDirty = true;
+$("viewTabs").querySelectorAll("button").forEach(b => b.onclick = () => switchPane(b.dataset.pane));
+function switchPane(p){
+  curPane = p;
+  for (const id of ["shelfPane","timelinePane","graphPane","matrixPane"]) $(id).style.display = id === p + "Pane" ? "" : "none";
+  $("viewTabs").querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.pane === p));
+  if (p === "timeline") renderTimeline();
+  if (p === "matrix") renderMatrix();
+  if (p === "graph" && graphDirty) renderGraph();
+}
+
+/* ================= 时间轴 ================= */
+function renderTimeline(){
+  const list = cards.slice().sort((a,b)=> (a.yearKey==null?1:0)-(b.yearKey==null?1:0) || (a.yearKey||0)-(b.yearKey||0) || a.slug.localeCompare(b.slug));
+  $("timelineBox").innerHTML = list.map(c =>
+    '<div class="item" style="--dot:' + cardColor(c) + '">' +
+      '<span class="yr">' + esc(c.fields["年份"] || "年份未填") + "</span>" +
+      '<span class="nm" data-open="' + escAttr(c.uid) + '">' + esc(c.slug) + "</span>" +
+      '<span class="se">' + esc(c.series.join("/")) + (c.fields["地点"] ? " · " + esc(c.fields["地点"]) : "") + "</span>" +
+    "</div>").join("") || '<div style="color:var(--tx3);">暂无卡片。</div>';
+  $("timelineBox").querySelectorAll(".nm").forEach(el => el.onclick = () => openCard(el.dataset.open));
+}
+
+/* ================= 双链关系图谱（零依赖力学布局） ================= */
+function graphModel(){
+  const map = new Map();
+  for (const c of cards) map.set(c.slug, { id:c.slug, card:c, broken:false });
+  const edges = [];
+  for (const c of cards) for (const sl of c.links){
+    if (!map.has(sl)) map.set(sl, { id:sl, card:null, broken:true });
+    edges.push({ s:map.get(c.slug), t:map.get(sl) });
+  }
+  return { nodes:[...map.values()], edges };
+}
+let simState = null;
+let graphRaf = 0;                 // 全局唯一句柄：重绘时必须取消上一轮模拟，旧帧不得访问新 DOM
+function toSvg(svg, ev){
+  const r = svg.getBoundingClientRect();
+  return { x:(ev.clientX - r.left) * 960 / r.width, y:(ev.clientY - r.top) * 600 / r.height };
+}
+function drawGraph(svg, s){
+  const lineEls = svg.querySelectorAll("line");
+  s.edges.forEach((e,i) => {
+    const l = lineEls[i];
+    l.setAttribute("x1", e.s.x); l.setAttribute("y1", e.s.y); l.setAttribute("x2", e.t.x); l.setAttribute("y2", e.t.y);
+  });
+  svg.querySelectorAll("g").forEach((g,i) => g.setAttribute("transform", "translate(" + s.nodes[i].x + "," + s.nodes[i].y + ")"));
+}
+function simStep(s){
+  const W = 960, H = 600, nodes = s.nodes, edges = s.edges;
+  for (const n of nodes){ n.fx = 0; n.fy = 0; }
+  for (let i=0;i<nodes.length;i++) for (let j=i+1;j<nodes.length;j++){
+    const a = nodes[i], b = nodes[j];
+    let dx = a.x - b.x, dy = a.y - b.y;
+    const d2 = dx*dx + dy*dy || 0.01, d = Math.sqrt(d2);
+    const f = 2600 / d2, fx = f*dx/d, fy = f*dy/d;
+    a.fx += fx; a.fy += fy; b.fx -= fx; b.fy -= fy;
+  }
+  for (const e of edges){
+    let dx = e.t.x - e.s.x, dy = e.t.y - e.s.y;
+    const d = Math.hypot(dx,dy) || 0.01, f = (d - 170) * 0.02;
+    const fx = f*dx/d, fy = f*dy/d;
+    e.s.fx += fx; e.s.fy += fy; e.t.fx -= fx; e.t.fy -= fy;
+  }
+  for (const n of nodes){
+    if (s.drag === n) continue;
+    n.fx += (W/2 - n.x) * 0.012; n.fy += (H/2 - n.y) * 0.012;
+    n.vx = (n.vx + n.fx*0.1) * 0.86; n.vy = (n.vy + n.fy*0.1) * 0.86;
+    n.x = Math.max(30, Math.min(W-30, n.x + n.vx));
+    n.y = Math.max(26, Math.min(H-26, n.y + n.vy));
+  }
+}
+function runSim(svg, s){
+  cancelAnimationFrame(graphRaf);
+  (function frame(){
+    for (let k=0;k<6;k++){ simStep(s); s.t++; }
+    drawGraph(svg, s);
+    if (s.t < 360) graphRaf = requestAnimationFrame(frame);
+  })();
+}
+function renderGraph(){
+  graphDirty = false;
+  const svg = $("graphSvg");
+  const { nodes, edges } = graphModel();
+  $("graphLegend").innerHTML =
+    allSeries().map(sn => '<span><i style="background:' + seriesColorOf(sn) + '"></i>' + esc(sn) + "</span>").join("") +
+    '<span><i class="broken"></i>断链 = 待写卡片</span><span style="margin-left:auto;">点圆点打开卡片；可拖动布局</span>';
+  nodes.forEach((n,i) => {
+    const a = Math.PI*2*i/Math.max(nodes.length,1);
+    n.x = 480 + Math.cos(a)*220; n.y = 300 + Math.sin(a)*200; n.vx = 0; n.vy = 0;
+  });
+  svg.innerHTML =
+    edges.map((e,i) => "<line data-i=\"" + i + "\"></line>").join("") +
+    nodes.map((n,i) =>
+      '<g data-i="' + i + '"><circle class="node' + (n.broken ? " broken" : "") + '" r="' + (n.broken ? 7 : 9) + '"' +
+      (n.broken ? "" : ' fill="' + cardColor(n.card) + '"') +
+      ' title="' + escAttr(n.broken ? n.id + "（库里还没有这张卡片）" : n.id) + '"></circle>' +
+      '<text class="' + (n.broken ? "broken" : "") + '" dy="-14" text-anchor="middle">' + esc(n.id) + "</text></g>").join("");
+  simState = { nodes, edges, t:0, drag:null };
+  svg.querySelectorAll("g").forEach((g,i) => {
+    const n = nodes[i], circle = g.querySelector("circle");
+    let down = false, moved = false;
+    circle.addEventListener("pointerdown", ev => { down = true; moved = false; simState.drag = n; circle.setPointerCapture(ev.pointerId); ev.preventDefault(); });
+    circle.addEventListener("pointermove", ev => {
+      if (!down) return;
+      moved = true;
+      const p = toSvg(svg, ev); n.x = p.x; n.y = p.y; n.vx = 0; n.vy = 0;
+      drawGraph(svg, simState);
+    });
+    circle.addEventListener("pointerup", () => {
+      down = false; simState.drag = null;
+      if (!moved && !n.broken) openCard(n.card.uid);
+    });
+  });
+  runSim(svg, simState);
+}
+
+/* ================= 卡片 × 维度填充矩阵 ================= */
+const STRUCT_TITLES = new Set(["关系", "来源", "图像"]);
+function dimColumns(){
+  const cols = [];
+  for (const c of cards) for (const s of c.sections)
+    if (!STRUCT_TITLES.has(s.title) && !cols.includes(s.title)) cols.push(s.title);
+  return cols;
+}
+function renderMatrix(){
+  const cols = dimColumns();
+  const rows = cards.slice().sort((a,b)=> (a.yearKey==null?1:0)-(b.yearKey==null?1:0) || (a.yearKey||0)-(b.yearKey||0) || a.slug.localeCompare(b.slug));
+  let h = "<thead><tr><th class=\"rowh\">卡片（" + rows.length + "）</th>" + cols.map(t => "<th>" + esc(t) + "</th>").join("") + "</tr></thead><tbody>";
+  for (const c of rows){
+    const sec = new Map(c.sections.map(s => [s.title, s]));
+    h += "<tr><td class=\"rowh\" data-open=\"" + escAttr(c.uid) + "\">" + esc(c.slug) + "</td>";
+    for (const t of cols){
+      const s = sec.get(t);
+      if (!s) h += '<td class="no" title="' + escAttr(c.slug + "：未涉及 " + t) + '">–</td>';
+      else if (s.placeholder) h += '<td class="todo" title="' + escAttr(c.slug + "：" + t + " 待补") + '">待</td>';
+      else h += '<td class="yes" title="' + escAttr(c.slug + "：" + t + " 已写") + '">●</td>';
+    }
+    h += "</tr>";
+  }
+  $("matrixBox").innerHTML = h + "</tbody>";
+  $("matrixBox").querySelectorAll(".rowh[data-open]").forEach(el => el.onclick = () => openCard(el.dataset.open));
+}
+
+/* ================= 书架 ================= */
+function allTags(){
+  const m = new Map();
+  for (const c of cards) for (const t of c.tags) m.set(t, (m.get(t)||0)+1);
+  return [...m.entries()].sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0]));
+}
+function allSeries(){
+  const m = new Map();
+  for (const c of cards) for (const s of c.series) m.set(s, (m.get(s)||0)+1);
+  return [...m.keys()].sort();
+}
+function cardHaystack(c){
+  return [c.slug, c.overview, c.tags.join(" "), c.series.join(" "), c.sections.map(s=>s.title+" "+s.body).join(" ")].join("\n");
+}
+function filteredCards(){
+  const q = $("searchInput").value.trim().toLowerCase();
+  let list = cards.filter(c =>
+    (fSeries === "全部" || c.series.includes(fSeries)) &&
+    (!fTags.size || [...fTags].every(t => c.tags.includes(t))) &&
+    (!q || cardHaystack(c).toLowerCase().includes(q))
+  );
+  const sort = $("sortSel").value;
+  if (sort === "yearDesc") list = list.slice().sort((a,b)=>(b.yearKey==null?-1:b.yearKey)-(a.yearKey==null?-1:a.yearKey) || b.slug.localeCompare(a.slug));
+  else if (sort === "updated") list = list.slice().sort((a,b)=>(b.update||"").localeCompare(a.update||""));
+  return list;
+}
+function coordLine(c){
+  const f = c.fields;
+  return [f["年份"], f["地点"], f["对象"], f["范式"], f["时期"]].filter(Boolean).join(" · ");
+}
+function cardBadges(c){
+  let h = "";
+  if (c.placeholders.length) h += '<span class="badge info">待补×' + c.placeholders.length + "</span>";
+  const broken = c.links.filter(sl => !slugIndex[sl]).length;
+  if (broken) h += '<span class="badge warn">断链×' + broken + "</span>";
+  if (c.missingImgs.length) h += '<span class="badge warn">缺图×' + c.missingImgs.length + "</span>";
+  return h;
+}
+function renderHome(){
+  // 系列筛选
+  $("seriesFilter").innerHTML =
+    '<span class="chip' + (fSeries==="全部"?" on":"") + '" data-s="全部">全部<span class="n">' + cards.length + "</span></span>" +
+    allSeries().map(s => '<span class="chip' + (fSeries===s?" on":"") + '" data-s="' + escAttr(s) + '">' + esc(s) + '<span class="n">' + cards.filter(c=>c.series.includes(s)).length + "</span></span>").join("");
+  $("seriesFilter").querySelectorAll(".chip").forEach(el => el.onclick = () => { fSeries = el.dataset.s; renderHome(); });
+  // 标签筛选
+  $("tagFilter").innerHTML = allTags().map(([t,n]) =>
+    '<span class="chip' + (fTags.has(t)?" on":"") + '" data-t="' + escAttr(t) + '">' + esc(t) + '<span class="n">' + n + "</span></span>").join("") || '<span style="font-size:12px;color:var(--tx3);">（暂无标签）</span>';
+  $("tagFilter").querySelectorAll(".chip").forEach(el => el.onclick = () => {
+    const t = el.dataset.t;
+    fTags.has(t) ? fTags.delete(t) : fTags.add(t);
+    renderHome();
+  });
+  // 卡片网格
+  const list = filteredCards();
+  $("cardGrid").innerHTML = list.map(c =>
+    '<div class="pcard">' +
+      '<div style="display:flex;align-items:flex-start;gap:6px;"><input type="checkbox" class="cmp" title="加入对比" ' + (chosen.has(c.uid)?"checked":"") + '>' +
+      '<div style="flex:1;min-width:0;"><div class="ttl" data-open="' + escAttr(c.uid) + '">' + esc(c.slug) + "</div>" +
+      '<div class="meta">' + esc(coordLine(c)) + (c.series.length ? " · " + esc(c.series.join("/")) : "") + (c.update ? " · 更新 " + esc(c.update) : "") + "</div></div></div>" +
+      '<div class="ov">' + esc(c.overview.replace(/\n/g," ") || "（无概述）") + "</div>" +
+      '<div class="foot">' + c.tags.map(t=>'<span class="tag" data-tagjump="' + escAttr(t) + '">' + esc(t) + "</span>").join("") + cardBadges(c) + "</div>" +
+    "</div>").join("") || '<div style="color:var(--tx3);font-size:13px;grid-column:1/-1;">没有符合筛选条件的卡片。</div>';
+  $("cardGrid").querySelectorAll(".ttl").forEach(el => el.onclick = () => openCard(el.dataset.open));
+  $("cardGrid").querySelectorAll(".tag").forEach(el => el.onclick = () => { fTags.add(el.dataset.tagjump); renderHome(); window.scrollTo(0,0); });
+  $("cardGrid").querySelectorAll(".cmp").forEach(box => box.onchange = () => {
+    const uid = box.closest(".pcard").querySelector(".ttl").dataset.open;
+    if (box.checked){ if (chosen.size >= 4){ box.checked = false; alert("对比最多选 4 张，先取消一张。"); return; } chosen.add(uid); }
+    else chosen.delete(uid);
+    $("cmpN").textContent = chosen.size;
+    $("cmpGoBtn").disabled = chosen.size < 2;
+  });
+  $("cmpN").textContent = chosen.size;
+  $("cmpGoBtn").disabled = chosen.size < 2;
+  renderHealth();
+}
+function renderHealth(){
+  const broken = new Map();       // slug -> [cards]
+  const missImg = [];
+  const todo = [];
+  for (const c of cards){
+    for (const sl of c.links) if (!slugIndex[sl]){ (broken.get(sl) || broken.set(sl, []).get(sl)).push(c); }
+    if (c.missingImgs.length) missImg.push(c);
+    if (c.placeholders.length) todo.push(c);
+  }
+  const total = broken.size + missImg.length + todo.length;
+  $("healthSummary").textContent = "数据体检：" + (total ? "发现 " + broken.size + " 个断链 / " + missImg.length + " 张缺图 / " + todo.length + " 张有待补" : "全部健康：无断链、无缺图、无待补");
+  let h = "";
+  if (broken.size){
+    h += '<div style="margin-top:6px;color:var(--warn);">断链（缺失的卡片 = 待写线索）：</div>';
+    for (const [sl, cs] of broken){
+      h += '<div class="hrow">→ [[' + esc(sl) + "]]　被引于 " +
+        cs.map(c => '<button class="linklike" data-open="' + escAttr(c.uid) + '">' + esc(c.slug) + "</button>").join("、") + "</div>";
+    }
+  }
+  if (missImg.length){
+    h += '<div style="margin-top:6px;color:var(--warn);">缺图（引用了但 图/ 里没有）：</div>';
+    for (const c of missImg){
+      h += '<div class="hrow"><button class="linklike" data-open="' + escAttr(c.uid) + '">' + esc(c.slug) + "</button>：" + c.missingImgs.map(esc).join("、") + "</div>";
+    }
+  }
+  if (todo.length){
+    h += '<div style="margin-top:6px;color:var(--tx2);">待补小节：</div>';
+    for (const c of todo){
+      h += '<div class="hrow"><button class="linklike" data-open="' + escAttr(c.uid) + '">' + esc(c.slug) + "</button>：" + esc(c.placeholders.join("、")) + "</div>";
+    }
+  }
+  $("healthBody").innerHTML = h;
+  $("healthBody").querySelectorAll("[data-open]").forEach(b => b.onclick = () => openCard(b.dataset.open));
+}
+$("searchInput").addEventListener("input", renderHome);
+$("sortSel").addEventListener("change", renderHome);
+$("cmpGoBtn").onclick = () => openCompare();
+
+/* ================= 阅读视图 ================= */
+function openCard(uid){
+  const c = cards.find(x => x.uid === uid);
+  if (!c) return;
+  curReaderUid = uid;
+  location.hash = "/" + encodeURIComponent(c.slug);
+  let h = '<button id="editCardBtn" type="button" title="在编辑视图中修改此卡（保存才会写回）">编辑此卡</button><h2>' + esc(c.slug) + "</h2>";
+  h += '<div class="rmeta">' + esc(coordLine(c)) +
+    (c.series.length ? " · <b>" + esc(c.series.join("/")) + "</b>" : "") +
+    (c.update ? " · 更新于 " + esc(c.update) : "") + "<br>" +
+    c.tags.map(t=>'<span class="tag" data-tagjump="' + escAttr(t) + '">' + esc(t) + "</span>").join("") +
+    '　<label style="font-size:11.5px;color:var(--tx3);"><input type="checkbox" id="cmpAdd" style="width:auto;vertical-align:-2px;"> 加入对比</label></div>';
+  h += "<h3>概述</h3><div>" + mdHtml(c.overview || "（待补）", c) + "</div>";
+  for (const s of c.sections) h += "<h3>" + esc(s.title) + (s.placeholder ? ' <span class="badge info">待补</span>' : "") + "</h3><div>" + mdHtml(s.body || "（待补）", c) + "</div>";
+  const bl = backlinks[c.slug] || [];
+  h += '<div class="backlinks"><h3 style="border:none;padding:0;">反向链接（' + bl.length + "）</h3>";
+  h += bl.length ? bl.map(b => '<div class="bl"><button class="wikilink backlink" data-slug="' + escAttr(b.slug) + '">' + esc(b.slug) + "</button> <span style='color:var(--tx3);'>" + esc((b.overview||"").slice(0,48)) + "</span></div>").join("")
+                 : '<div style="font-size:12.5px;color:var(--tx3);">还没有卡片链接到这里。</div>';
+  h += "</div>";
+  $("readerBox").innerHTML = h;
+  $("readerBox").querySelectorAll(".wikilink[data-slug]").forEach(b => b.onclick = () => {
+    const target = slugIndex[b.dataset.slug];
+    if (target) openCard(target.uid);
+  });
+  $("readerBox").querySelectorAll(".tag[data-tagjump]").forEach(b => b.onclick = () => { fTags.add(b.dataset.tagjump); goHome(); });
+  $("editCardBtn").onclick = () => startEditCard(c.uid);   // v4：读 → 编辑同一卡片
+  const addBox = $("cmpAdd");
+  addBox.checked = chosen.has(c.uid);
+  addBox.onchange = () => {
+    if (addBox.checked){ if (chosen.size >= 4){ addBox.checked = false; alert("对比最多选 4 张，先在书架取消一张。"); return; } chosen.add(c.uid); }
+    else chosen.delete(c.uid);
+  };
+  show("readerView");
+  window.scrollTo(0,0);
+  materializeImages($("readerBox"));
+}
+
+/* ================= 对比视图 ================= */
+const MAX_CMP = 4;
+function openCompare(){
+  const pair = [...chosen].map(uid => cards.find(c => c.uid === uid)).filter(Boolean);
+  if (pair.length < 2 || pair.length > MAX_CMP) return;
+  // 判定同系列：所有卡至少共享一个系列
+  const shared = pair.reduce((a,c)=>a.intersection(new Set(c.series)), new Set(pair[0].series));
+  const sameSeries = shared.size > 0;
+  let h = "";
+  if (sameSeries){
+    // 同系列：以所有卡的小节并集（保序）逐行对齐
+    const titles = [];
+    for (const c of pair) for (const s of c.sections) if (!titles.includes(s.title)) titles.push(s.title);
+    const secMap = c => { const m = {}; for (const s of c.sections) m[s.title] = s; return m; };
+    const maps = pair.map(secMap);
+    h += pair.map(cmpHead).join("");
+    h += '<div style="grid-column:1/-1;">' + titles.map(t =>
+      '<div class="cmprow">' + pair.map((c,i) =>
+        '<div class="cell"><h4>' + esc(t) + '</h4>' + cellBody(maps[i][t], c) + '</div>'
+      ).join("") + '</div>').join("") +
+      '<div class="cmprow">' + pair.map(c =>
+        '<div class="cell"><h4>概述</h4>' + cellBody({body:c.overview,placeholder:isPlaceholder(c.overview)}, c) + '</div>'
+      ).join("") + '</div></div>';
+  } else {
+    h += pair.map(cmpColFull).join("");
+  }
+  $("cmpBox").innerHTML = h;
+  $("cmpBox").querySelectorAll("[data-slug]").forEach(b => b.onclick = () => { const t = slugIndex[b.dataset.slug]; if (t) openCard(t.uid); });
+  $("cmpBox").querySelectorAll("h2[data-open]").forEach(b => b.onclick = () => openCard(b.dataset.open));
+  show("compareView");
+  window.scrollTo(0,0);
+  materializeImages($("cmpBox"));
+}
+function cmpHead(c){
+  return '<div class="cmpcol"><h2 data-open="' + escAttr(c.uid) + '">' + esc(c.slug) + "</h2>" +
+    '<div class="cmeta">' + esc(coordLine(c)) + (c.update ? " · 更新 " + esc(c.update) : "") + "</div></div>";
+}
+function cellBody(sec, card){
+  if (!sec) return '<p style="color:var(--tx3);">—</p>';
+  return (sec.placeholder ? '<p style="color:var(--tx3);">（待补）</p>' : mdHtml(sec.body, card));
+}
+function cmpColFull(c){
+  let h = '<div class="cmpcol"><h2 data-open="' + escAttr(c.uid) + '">' + esc(c.slug) + "</h2>" +
+    '<div class="cmeta">' + esc(coordLine(c)) + " · " + esc(c.series.join("/")) + "</div>" +
+    "<h4>概述</h4>" + cellBody({body:c.overview,placeholder:isPlaceholder(c.overview)}, c);
+  for (const s of c.sections) h += "<h4>" + esc(s.title) + "</h4>" + cellBody(s, c);
+  return h + "</div>";
+}
+
+/* ================= v4：编辑视图（原 录入卡片.html 的结构化表单，并入本页） ================= */
+/* ---- 坐标池（全系列统一，README 已登记；系列只声明必填项） ---- */
+const AXES_POOL = [
+  { k:"年份", ph:"如 1195-1205 / 2007 / 1888", w:0.7 },
+  { k:"地点", ph:"如 杭州 / 阿尔勒（可空）", w:1 },
+  { k:"对象", ph:"如 夜间咖啡馆 / iPhone", w:1.2 },
+  { k:"范式", ph:"如 对话式交互（可空）", w:1.2 },
+  { k:"时期", ph:"如 阿尔勒时期（可空）", w:1 },
+  { k:"别名", ph:"逗号分隔（可空）", arr:true, w:1.2 }
+];
+const BUILTIN = {
+  chronicle: {
+    name:"编年卡片", folder:"编年",
+    req:["年份","地点"],
+    dims:["政治","经济","社会","科技","日常生活","艺术"],
+    dimHints:{
+      "政治":"谁说了算？权力怎么分配？——例：君主官僚制成熟期，科举文官主导朝政。",
+      "经济":"人们靠什么谋生？买卖怎么进行？——例：纸币会子流通，瓦舍勾栏构成庞大服务业经济。",
+      "社会":"人和人怎么分层、怎么抱团？——例：科举使阶层流动制度化，城市行会组织发达。",
+      "科技":"当时的新玩意是什么？怎么传播？——例：雕版印刷极盛，指南针已用于航海。",
+      "日常生活":"吃穿住行、作息、消遣、声音与气味——例：早市至夜市几无间断，午后听平话看傀儡戏。",
+      "艺术":"谁在创作、为谁创作？——例：院体画与文人画并立，话本小说成熟。"
+    },
+    slug: f => [f["年份"], f["地点"]].filter(Boolean).join("-"),
+    imgName: (f, img, i) => [f["年份"], f["地点"], img.内容 || ("图"+(i+1)), img.作者].filter(Boolean).join("-"),
+    example:{
+      title:"1200-杭州",
+      fields:{ "年份":"1195-1205", "地点":"杭州", "别名":"临安, 南宋行在" },
+      overview:"南宋行在，人口逾百万的当时世界最大城市之一。政治中心与商业中心重合，市民文化极度繁荣。",
+      tags:["商业化城市","官僚制","禅宗","稻作农业","市民文化","印刷术"],
+      dims:{
+        "政治":"君主官僚制成熟期：科举出身的文官集团主导朝政，宰相权重。皇室南迁后礼制重建，太庙与郊坛俱在城内。",
+        "经济":"纸币（会子）已为主要流通货币，是世界最早的大规模纸币经济之一。市舶司年收入可观，泉州、明州海外贸易兴旺。瓦舍勾栏、酒楼茶肆构成庞大的服务业经济。",
+        "社会":"科举使阶层流动通道制度化，\u201c取士不问家世\u201d。城市平民（坊郭户）成为显著群体，行会（团行）组织发达。",
+        "科技":"活字印刷已发明但雕版仍为主流，官私刻书业极盛，为当时世界最大出版中心。造船采用水密隔舱，指南针已用于航海。",
+        "日常生活":"主食稻米，市面百味小食。市民午后听平话、看傀儡戏，夜有瓦子百戏。全年节庆密集：元夕灯山、清明踏青、西湖竞渡。",
+        "艺术":"院体画与文人画并立：李嵩、马远、夏圭供职画院；山水从全景转向边角构图。话本小说成熟，是后世章回小说的源头。"
+      },
+      links:"参见 [[1700-阿姆斯特丹]]：同样高度商业化、印刷业发达的口岸城市，可对比行会制度与信用工具。",
+      source:"《梦粱录》吴自牧，卷十三、卷十六；《武林旧事》周密"
+    }
+  },
+  interaction: {
+    name:"交互设计", folder:"交互",
+    req:["年份","对象","范式"],
+    dims:["技术基础","交互隐喻","美学风格","用户群体","商业模式","争议与批评"],
+    dimHints:{
+      "技术基础":"什么技术让这种交互成为可能？——例：关键词匹配+模板改写，算力极小却制造理解错觉。",
+      "交互隐喻":"用户靠什么心智模型操作？核心手势/操作是什么？——例：\u201c对话即界面\u201d，说人话即可。",
+      "美学风格":"它看起来/听起来什么感觉？——例：终端绿字、逐字打印的延迟感。",
+      "用户群体":"第一批用户是谁？如何扩散？——例：来访者自发倾诉，即\u201cELIZA 效应\u201d。",
+      "商业模式":"怎么赚钱？对交互设计有什么反作用？——例：无商业化，学术项目。",
+      "争议与批评":"当时怎么批评它？后来怎么反思？——例：Weizenbaum 本人转向批判人工智能。"
+    },
+    slug: f => [f["年份"], f["对象"]].filter(Boolean).join("-"),
+    imgName: (f, img, i) => [f["年份"], f["对象"], img.内容 || ("图"+(i+1)), img.作者].filter(Boolean).join("-"),
+    example:{
+      title:"1966-ELIZA",
+      fields:{ "年份":"1966", "地点":"麻省理工学院", "对象":"ELIZA", "范式":"对话式交互" },
+      overview:"Weizenbaum 用模式匹配模拟心理治疗师，是\u201c用自然语言对话操作机器\u201d的第一次大众化演示。拟人化交互的魔力与危险在 1966 年就已全部登场。",
+      tags:["对话式交互","拟人化","聊天机器人","图灵测试"],
+      dims:{
+        "技术基础":"无任何\u201c理解\u201d：关键词匹配 + 模板改写（\u201c我头疼\u201d→\u201c你说你头疼？\u201d）。技术越简单，拟人效果越惊人。",
+        "交互隐喻":"\u201c对话即界面\u201d：用户不需要学任何命令语法，说人话即可。机器用反问维持对话——这个话术五十八年后仍是大语言模型的基本盘。",
+        "美学风格":"终端绿字、逐字打印的延迟感——反应速度反而增强了\u201c对方在思考\u201d的错觉。第一次确立：等待也是体验的一部分。",
+        "用户群体":"秘书与来访者在实验中自发对其倾诉，即\u201cELIZA 效应\u201d：人类会对最低限度的语言线索投注情感。",
+        "商业模式":"无商业化，学术项目。但它定义了此后所有对话产品的验收幻想：图灵测试从科学问题变成了产品营销词。",
+        "争议与批评":"Weizenbaum 本人对\u201cELIZA 效应\u201d深感不安，1976 年出版《计算机能力与人类理性》，成为人机交互伦理学的起点批评。"
+      },
+      links:"参见 [[2007-iPhone]]：手势直接操纵与语言对话是交互的两个极点，2023 年后重新汇合。",
+      source:"Weizenbaum, J. \u201cELIZA—A Computer Program...\u201d (1966)；《计算机能力与人类理性》1976"
+    }
+  },
+  vangogh: {
+    name:"梵高研究", folder:"梵高研究",
+    req:["年份","地点","对象","时期"],
+    dims:["构图与笔触","色彩策略","题材与动机","心理与书信","技法实验","后世影响"],
+    dimHints:{
+      "构图与笔触":"画面结构、视线引导、笔触方向与速度——例：反透视压扁空间，笔触粗短成几何块面。",
+      "色彩策略":"用了什么色彩关系？想达到什么情绪？——例：红绿互补对撞是全画的发动机。",
+      "题材与动机":"为什么画这个？——例：想表现咖啡馆是让人发疯、犯罪的地方。",
+      "心理与书信":"创作时的状态，写给谁、说了什么？——例：失眠严重，靠咖啡与酒维持创作。",
+      "技法实验":"这幅画在试验什么新画法？——例：厚涂不调匀，学日本主义的平涂轮廓。",
+      "后世影响":"影响了谁？作品怎么流转？——例：表现主义先声，生前抵押抵房租。"
+    },
+    slug: f => [f["年份"], f["地点"], f["对象"]].filter(Boolean).join("-"),
+    imgName: (f, img, i) => [f["年份"], f["地点"], f["对象"], img.内容 || ("图"+(i+1)), img.作者].filter(Boolean).join("-"),
+    example:{
+      title:"1888-阿尔勒-夜间咖啡馆",
+      fields:{ "年份":"1888", "地点":"阿尔勒", "对象":"夜间咖啡馆", "时期":"阿尔勒时期" },
+      overview:"用刺目的色彩关系做\u201c情绪武器\u201d的宣言式作品——梵高自称想表现咖啡馆是让人发疯、犯罪的地方。",
+      tags:["互补色","夜景","日本主义","颜料厚涂","反透视"],
+      dims:{
+        "构图与笔触":"反透视：天花板绿光把空间压扁，球台画得歪斜，视线被逼向挂钟——无处可逃的构图。笔触粗、快、短，明显受日本版画平面化影响。",
+        "色彩策略":"红与绿的互补对撞是全画的发动机：血红墙壁、绿灯天花板。他在信中说要用色彩制造\u201c恶魔的熔炉\u201d——色彩不描摹现实，直接承担心理功能。",
+        "题材与动机":"画的是火车站旁一家通宵营业的咖啡馆，流浪汉与醉汉在此过夜。这也是他为筹备\u201c南方画室\u201d期间的系列室内画之一。",
+        "心理与书信":"1888 年夏给提奥的信中详细解释了用色意图；同期失眠严重、靠咖啡与酒维持高强度创作。三个月后高更抵达，年末即发生割耳事件。",
+        "技法实验":"粗笔厚涂，颜料近乎不调匀地并置；以轮廓线和平涂组织画面。同期《夜间露天咖啡座》是同一课题的\u201c室外对照组\u201d。",
+        "后世影响":"表现主义\u201c色彩即情绪\u201d的先声参考；原作现藏耶鲁大学美术馆。生前曾被他抵押抵房租，死后成为其市场神话的标本之一。"
+      },
+      links:"参见 [[1200-杭州]]：日本浮世绘绕道巴黎改变欧洲绘画——版画传播链的两端。",
+      source:"《梵高书信全集》第 676、677 号信（1888-09 致提奥）；Yale University Art Gallery 藏品档案"
+    }
+  }
+};
+
+/* ---- 表单状态 ---- */
+let curTpl = "chronicle";
+let tags = [];
+let images = [];                 // {file,url,内容,作者}
+let dimValues = {};
+let customDims = [];
+let curDim = 0;
+let editTarget = null;          // {type:"local"|"gh", path, extra, rawImages}
+let editReturn = null;          // 保存/离开后回到哪里：{mode:"edit",uid} | {mode:"new",folder,slug}
+
+let SERIES = Object.keys(BUILTIN).map(k => ({
+  id:k, name:BUILTIN[k].name, folder:BUILTIN[k].folder,
+  req:BUILTIN[k].req.slice(), dims:BUILTIN[k].dims.slice(), exKey:k, slug:BUILTIN[k].slug || null
+}));
+const HINTS = {}; for (const k of Object.keys(BUILTIN)) Object.assign(HINTS, BUILTIN[k].dimHints);
+function tpl(){ return SERIES.find(s => s.id === curTpl) || SERIES[0]; }
+function exOf(){ const s = tpl(); return s.exKey && BUILTIN[s.exKey] ? BUILTIN[s.exKey].example : null; }
+function imgNameOf(s, f, im, i){ return [...s.req.map(k => f[k]), im.内容 || ("图"+(i+1)), im.作者].filter(Boolean).join("-"); }
+function eRoot(){ return (source && source.type === "local") ? source.root : null; }
+
+/* ---- 系列配置文件 模板/系列配置.md ---- */
+function seriesToText(list){
+  const L = [
+    "# 系列配置 —— 阅读卡片.html（编辑视图）的系列注册表",
+    "",
+    "> 本文件是纯文本，可随时用任何编辑器手工修改；在编辑视图点「系列管理」保存也会改写它。",
+    "> 规则：每个「## 名称」小节 = 一个系列，字段如下——",
+    "> · 目录：卡片/ 下的文件夹名；",
+    "> · 必填：坐标池里的词（年份/地点/对象/范式/时期/别名），逗号分隔；",
+    "> · 维度：推荐维度，逗号分隔（新维度请先到 README 的维度池登记）；",
+    "> · 示例：编年卡片 / 交互设计 / 梵高研究 之一（给「载入示例」挂内置示范卡片，可省略）。",
+    "> 删除小节即删除系列；改「## 名称」即改名——注意已有卡片的 系列 字段不会自动跟着改。",
+    ""
+  ];
+  for (const s of list){
+    L.push("## " + s.name);
+    L.push("目录: " + (s.folder || s.name));
+    L.push("必填: " + s.req.join(", "));
+    L.push("维度: " + s.dims.join(", "));
+    if (s.exKey && BUILTIN[s.exKey]) L.push("示例: " + BUILTIN[s.exKey].name);
+    L.push("");
+  }
+  return L.join("\n");
+}
+function parseSeriesText(text){
+  const out = []; let cur = null;
+  for (const raw of text.split(/\r?\n/)){
+    const h = raw.match(/^##\s+(.+?)\s*$/);
+    if (h){ cur = { name:h[1], folder:"", req:[], dims:[], exKey:"" }; out.push(cur); continue; }
+    if (!cur) continue;
+    const kv = raw.match(/^(目录|必填|维度|示例)\s*[:：]\s*(.*)$/);
+    if (!kv) continue;
+    const v = kv[2].trim();
+    if (kv[1] === "目录") cur.folder = v;
+    else if (kv[1] === "必填") cur.req = v.split(/[,，、]/).map(x=>x.trim()).filter(x => AXES_POOL.some(a => a.k === x));
+    else if (kv[1] === "维度") cur.dims = v.split(/[,，、]/).map(x=>x.trim()).filter(Boolean);
+    else if (kv[1] === "示例"){ const b = Object.keys(BUILTIN).find(k => BUILTIN[k].name === v); cur.exKey = b || ""; }
+  }
+  return out.filter(s => s.name && s.dims.length);
+}
+function applySeries(list){
+  const prevName = tpl().name;
+  SERIES = list.map(s => {
+    const bid = Object.keys(BUILTIN).find(k => BUILTIN[k].name === s.name);
+    return { id: bid || s.name, name:s.name, folder:s.folder || s.name, req:s.req.length ? s.req : ["年份"],
+             dims:s.dims, exKey:s.exKey || "", slug: bid ? BUILTIN[bid].slug : null };
+  });
+  if (!SERIES.find(s => s.name === prevName)) curTpl = SERIES[0].id;
+  if ($("tplSel")) renderAll();
+}
+async function loadSeriesConfig(){
+  try{
+    let txt = null;
+    if (source && source.type === "gh") txt = await ghGetText((gh.base ? gh.base + "/" : "") + "模板/系列配置.md");
+    else {
+      const rt = eRoot();
+      if (rt){
+        const fh = await (await rt.getDirectoryHandle("模板")).getFileHandle("系列配置.md");
+        txt = await (await fh.getFile()).text();
+      }
+    }
+    if (txt){ const list = parseSeriesText(txt); if (list.length) applySeries(list); }
+  }catch(e){ /* 配置文件不存在 → 沿用内置三系列 */ }
+}
+let serDraft = null;
+function renderTplSel(){
+  $("tplSel").innerHTML = SERIES.map(s => '<option value="'+esc(s.id)+'">系列：'+esc(s.name)+"</option>").join("");
+  $("tplSel").value = tpl().id;
+}
+function serRowHtml(s, i){
+  const exOpts = ['<option value="">（无示例）</option>'].concat(
+    Object.keys(BUILTIN).map(k => '<option value="'+k+'"'+(s.exKey===k?" selected":"")+">"+esc(BUILTIN[k].name)+"</option>")
+  ).join("");
+  return '<div class="serrow" data-i="'+i+'">' +
+    '<div><label>系列名称（写入 YAML 系列）</label><input class="s-name" value="'+esc(s.name)+'"></div>' +
+    '<div><label>目录（卡片/ 下的文件夹名）</label><input class="s-folder" value="'+esc(s.folder)+'"></div>' +
+    '<div><label>必填坐标（逗号分隔，选自 年份/地点/对象/范式/时期/别名）</label><input class="s-req" value="'+esc(s.req.join(", "))+'"></div>' +
+    '<div><label>推荐维度（逗号分隔）</label><input class="s-dims" value="'+esc(s.dims.join(", "))+'"></div>' +
+    '<div><label>示例（挂内置示范卡片）</label><select class="s-ex">'+exOpts+"</select></div>" +
+    '<div style="display:flex;align-items:end;"><button type="button" class="s-del">删除系列</button></div></div>';
+}
+function renderSerRows(){
+  $("serRows").innerHTML = serDraft.map(serRowHtml).join("");
+  $("serRows").querySelectorAll(".s-del").forEach(b => b.onclick = () => { serDraft.splice(+b.closest(".serrow").dataset.i, 1); renderSerRows(); });
+}
+$("seriesBtn").onclick = async () => {
+  await loadSeriesConfig();
+  serDraft = SERIES.map(s => ({ name:s.name, folder:s.folder, req:s.req.slice(), dims:s.dims.slice(), exKey:s.exKey||"" }));
+  renderSerRows(); $("serModal").style.display = "flex";
+};
+$("serCancel").onclick = () => { $("serModal").style.display = "none"; };
+$("serAdd").onclick = () => {
+  serDraft.push({ name:"新系列", folder:"新系列", req:["年份"], dims:["背景","过程","影响"], exKey:"" });
+  renderSerRows();
+  const rows = $("serRows").querySelectorAll(".serrow");
+  rows[rows.length-1].querySelector(".s-name").focus();
+};
+function collectSerDraft(){
+  return [...$("serRows").querySelectorAll(".serrow")].map(row => ({
+    name: row.querySelector(".s-name").value.trim(),
+    folder: row.querySelector(".s-folder").value.trim(),
+    req: row.querySelector(".s-req").value.split(/[,，、]/).map(x=>x.trim()).filter(x => AXES_POOL.some(a => a.k === x)),
+    dims: row.querySelector(".s-dims").value.split(/[,，、]/).map(x=>x.trim()).filter(Boolean),
+    exKey: row.querySelector(".s-ex").value
+  }));
+}
+$("serSave").onclick = async () => {
+  const list = collectSerDraft();
+  if (!list.length){ showMessage("至少保留一个系列。"); return; }
+  for (const s of list){
+    if (!s.name){ showMessage("每个系列都需要名称。"); return; }
+    if (!s.req.length){ showMessage("系列「"+s.name+"」至少要有一个必填坐标（建议包含 年份）。"); return; }
+    if (!s.dims.length){ showMessage("系列「"+s.name+"」至少要有一个推荐维度。"); return; }
+  }
+  const text = seriesToText(list);
+  try{
+    if (source && source.type === "gh"){
+      await ghPut((gh.base ? gh.base + "/" : "")+"模板/系列配置.md", utf8ToB64(text), "更新系列配置");
+      applySeries(list); $("serModal").style.display = "none";
+      setStatus("系列配置已提交到 GitHub：模板/系列配置.md", "ok");
+    } else if (eRoot()){
+      if (!await ensureLocalWrite()) return;
+      const mh = await eRoot().getDirectoryHandle("模板", { create:true });
+      await saveInto(mh, "系列配置.md", new Blob([text], { type:"text/markdown;charset=utf-8" }));
+      applySeries(list); $("serModal").style.display = "none";
+      setStatus("系列配置已写入：模板/系列配置.md", "ok");
+    } else {
+      applySeries(list); $("serModal").style.display = "none";
+      showMessage("系列修改已在本页生效，但当前没有连接数据源，配置无处保存——刷新页面后会丢失。\n\n先连接项目文件夹（或配置 GitHub）再保存一次，即可永久写入 模板/系列配置.md。",
+        window.showDirectoryPicker ? "立即连接项目文件夹" : null,
+        window.showDirectoryPicker ? () => $("pickBtn").click() : null);
+    }
+  }catch(e){ showMessage("保存系列配置失败：" + e.message); }
+};
+
+/* ---- 系列切换 / 通用渲染 ---- */
+$("tplSel").onchange = () => {
+  if (!confirm("切换系列将清空当前表单（已填内容不会写入任何文件）"+(editTarget ? "，并退出当前编辑" : "")+"，确定？")){
+    $("tplSel").value = curTpl; return;
+  }
+  exitEdit(); editReturn = null;
+  curTpl = $("tplSel").value;
+  tags=[]; images=[]; dimValues={}; customDims=[]; curDim=0; $("dimText").value="";
+  ["overview","links","source"].forEach(id => $(id).value="");
+  $("exBanner").style.display="none";
+  renderAll();
+};
+function renderAll(){
+  renderTplSel(); renderAxes(); renderDims(); renderTags(); renderImages(); renderExamples(); updatePreview();
+}
+function renderExamples(){
+  const ex = exOf();
+  $("overviewEx").textContent = ex ? (ex.overview||"") : "";
+  $("linksEx").textContent = ex ? (ex.links||"") : "";
+  $("sourceEx").textContent = ex ? (ex.source||"") : "";
+}
+function renderAxes(){
+  const t = tpl();
+  $("axes").innerHTML = '<div class="axrow">' + AXES_POOL.map(a =>
+    '<div style="flex:'+(a.w||1)+' 1 130px;"><label>'+a.k+(a.arr?"（数组）":"")+(t.req.includes(a.k)?' <span style="color:var(--warn)" title="本系列必填">✱</span>':"")+'</label><input data-k="'+a.k+'" placeholder="'+a.ph+'"></div>'
+  ).join("") + "</div>";
+  $("axes").querySelectorAll("input").forEach(inp => inp.addEventListener("input", updatePreview));
+}
+function allDims(){ const t = tpl(); return [...t.dims, ...customDims.filter(d => !t.dims.includes(d))]; }
+function renderDims(){
+  const t = tpl();
+  const list = allDims();
+  if (curDim >= list.length) curDim = 0;
+  $("dimTabs").innerHTML = list.map((d, i) => {
+    const isCustom = customDims.includes(d) && !t.dims.includes(d);
+    return '<button type="button" data-i="'+i+'" class="'+(i===curDim?"on":"")+'" title="'+(isCustom?"自选维度":"")+'">'+d+(dimValues[d]?'<span class="dot">●</span>':"")+(isCustom?'<span class="rm" data-k="'+esc(d)+'" title="移除此维度（未保存的文字会丢失）">×</span>':"")+"</button>";
+  }).join("");
+  $("dimTabs").querySelectorAll("button").forEach(b => b.onclick = () => { saveCurDim(); curDim = +b.dataset.i; renderDims(); });
+  $("dimTabs").querySelectorAll(".rm").forEach(r => r.onclick = e => {
+    e.stopPropagation();
+    if (!confirm("移除自选维度「"+r.dataset.k+"」？（该维度下未保存的文字会丢失）")) return;
+    customDims = customDims.filter(d => d !== r.dataset.k);
+    delete dimValues[r.dataset.k];
+    saveCurDim(); curDim = 0;
+    renderDims(); updatePreview();
+  });
+  $("dimText").value = dimValues[list[curDim]] || "";
+  const hint = HINTS[list[curDim]] || "";
+  const ex = exOf();
+  const exd = ex && ex.dims ? (ex.dims[list[curDim]] || "") : "";
+  $("dimHint").textContent = hint || (customDims.includes(list[curDim]) ? "自定义维度：用 2-5 句说清它问什么、答案的常态是什么。" : "");
+  $("dimExample").textContent = exd || (customDims.includes(list[curDim]) ? "（自选维度无内置示例，直接照引导问题写即可）" : "（该维度暂无示例，直接照引导问题写即可）");
+  $("dimText").placeholder = hint ? hint.split("——")[0] : "写 2-5 句"+list[curDim]+"维度的常态，求具体";
+}
+function saveCurDim(){ const list = allDims(); if (list[curDim]) dimValues[list[curDim]] = $("dimText").value; }
+$("dimText").addEventListener("input", () => { saveCurDim(); updatePreview(); });
+
+function renderTags(){
+  const chipsHtml = tags.map(t => '<span class="chip">'+esc(t)+'<b data-t="'+esc(t)+'">×</b></span>').join("");
+  $("chips").innerHTML = chipsHtml + '<input id="tagInput" list="tagList" placeholder="回车添加">';
+  const inp = $("tagInput");
+  inp.addEventListener("keydown", e => {
+    if (e.key === "Enter" && inp.value.trim()){
+      const v = inp.value.trim();
+      if (!tags.includes(v)) tags.push(v);
+      addTagMemory(v); renderTags(); updatePreview();
+    }
+  });
+  inp.addEventListener("change", () => { if (inp.value.trim() && !tags.includes(inp.value.trim())){ tags.push(inp.value.trim()); addTagMemory(inp.value.trim()); renderTags(); updatePreview(); } });
+  $("chips").querySelectorAll("b").forEach(b => b.onclick = () => { tags = tags.filter(x => x !== b.dataset.t); renderTags(); updatePreview(); });
+  $("tagList").innerHTML = getTagMemory().map(t => "<option value='"+esc(t)+"'>").join("");
+}
+function getTagMemory(){ try { return JSON.parse(localStorage.getItem("nb-tags") || "[]"); } catch(e){ return []; } }
+function addTagMemory(t){ const m = getTagMemory(); if (!m.includes(t)){ m.push(t); try { localStorage.setItem("nb-tags", JSON.stringify(m.slice(-200))); } catch(e){} } }
+
+/* ---- 图片（v9：拖入自动压缩到长边 2000px 转 JPEG） ---- */
+$("drop").onclick = () => $("fileInput").click();
+$("fileInput").onchange = e => { addImages(e.target.files); e.target.value = ""; };
+$("drop").addEventListener("dragover", e => { e.preventDefault(); $("drop").classList.add("over"); });
+$("drop").addEventListener("dragleave", () => $("drop").classList.remove("over"));
+$("drop").addEventListener("drop", e => { e.preventDefault(); $("drop").classList.remove("over"); addImages(e.dataTransfer.files); });
+async function compressImage(f){
+  if (!f.type.startsWith("image/")) return { file:f, compressed:false };
+  const objUrl = URL.createObjectURL(f);
+  let im;
+  try { im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = objUrl; }); }
+  catch(e){ URL.revokeObjectURL(objUrl); return { file:f, compressed:false }; }
+  const w = im.naturalWidth, h = im.naturalHeight;
+  if (!w || !h || Math.max(w,h) <= 2000){ URL.revokeObjectURL(objUrl); return { file:f, compressed:false }; }
+  const scale = 2000/Math.max(w,h);
+  const cv = document.createElement("canvas");
+  cv.width = Math.round(w*scale); cv.height = Math.round(h*scale);
+  cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
+  URL.revokeObjectURL(objUrl);
+  const blob = await new Promise(res => cv.toBlob(res, "image/jpeg", 0.88));
+  const base = f.name.replace(/\.[^.]+$/, "");
+  return { file:new File([blob], base+".jpg", { type:"image/jpeg" }), compressed:true, dims:cv.width+"×"+cv.height };
+}
+async function addImages(files){
+  let n = 0; const dimsList = [];
+  for (const f of files){
+    if (!f.type.startsWith("image/")) continue;
+    let out = f, dims = "";
+    try { const r = await compressImage(f); out = r.file; if (r.compressed){ n++; dims = r.dims; } } catch(e){}
+    const reader = new FileReader();
+    reader.onload = () => { images.push({ file:out, url:reader.result, 内容:"", 作者:"" }); renderImages(); updatePreview(); };
+    reader.readAsDataURL(out);
+    if (dims) dimsList.push(dims);
+  }
+  if (n) setStatus("已自动压缩 "+n+" 张图至长边 ≤2000px（"+dimsList.join("、")+"，转 JPEG）；保存时按规范改名。", "ok");
+}
+function renderImages(){
+  $("imgList").innerHTML = images.map((im, i) =>
+    '<div class="imgrow"><img src="'+im.url+'">' +
+    '<div class="meta"><input data-i="'+i+'" data-f="内容" placeholder="内容，如 西湖图" value="'+esc(im.内容)+'">' +
+    '<input data-i="'+i+'" data-f="作者" placeholder="作者/来源，可空" value="'+esc(im.作者)+'"></div>' +
+    '<button type="button" class="del" data-i="'+i+'">移除</button></div>'
+  ).join("");
+  $("imgList").querySelectorAll("input").forEach(inp => inp.addEventListener("input", e => { images[+e.target.dataset.i][e.target.dataset.f] = e.target.value; updatePreview(); }));
+  $("imgList").querySelectorAll(".del").forEach(b => b.onclick = () => { images.splice(+b.dataset.i, 1); renderImages(); updatePreview(); });
+}
+
+/* ---- 生成 Markdown ---- */
+function collectFields(){
+  const t = tpl(), f = {};
+  $("axes").querySelectorAll("input").forEach(inp => { f[inp.dataset.k] = inp.value.trim(); });
+  f["概述"] = ($("overview").value || "").trim();
+  f["系列"] = [t.name]; f["标签"] = tags.slice();
+  saveCurDim();
+  return f;
+}
+function yamlList(arr){ return arr.length ? "\n"+arr.map(x => "  - "+x).join("\n") : " []"; }
+function todayStr(){ const d = new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function buildMarkdown(){
+  const t = tpl(), f = collectFields();
+  const missing = t.req.filter(k => !f[k]);
+  if (missing.length) return null;
+  let md = "---\n";
+  for (const a of AXES_POOL){
+    if (a.arr){ if (f[a.k]) md += a.k+": ["+f[a.k]+"]\n"; }
+    else if (f[a.k]) md += a.k+": "+f[a.k]+"\n";
+  }
+  md += "系列:"+yamlList(f["系列"])+"\n";
+  md += "标签:"+yamlList(f["标签"])+"\n";
+  md += "更新: "+todayStr()+"\n---\n\n";
+  md += "# 概述\n\n"+(f["概述"] || "（待补：这个卡片最突出的面貌）")+"\n\n";
+  for (const d of t.dims) md += "## "+d+"\n\n"+(dimValues[d]||"").trim()+"\n\n";
+  for (const d of customDims) if ((dimValues[d]||"").trim()) md += "## "+d+"\n\n"+dimValues[d].trim()+"\n\n";
+  if (images.length || (editTarget && editTarget.rawImages)){
+    md += "## 图像\n\n";
+    if (editTarget && editTarget.rawImages) md += editTarget.rawImages+"\n\n";
+    images.forEach((im, i) => {
+      const name = t.imgName(f, im, i) + extOf(im.file);
+      md += "!["+(im.内容 || name)+"](图/"+name+")\n> "+(im.内容||"")+(im.作者 ? "　—— "+im.作者 : "")+"\n\n";
+    });
+  }
+  const links = $("links").value.trim();
+  md += "## 关系\n\n"+(links || "（待补：与其他卡片的双链）")+"\n\n";
+  md += "## 来源\n\n"+($("source").value.trim() || "（待补）")+"\n";
+  if (editTarget && editTarget.extra) md += editTarget.extra;
+  return { fields:f, md };
+}
+function extOf(file){ const m = (file.name.match(/\.\w+$/) || [".jpg"])[0]; return m.toLowerCase(); }
+function slugOf(f){ const s = tpl(); return (s.slug ? s.slug(f) : s.req.map(k => f[k]).filter(Boolean).join("-")) || "未命名"; }
+function updatePreview(){
+  const r = buildMarkdown();
+  $("preview").textContent = r ? r.md : "（填写必填坐标："+tpl().req.join("、")+" 后，此处显示将生成的卡片）";
+}
+
+/* ---- 示例 ---- */
+function formHasContent(){
+  return tags.length > 0 || images.length > 0 ||
+    Object.values(dimValues).some(v => (v||"").trim()) ||
+    ($("overview").value||"").trim() || ($("links").value||"").trim() || ($("source").value||"").trim() ||
+    [...$("axes").querySelectorAll("input")].some(inp => inp.value.trim());
+}
+$("exBtn").onclick = () => {
+  if (formHasContent() && !confirm("载入示例将覆盖当前表单内容（不会写入任何文件），继续？")) return;
+  const t = tpl(), ex = exOf();
+  if (!ex){ showMessage("系列「"+t.name+"」还没有挂示例。可以在「系列管理」里给它挂一个内置示范（编年卡片 / 交互设计 / 梵高研究）。"); return; }
+  curDim = 0;
+  tags = ex.tags.slice();
+  customDims = [];
+  dimValues = Object.assign({}, ex.dims);
+  $("links").value = ex.links || "";
+  $("source").value = ex.source || "";
+  renderAll();
+  $("axes").querySelectorAll("input").forEach(inp => { inp.value = ex.fields[inp.dataset.k] || ""; });
+  $("overview").value = ex.overview || "";
+  renderDims(); renderTags(); updatePreview();
+  $("exBanner").style.display = "block";
+  setStatus("已载入示例《"+ex.title+"》（取自库内真实卡片）——照着改成你的内容即可。", "ok");
+};
+
+/* ---- 添加维度 ---- */
+function dimPool(){ const s = []; for (const ser of SERIES) for (const d of ser.dims) if (!s.includes(d)) s.push(d); return s; }
+$("addDimBtn").onclick = () => {
+  const cur = allDims();
+  $("dimNameInput").value = "";
+  $("dimPoolChips").innerHTML = dimPool().filter(d => !cur.includes(d)).map(d =>
+    '<button type="button" data-d="'+esc(d)+'" style="border:0.5px solid var(--line);border-radius:99px;background:var(--bg);font-size:12px;padding:3px 10px;">'+esc(d)+"</button>"
+  ).join("");
+  $("dimPoolChips").querySelectorAll("button").forEach(b => b.onclick = () => { $("dimNameInput").value = b.dataset.d; });
+  $("dimModal").style.display = "flex";
+  $("dimNameInput").focus();
+};
+function addDimCommit(){
+  const name = $("dimNameInput").value.trim();
+  if (!name) return;
+  $("dimModal").style.display = "none";
+  if (allDims().includes(name)){ curDim = allDims().indexOf(name); renderDims(); return; }
+  saveCurDim();
+  customDims.push(name); dimValues[name] = "";
+  curDim = allDims().length - 1;
+  renderDims(); updatePreview();
+  setStatus("已添加维度「"+name+"」。若它是新发明的维度，记得去 README 的维度池登记。", "ok");
+}
+$("dimAdd").onclick = addDimCommit;
+$("dimCancel").onclick = () => { $("dimModal").style.display = "none"; };
+$("dimNameInput").addEventListener("keydown", e => { if (e.key === "Enter") addDimCommit(); });
+
+/* ---- 反解析卡片.md → 表单（阅读侧 parseCard 已占用此名，改称 decompose） ---- */
+function showMessage(text, actionLabel, actionFn){
+  $("msgText").textContent = text;
+  const act = $("msgAction");
+  if (actionLabel){ act.textContent = actionLabel; act.style.display = "inline-block"; act.onclick = () => { $("msgModal").style.display = "none"; if (actionFn) actionFn(); }; }
+  else act.style.display = "none";
+  $("msgClose").onclick = () => { $("msgModal").style.display = "none"; };
+  $("msgModal").style.display = "flex";
+}
+function exitEdit(){
+  editTarget = null;
+  $("editBanner").style.display = "none";
+  $("saveBtn").textContent = "保存卡片";
+}
+function cleanSection(s){
+  s = (s || "").trim();
+  return /^（待补|^（未|^（暂/.test(s) ? "" : s;
+}
+function decomposeCardMd(md, t){
+  const r = { fields:{}, arrays:{}, overview:"", dims:{}, links:"", source:"", rawImages:"", extra:"" };
+  const ym = md.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (ym){
+    let key = null;
+    for (const line of ym[1].split(/\r?\n/)){
+      const li = line.match(/^\s+-\s*(.*)$/);
+      if (li && key){ (r.arrays[key] = r.arrays[key] || []).push(li[1].trim()); continue; }
+      const kv = line.match(/^([^:#]+):\s*(.*)$/);
+      if (!kv) continue;
+      key = kv[1].trim();
+      const v = kv[2].trim();
+      if (/^\[.+\]$/.test(v)) r.arrays[key] = v.slice(1,-1).split(",").map(s=>s.trim()).filter(Boolean);
+      else r.fields[key] = v;
+    }
+  }
+  const body = md.slice(ym ? ym[0].length : 0);
+  const buf = {}; const order = []; let cur = null;
+  for (const line of body.split(/\r?\n/)){
+    const h = line.match(/^#{1,2}\s+(.+?)\s*$/);
+    if (h){ cur = h[1]; if (!(cur in buf)){ buf[cur]=""; order.push(cur); } }
+    else if (cur) buf[cur] += line+"\n";
+  }
+  r.overview = cleanSection(buf["概述"]);
+  r.links = cleanSection(buf["关系"]);
+  r.source = cleanSection(buf["来源"]);
+  r.rawImages = (buf["图像"] || "").trim();
+  for (const d of t.dims) r.dims[d] = cleanSection(buf[d]);
+  const known = new Set([...t.dims, "概述", "图像", "关系", "来源"]);
+  r.extraList = order.filter(k => !known.has(k)).map(k => ({ k, txt:cleanSection(buf[k]) }));
+  r.extra = r.extraList.map(it => "## "+it.k+"\n\n"+it.txt+"\n").join("\n");
+  return r;
+}
+function loadCardIntoForm(md, label){
+  const probe = decomposeCardMd(md, tpl());
+  const series = probe.arrays["系列"] || [];
+  const hit = SERIES.find(s => series.includes(s.name));
+  if (hit && hit.id !== curTpl){ curTpl = hit.id; $("tplSel").value = curTpl; }
+  const t = tpl();
+  const p = decomposeCardMd(md, t);
+  curDim = 0;
+  tags = p.arrays["标签"] || [];
+  dimValues = p.dims;
+  customDims = [];
+  for (const it of (p.extraList || [])){ if (it.txt){ customDims.push(it.k); dimValues[it.k] = it.txt; } }
+  p.extra = "";
+  $("overview").value = p.overview;
+  $("links").value = p.links;
+  $("source").value = p.source;
+  renderAll();
+  $("axes").querySelectorAll("input").forEach(inp => { inp.value = p.fields[inp.dataset.k] || ""; });
+  updatePreview();
+  $("exBanner").style.display = "none";
+  $("editBanner").style.display = "block";
+  $("editPath").textContent = label;
+  const n = (p.rawImages.match(/!\[/g) || []).length;
+  $("editImgs").textContent = n ? "　（原卡片已有图片 "+n+" 张，原样保留）" : "";
+  $("saveBtn").textContent = "保存修改（覆盖原文件）";
+  return p;
+}
+function describeCard(c){
+  let label = c.fsDir;
+  if (c.update) label += "（更新 "+c.update+"）";
+  if (c.overview) label += "\n　" + c.overview.slice(0,60);
+  return label;
+}
+function pickFrom(list){
+  return new Promise(res => {
+    const box = $("pickList");
+    box.innerHTML = list.map((it, i) =>
+      '<button type="button" data-i="'+i+'" style="display:block;width:100%;text-align:left;white-space:pre-wrap;border:none;border-bottom:0.5px solid var(--line);border-radius:0;padding:8px 10px;">'+esc(it.label)+"</button>"
+    ).join("");
+    box.querySelectorAll("button").forEach(b => b.onclick = () => { $("pickModal").style.display = "none"; res(list[+b.dataset.i]); });
+    $("pickCancel").onclick = () => { $("pickModal").style.display = "none"; res(null); };
+    $("pickModal").style.display = "flex";
+  });
+}
+$("exitEditBtn").onclick = () => {
+  if (!confirm("退出编辑并清空表单？（原文件不受影响，只有点「保存修改」才会写入）")) return;
+  exitEdit(); editReturn = null;
+  tags=[]; images=[]; dimValues={}; customDims=[]; curDim=0;
+  ["overview","links","source","dimText"].forEach(id => $(id).value="");
+  renderAll();
+};
+$("linkPick").onclick = async () => {
+  if (!source){
+    showMessage("选卡插入需要先连接数据源（项目文件夹或 GitHub）。", window.showDirectoryPicker ? "立即连接项目文件夹" : null,
+      window.showDirectoryPicker ? () => $("pickBtn").click() : null);
+    return;
+  }
+  const curPath = editTarget && editTarget.path;
+  const usable = cards.filter(c => curPath !== c.path && curPath !== c.repoDir + "/卡片.md");
+  if (!usable.length){ showMessage("库里还没有其他卡片，先保存一张再来做双链。"); return; }
+  const pick = await pickFrom(usable.map(c => ({ label:describeCard(c), value:c.slug })));
+  if (!pick) return;
+  const ta = $("links");
+  ta.value = (ta.value.trim() ? ta.value.trimEnd()+"\n" : "") + "参见 [["+pick.value+"]]：";
+  updatePreview();
+  setStatus("已插入 [["+pick.value+"]]，补一句为什么相关即可。", "ok");
+};
+
+/* ---- 保存 ---- */
+async function saveInto(dirHandle, name, blob){
+  const fh = await dirHandle.getFileHandle(name, { create:true });
+  const w = await fh.createWritable(); await w.write(blob); await w.close();
+}
+async function getDir(parent, name){ return parent.getDirectoryHandle(name, { create:true }); }
+/* v4：阅读侧句柄可能是以 read 取得；保存（用户手势）时尝试升级为读写授权 */
+async function ensureLocalWrite(){
+  const rt = eRoot();
+  if (!rt) return false;
+  if (await permState(rt, "readwrite") === "granted") return true;
+  if (await askPerm(rt, "readwrite")) return true;
+  setStatus("需要读写权限才能保存到项目文件夹——浏览器应已弹出授权条，允许后请再点一次保存。", "err");
+  return false;
+}
+async function walkDir(rt, rel){
+  let h = rt;
+  for (const seg of rel.split("/")) if (seg) h = await h.getDirectoryHandle(seg);
+  return h;
+}
+async function localCardExists(folder, slug){
+  try{
+    const rt = eRoot();
+    const d = await walkDir(await getDir(await getDir(rt, "卡片"), folder), slug);
+    await d.getFileHandle("卡片.md");
+    return true;
+  }catch(e){ return false; }
+}
+async function finishSaved(rec, savedDesc){
+  rememberTags();
+  setStatus("已保存" + (savedDesc ? "：" + savedDesc : "") + "。正在刷新书库…", "ok");
+  setMsg("已保存，正在刷新书库…");
+  try {
+    if (source.type === "gh") await loadGh();
+    else await readLocalRoot(source.root);
+  }catch(e){ setMsg("已保存，但自动刷新失败：" + e.message + "（可手动点刷新）"); }
+  exitEdit();
+  if (rec && rec.mode === "edit"){
+    if (cards.some(c => c.uid === rec.uid)){ openCard(rec.uid); return; }
+    goHome();
+  } else if (rec && rec.mode === "new"){
+    const want = "卡片/"+rec.folder+"/"+rec.slug+"/卡片.md";
+    const c = cards.find(x => x.path === want) || cards.find(x => x.slug === rec.slug);
+    if (c){ openCard(c.uid); return; }
+    goHome();
+  } else {
+    goHome();
+  }
+}
+async function saveSlice(){
+  const r = buildMarkdown();
+  if (!r){ setStatus("请填写必填坐标（✱ 标记）："+tpl().req.join("、")+"。", "err"); return; }
+  const t = tpl();
+  const blob = new Blob([r.md], { type:"text/markdown;charset=utf-8" });
+
+  /* 编辑模式：覆盖原文件 */
+  if (editTarget){
+    const mdOut = r.md, rec = editReturn;
+    try{
+      if (editTarget.type === "local"){
+        if (!await ensureLocalWrite()) return;
+        const dir = await walkDir(eRoot(), editTarget.path.replace(/\/卡片\.md$/, ""));
+        await saveInto(dir, "卡片.md", blob);
+        if (images.length){
+          const imgDir = await getDir(dir, "图");
+          for (let i=0;i<images.length;i++){
+            const name = imgNameOf(t, r.fields, images[i], i) + extOf(images[i].file);
+            await saveInto(imgDir, name, images[i].file);
+          }
+        }
+      } else {
+        const dir = editTarget.path.replace(/\/卡片\.md$/, "");
+        await ghPut(editTarget.path, utf8ToB64(mdOut), "更新卡片 "+dir.split("/").pop());
+        for (let i=0;i<images.length;i++){
+          const name = imgNameOf(t, r.fields, images[i], i) + extOf(images[i].file);
+          await ghPut(dir+"/图/"+name, await fileB64(images[i].file), "图片 "+name);
+        }
+      }
+      await finishSaved(rec, editTarget.path);
+    }catch(e){ setStatus("保存失败：" + e.message, "err"); }
+    return;
+  }
+
+  const slug = slugOf(r.fields);
+
+  /* 新建：同坐标同名先确认 */
+  let exists = false;
+  try{
+    if (source && source.type === "gh"){
+      const bp0 = gh.base ? gh.base + "/" : "";
+      exists = await ghCardExists(bp0 + "卡片/"+t.folder+"/"+slug+"/卡片.md");
+    } else if (eRoot()){
+      exists = await localCardExists(t.folder, slug);
+    }
+  }catch(e){ setStatus("保存前检查重名失败：" + e.message, "err"); return; }
+  if (exists && !confirm("同坐标卡片已存在：卡片/"+t.folder+"/"+slug+"/卡片.md\n\n继续保存将【覆盖】原文件。\n建议取消后在书架打开该卡点「编辑此卡」修改。仍要覆盖？")){
+    setStatus("已取消：存在同坐标同名卡片，未覆盖。", "err");
+    return;
+  }
+
+  if (source && source.type === "gh"){
+    try{
+      const bp = gh.base ? gh.base + "/" : "";
+      const dir = bp + "卡片/"+t.folder+"/"+slug;
+      await ghPut(dir+"/卡片.md", utf8ToB64(r.md), "卡片 "+slug+"（"+t.name+"）");
+      for (let i=0;i<images.length;i++){
+        const name = imgNameOf(t, r.fields, images[i], i) + extOf(images[i].file);
+        await ghPut(dir+"/图/"+name, await fileB64(images[i].file), "图片 "+name);
+      }
+      await finishSaved({ mode:"new", folder:t.folder, slug }, dir);
+    }catch(e){ setStatus(e.message + " —— 可点「复制文本」手动保存。", "err"); }
+    return;
+  }
+  if (!eRoot()){ downloadFile(slug+"-卡片.md", blob); setStatus("未连接文件夹，已降级为浏览器下载。请手动放入对应目录。", "err"); return; }
+  if (!await ensureLocalWrite()) return;
+  try{
+    const sliceDir = await getDir(await getDir(await getDir(eRoot(), "卡片"), t.folder), slug);
+    await saveInto(sliceDir, "卡片.md", blob);
+    if (images.length){
+      const imgDir = await getDir(sliceDir, "图");
+      for (let i=0;i<images.length;i++){
+        const name = imgNameOf(t, r.fields, images[i], i) + extOf(images[i].file);
+        await saveInto(imgDir, name, images[i].file);
+      }
+    }
+    await finishSaved({ mode:"new", folder:t.folder, slug }, "卡片/"+t.folder+"/"+slug+"/（含 "+images.length+" 张图片）");
+  }catch(e){ setStatus("保存失败：" + e.message, "err"); }
+}
+async function saveInbox(){
+  const r = buildMarkdown();
+  const t = tpl(), f = r ? r.fields : collectFields();
+  const now = new Date();
+  const ds = now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0")+"-"+String(now.getHours()).padStart(2,"0")+String(now.getMinutes()).padStart(2,"0");
+  const name = ds+"-"+(slugOf(f) || "未命名")+".md";
+  let raw = "# 收件箱草稿（"+ds+"，系列："+t.name+"）\n\n";
+  raw += "坐标："+AXES_POOL.map(a => a.k+"="+(f[a.k] || "—")).join("；")+"\n标签："+(tags.join("、") || "—")+"\n\n";
+  for (const d of [...t.dims, ...customDims]) if ((dimValues[d]||"").trim()) raw += "## "+d+"\n\n"+dimValues[d].trim()+"\n\n";
+  raw += "## 来源\n\n"+($("source").value.trim() || "—")+"\n";
+  const blob = new Blob([raw], { type:"text/markdown;charset=utf-8" });
+  if (source && source.type === "gh"){
+    try{
+      const bp = gh.base ? gh.base + "/" : "";
+      await ghPut(bp+"_收件箱/"+name, utf8ToB64(raw), "收件箱草稿 "+name);
+      setStatus("已提交到 GitHub 收件箱："+bp+"_收件箱/"+name, "ok");
+    }catch(e){ setStatus(e.message + " —— 可改用「复制文本」。", "err"); }
+    return;
+  }
+  if (!eRoot()){ downloadFile(name, blob); setStatus("未连接文件夹，已降级为浏览器下载。", "err"); return; }
+  if (!await ensureLocalWrite()) return;
+  try{
+    await saveInto(await getDir(eRoot(), "_收件箱"), name, blob);
+    setStatus("已存入收件箱："+name, "ok");
+  }catch(e){ setStatus("保存失败：" + e.message, "err"); }
+}
+async function copyText(){
+  const r = buildMarkdown();
+  if (!r){ setStatus("请填写必填坐标（✱ 标记）："+tpl().req.join("、")+"。", "err"); return; }
+  try{
+    await navigator.clipboard.writeText(r.md);
+    setStatus("卡片文本已复制，可粘贴到备忘录 / Obsidian。", "ok");
+  }catch(e){ setStatus("复制失败，请在右侧预览区手动全选复制。", "err"); }
+}
+function downloadFile(name, blob){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+}
+function rememberTags(){ tags.forEach(addTagMemory); }
+function setStatus(msg, cls){ const s = $("status"); s.textContent = msg; s.className = cls || ""; }
+
+$("saveBtn").onclick = saveSlice;
+$("inboxBtn").onclick = saveInbox;
+$("copyBtn").onclick = copyText;
+$("resetBtn").onclick = () => {
+  if (!confirm("清空当前表单？")) return;
+  exitEdit(); editReturn = null;
+  tags=[]; images=[]; dimValues={}; customDims=[]; curDim=0;
+  ["links","source","dimText","overview"].forEach(id => $(id).value="");
+  $("exBanner").style.display="none";
+  renderAll();
+};
+["overview","links","source"].forEach(id => $(id).addEventListener("input", updatePreview));
+renderAll();
+
+/* ---- v4：从书架/阅读页进入编辑 ---- */
+function blankForm(){
+  exitEdit(); editReturn = null;
+  curTpl = SERIES[0].id; $("tplSel").value = curTpl;
+  tags=[]; images=[]; dimValues={}; customDims=[]; curDim=0;
+  ["overview","links","source","dimText"].forEach(id => $(id).value="");
+  $("exBanner").style.display = "none";
+  setStatus("", "");
+  renderAll();
+}
+function startNewCard(){
+  if (!source){ setMsg("请先连接项目文件夹或 GitHub 主库。"); return; }
+  blankForm();
+  show("editView");
+  window.scrollTo(0,0);
+  setStatus("新建卡片：填完点「保存卡片」将写入 " + (source.type === "gh" ? "GitHub 仓库" : "项目文件夹") + "。", "ok");
+}
+async function readRelFile(rt, rel){
+  const parts = rel.split("/"); const name = parts.pop();
+  const d = await walkDir(rt, parts.join("/"));
+  const fh = await d.getFileHandle(name);
+  return await (await fh.getFile()).text();
+}
+async function startEditCard(uid){
+  const c = cards.find(x => x.uid === uid);
+  if (!c || !source) return;
+  try{
+    setMsg("正在打开卡片原文…");
+    let md, type, path;
+    if (source.type === "gh"){
+      path = c.repoDir + "/卡片.md";
+      md = await ghGetText(path);
+      type = "gh";
+    } else {
+      path = c.path;
+      md = await readRelFile(source.root, path);
+      type = "local";
+    }
+    setMsg("");
+    const p = loadCardIntoForm(md, c.fsDir);
+    editTarget = { type, path, extra:p.extra, rawImages:p.rawImages };
+    editReturn = { mode:"edit", uid:c.uid };
+    updatePreview();
+    show("editView");
+    window.scrollTo(0,0);
+    setStatus("正在编辑 "+c.fsDir+"。改完点「保存修改」将覆盖原文件。", "ok");
+  }catch(e){ setMsg("打开卡片原文失败：" + e.message); }
+}
+async function leaveEditor(){
+  if (formHasContent() && !confirm("表单里有未保存的内容，离开不会写入任何文件。确定离开？")) return;
+  const rec = editReturn;
+  if (rec && rec.mode === "edit" && cards.some(c => c.uid === rec.uid)) openCard(rec.uid);
+  else goHome();
+}
+$("editBackBtn").onclick = leaveEditor;
+
+/* v4：不保存配置，只测试 GitHub 仓库 + 令牌是否可用 */
+async function ghTest(){
+  const repo = $("ghRepo").value.trim();
+  const token = $("ghToken").value.trim();
+  if (!repo){ ghStatus("先填 用户名/仓库名", false); $("ghRepo").focus(); return; }
+  ghStatus("测试中…", true);
+  try{
+    const headers = { "Accept":"application/vnd.github+json" };
+    if (token) headers.Authorization = "Bearer " + token;
+    const res = await fetch("https://api.github.com/repos/" + repo, { headers });
+    if (!res.ok){
+      throw new Error(res.status === 401 ? "401 令牌无效或过期" :
+                      res.status === 404 ? "404 仓库不存在（私有库需有 Contents 权限的令牌）" :
+                      String(res.status));
+    }
+    const j = await res.json();
+    ghStatus("连接成功：" + j.full_name + "（默认分支 " + (j.default_branch || "?") + "；写入还需 Contents 读写权限的令牌）", true);
+  }catch(e){ ghStatus("连接失败：" + e.message, false); }
+}
+
+/* ================= 接线 ================= */
+$("pickBtn").onclick = pickLocal;
+$("newCardBtn").onclick = startNewCard;
+$("ghTestBtn").onclick = ghTest;
+$("emptyPick").onclick = pickLocal;
+$("emptyGh").onclick = () => { $("ghPanel").open = true; $("ghRepo").focus(); };
+$("reloadBtn").onclick = () => {
+  if (source.type === "gh") loadGh();
+  else if (source.root) readLocalRoot(source.root).catch(e => setMsg("刷新失败：" + e.message));
+  else pickLocal();
+};
+$("ghSave").onclick = () => {
+  gh.repo = $("ghRepo").value.trim();
+  gh.branch = $("ghBranch").value.trim() || "main";
+  gh.base = $("ghBase").value.trim();
+  gh.token = $("ghToken").value.trim();
+  try { localStorage.setItem("nb-gh", JSON.stringify(gh)); } catch(e){}
+  fillGhForm();
+  loadGh();
+};
+fillGhForm();
+show("emptyView");
+
+/* v3：记住的文件夹——本会话已授权则自动连；跨会话只显示一键「继续使用」（授权必须由用户手势触发）。无记忆时沿用 GitHub 自动连接 */
+(async () => {
+  const h = await idbGet("root");
+  if (!h){ if (gh.repo && gh.token) loadGh(); return; }
+  try {
+    if (await permState(h, "read") === "granted"){
+      await readLocalRoot(h);
+    } else {
+      $("reconnectName").textContent = h.name;
+      $("reconnectBtn").style.display = "";
+      $("reconnectBtn").onclick = () => reconnectLocal(h);
+    }
+  } catch(e){
+    await idbDel("root");           // 句柄失效（云盘未就绪/文件夹移动）
+    if (gh.repo && gh.token) loadGh();
+  }
+})();
+</script>
+</body>
+</html>

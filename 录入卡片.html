@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>录入卡片</title>
+<!--
+  ============================================================
+  录入卡片 · 变更日志
+  v1 2026-09-19 初版：
+    - 三系列模板切换（编年卡片 / 交互设计 / 梵高研究）
+    - 表单生成标准卡片.md，自动建目录
+    - 图片拖拽、自动按规范改名并存入 图/
+    - 标签记忆与自动补全（localStorage）
+    - 一键存入 _收件箱
+    - 无 File System Access API 环境自动降级为"下载文件"
+  v2 2026-09-19 GitHub 主库模式：
+    - 配置仓库+令牌后，卡片与图片直接提交到 GitHub 仓库（手机也可用）
+    - 主库策略：GitHub 仓库 = 数据主库；电脑用 GitHub Desktop 克隆到华为云文件夹供 Obsidian 读写
+    - 新增"复制文本"按钮：无法写盘/未配置环境的一键兜底
+    - 未配置 GitHub 时保持 v1 本地写盘/下载行为
+  v3 2026-09-19 示例模式：
+    - 每个维度输入框带"引导问题 + 一句话示例"占位提示
+    - 新增"载入示例"按钮：一键填入该系列的完整示范卡片（取自库内真实卡片），照着改即可
+    - 新增"概述"字段；示例载入后顶部显示提示横幅
+  v4 2026-09-19 对照式示例：
+    - 示例全文常驻显示：概述/维度/关系/来源，写哪儿示例就跟到哪儿（左输入右示例对照）
+    - 不再需要打开卡片文件或先点"载入示例"才知道合格标准
+  v5 2026-09-19 编辑已有卡片：
+    - 新增"打开已有卡片"：本地模式列出 卡片/系列/坐标 下所有卡片，GitHub 模式用 git trees API 列仓库内卡片，弹窗选择
+    - 反解析器：YAML 头 + 正文按标题拆回表单字段；自动按"系列"识别研究系列并切换
+    - 保存修改 = 原地覆盖原文件（本地写回原句柄 / GitHub 提交更新 commit）
+    - 原有"图像"节的图片引用原样保留，不因重存丢失；新拖图片追加
+    - 正文里模板之外的标题节（自定义维度）原样保留，不丢数据
+  v5.1 2026-09-19 反馈可视化：
+    - "打开已有卡片"在未连接数据源/未找到卡片时，改为醒目弹窗提示（原来只写表单底部状态栏小字，用户以为按钮没反应）
+    - 弹窗附"立即连接项目文件夹"快捷按钮，一键进入授权流程
+  v5.2 2026-09-19 桌面布局：
+    - 版心放宽到 1400px；表单/预览列比例 1.25:0.75；输入框/示例框比例 1.2:0.8
+    - 坐标输入框改为按比例分配宽度（每轴带 w 权重：年份窄、地点/对象中等、别名/范式最宽），窄屏自动换行堆叠
+    - 断点调整：900px 以下单列（原 800px）
+  v5.3 2026-09-19 选卡与日期：
+    - YAML 新增"更新: 日期"，每次保存自动刷新（日期不进文件名——文件夹名是双链锚点，改名会断链）
+    - 「关系」新增"+ 从库中选卡"：列出库内全部卡片（含更新日期与概述摘要），点选即插入"参见 [[坐标]]："，排除当前编辑中的卡片
+  v6 2026-09-19 术语更名：
+    - 全库术语"切片"更名"卡片"：数据目录 切片/ → 卡片/，系列名"编年切片"→"编年卡片"，本项目文件夹同步改名
+    - 工具文件 录入台.html → 录入卡片.html（名字直白，任何人一看即知用途），页面标题同步
+    - 改名零数据损失：双链锚点是卡片文件夹名（如 1200-杭州），不含"切片"二字
+  v7 2026-09-19 坐标池 + 维度推荐制（为多学科扩张铺路）：
+    - 坐标池统一：年份/地点/对象/范式/时期/别名 全系列恒显示同一组格子，系列只声明必填项（标 ✱）；空坐标不写入 YAML，老卡片完全兼容
+    - 维度推荐制：维度是"推荐问题清单"而非围墙——新增「＋ 维度」按钮，可给任何卡片加维度池里的任何维度（弹窗：维度池选词 + 自由输入），自选维度存为独立标题节
+    - 打开旧卡片时，模板外的自定义节自动还原为可编辑的自选维度页签（不再是只读的 extra）
+    - 保存成功后显示"这是库里第 N 张卡片"（激励反馈）
+    - 意义：新开心理学/哲学/绘画等系列时，表单结构不变，只换必填标记和推荐问题
+    - "打开已有卡片"的选择列表同步升级：显示路径+更新日期+概述摘要（统一走 collectCards）
+  v8 2026-09-19 系列自定义：
+    - 新增「系列管理」按钮：改名、改目录、改必填坐标、改推荐维度、新增/删除系列，不再需要改代码
+    - 系列注册表 = 库内纯文本 模板/系列配置.md（可手工编辑；工具「系列管理」保存时读写同一份，GitHub 模式直接提交仓库）
+    - 未连接数据源时修改仅在本页内存生效并醒目提示；连接后保存即永久
+    - 自定义系列自动获得通用命名规则：卡片文件夹 = 必填坐标依次拼接，图片同理
+    - 引导问题池合并：任何维度的提示/示例只要有任一内置系列写过，全系列通用
+    - 打开旧卡仍按 YAML「系列」字段自动匹配；改名不追溯旧卡片（旧名保留可检索，数据不丢）
+  v9 2026-09-20 图片自动压缩 + 重名预警：
+    - 拖入图片长边 >2000px 时自动用 canvas 缩到 2000px 并转 JPEG（落实 README 手工压缩规则）；已达标的原样保留，不重复有损编码
+    - 新建卡片保存前检查目标路径：同坐标同名卡片已存在时弹确认，避免静默覆盖（编辑模式原地保存不受影响）
+  v10 2026-09-20 文件夹记忆：
+    - 首次选择的项目文件夹句柄存入 IndexedDB（与阅读卡片共享）；同会话再开自动连接，跨会话点一下「继续使用」即可，不再翻目录树
+    - 浏览器不允许网页感知自身路径或凭路径开目录，句柄授权是纯前端唯一免选方案；句柄失效（移动/云盘未就绪）自动清除
+  修改约定见 README.md：先改 README → 再改模板 → 再改录入卡片 → 最后同步阅读卡片
+  ============================================================
+-->
+<style>
+  :root{--bg:#ffffff;--bg2:#f5f4f0;--line:#d9d7cf;--line2:#b4b2a9;--tx:#2c2c2a;--tx2:#5f5e5a;--tx3:#888780;--ac:#185fa5;--ac-bg:#e6f1fb;--ok:#0f6e56;--ok-bg:#e1f5ee;--warn:#993c1d;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",sans-serif;font-size:13px;color:var(--tx);background:var(--bg2);line-height:1.6;}
+  header{background:var(--bg);border-bottom:0.5px solid var(--line);padding:12px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:5;}
+  header h1{font-size:15px;font-weight:500;margin:0;}
+  header .spacer{flex:1;}
+  header select{width:auto;min-width:150px;}
+  #dirStatus{font-size:12px;color:var(--tx3);border:0.5px solid var(--line);border-radius:99px;padding:2px 10px;}
+  #dirStatus.on{color:var(--ok);border-color:var(--ok);}
+  button{font:inherit;cursor:pointer;background:transparent;border:0.5px solid var(--line2);border-radius:6px;padding:5px 12px;color:var(--tx);}
+  button:hover{border-color:var(--ac);color:var(--ac);}
+  button.primary{background:var(--ac);border-color:var(--ac);color:#fff;}
+  button.primary:hover{opacity:.9;color:#fff;}
+  button:disabled{opacity:.45;cursor:not-allowed;}
+  select,input,textarea{font:inherit;color:var(--tx);background:var(--bg);border:0.5px solid var(--line2);border-radius:6px;padding:5px 8px;width:100%;}
+  textarea{resize:vertical;min-height:64px;}
+  label{display:block;font-size:11px;color:var(--tx3);margin:8px 0 3px;}
+  main{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,0.75fr);gap:16px;padding:16px 24px;max-width:1400px;margin:0 auto;}
+  .card{background:var(--bg);border:0.5px solid var(--line);border-radius:10px;padding:14px 16px;}
+  .row{display:grid;gap:8px;margin-bottom:4px;}
+  .c2{grid-template-columns:1fr 1.6fr;}
+  .c3{grid-template-columns:1fr 1fr 1fr;}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;border:0.5px solid var(--line2);border-radius:6px;padding:4px 6px;min-height:32px;}
+  .chips input{border:none;flex:1;min-width:90px;outline:none;padding:2px 4px;}
+  .chip{background:var(--ac-bg);color:var(--ac);border-radius:99px;padding:1px 9px;font-size:12px;white-space:nowrap;}
+  .chip b{cursor:pointer;margin-left:4px;font-weight:400;}
+  .dimtabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:0.5px solid var(--line);padding-bottom:6px;margin-bottom:8px;}
+  .dimtabs button{border:none;padding:4px 10px;border-radius:6px;font-size:12px;}
+  .dimtabs button.on{background:var(--ac-bg);color:var(--ac);}
+  .dimtabs button .dot{color:var(--ok);margin-left:3px;}
+  .serrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;border:0.5px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px;}
+  .serrow .s-del{align-self:end;color:var(--warn);border-color:var(--warn);font-size:11px;padding:4px 10px;}
+  #drop{border:1.5px dashed var(--line2);border-radius:8px;padding:12px;text-align:center;color:var(--tx3);margin:8px 0;}
+  #drop.over{border-color:var(--ac);color:var(--ac);background:var(--ac-bg);}
+  .imgrow{display:flex;gap:8px;align-items:flex-start;padding:8px;border:0.5px solid var(--line);border-radius:8px;margin-bottom:6px;background:var(--bg);}
+  .imgrow img{width:52px;height:40px;object-fit:cover;border-radius:4px;background:var(--bg2);}
+  .imgrow .meta{flex:1;}
+  .imgrow .meta input{margin-bottom:4px;}
+  .imgrow .del{align-self:center;color:var(--warn);border-color:var(--warn);}
+  #preview{font-family:Consolas,monospace;font-size:11.5px;white-space:pre-wrap;word-break:break-all;background:var(--bg2);border:0.5px solid var(--line);border-radius:8px;padding:10px;max-height:560px;overflow:auto;line-height:1.7;}
+  #status{margin-top:10px;font-size:12px;min-height:18px;}
+  #status.ok{color:var(--ok);} #status.err{color:var(--warn);}
+  .hint{font-size:11px;color:var(--tx3);margin-top:6px;}
+  .duo{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,0.8fr);gap:10px;align-items:start;}
+  .axrow{display:flex;gap:10px;flex-wrap:wrap;}
+  .axrow>div{min-width:130px;}
+  .exbox{background:var(--bg2);border:0.5px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--tx2);}
+  .exbox .exq{color:var(--warn);margin:0 0 5px;}
+  .exbox .exbody{white-space:pre-wrap;margin:0;line-height:1.7;}
+  .exbox .extag{display:inline-block;font-size:11px;color:var(--tx3);border:0.5px solid var(--line);border-radius:99px;padding:0 8px;margin-bottom:5px;}
+  @media (max-width:700px){.duo{grid-template-columns:1fr;}}
+  @media (max-width:900px){main{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<noscript>
+  <div style="background:#FCEBEB;border:0.5px solid #A32D2D;color:#791F1F;padding:12px 20px;font-size:13px;">
+    本页的交互功能需要启用 JavaScript。你当前看到的只是静态外壳——请用电脑版 Edge 或 Chrome 直接打开本文件（双击即可），不要在不执行脚本的预览器中查看。
+  </div>
+</noscript>
+
+<header>
+  <h1>录入卡片</h1>
+  <select id="tplSel" title="选择研究系列">
+    <option value="chronicle">系列：编年卡片</option>
+    <option value="interaction">系列：交互设计</option>
+    <option value="vangogh">系列：梵高研究</option>
+  </select>
+  <button id="exBtn" title="填入该系列的完整示范卡片，照着改">载入示例</button>
+  <button id="openBtn" title="从文件夹或 GitHub 打开已有卡片进行编辑">打开已有卡片</button>
+  <button id="seriesBtn" title="自定义系列：改名、改必填坐标与推荐维度、新增或删除系列">系列管理</button>
+  <span class="spacer"></span>
+  <span id="dirStatus">未连接项目文件夹</span>
+  <button id="pickBtn">选择项目文件夹</button>
+  <button id="reconnectBtn" style="display:none;">继续使用「<span id="rcName"></span>/」</button>
+</header>
+
+<main>
+  <div class="card" id="formCard">
+    <details id="ghPanel" style="margin-bottom:12px;border:0.5px solid var(--line);border-radius:8px;padding:8px 10px;">
+      <summary id="ghSummary" style="cursor:pointer;font-size:12px;color:var(--tx2);">GitHub 主库设置（点击展开）</summary>
+      <div class="row c2" style="margin-top:8px;">
+        <div><label>仓库（用户名/仓库名，建议私有）</label><input id="ghRepo" placeholder="yourname/chronicle-slices"></div>
+        <div><label>分支</label><input id="ghBranch" placeholder="main"></div>
+      </div>
+      <label>库内根目录</label><input id="ghBase" placeholder="编年卡片">
+      <label>访问令牌 Token（建议细粒度 PAT：仅授权本仓库，Contents 权限 Read and write）</label>
+      <input id="ghToken" type="password" placeholder="github_pat_...">
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;">
+        <button id="ghSave">保存设置</button>
+        <button id="ghTest">测试连接</button>
+        <span id="ghStatus" style="font-size:12px;"></span>
+      </div>
+      <p class="hint">令牌只保存在本机浏览器的 localStorage，不经过任何第三方。配置后"保存卡片"会把卡片和图片直接提交到仓库，手机填写也可用。电脑端建议用 GitHub Desktop 把仓库克隆到华为云文件夹，供 Obsidian 读取，改动后 commit + push 回仓库。</p>
+    </details>
+
+    <div id="axes"></div>
+
+    <div id="exBanner" style="display:none;background:#FAECE7;border:0.5px solid #D85A30;border-radius:8px;padding:8px 10px;margin:8px 0;font-size:12px;color:#712B13;">
+      当前是<b>示例内容</b>（不会自动写入任何文件）——把它当填空示范：照着结构和具体程度改成你的内容；图片区拖一张你自己的图试试；或点「清空」从头写。
+    </div>
+
+    <div id="editBanner" style="display:none;background:#E7F0FA;border:0.5px solid var(--ac);border-radius:8px;padding:8px 10px;margin:8px 0;font-size:12px;color:#123C63;">
+      正在编辑已有卡片：<b id="editPath"></b><span id="editImgs" style="color:var(--tx2);"></span>
+      <button id="exitEditBtn" style="margin-left:8px;font-size:11px;padding:2px 8px;">退出编辑（清空表单）</button>
+    </div>
+
+    <label>概述（三句话以内：这个卡片最突出的面貌是什么？）</label>
+    <div class="duo">
+      <textarea id="overview" rows="4" placeholder="三句话以内，说出这个卡片最突出的面貌"></textarea>
+      <div class="exbox"><span class="extag">示例</span><p class="exbody" id="overviewEx"></p></div>
+    </div>
+
+    <label>标签（输入后回车添加，已有标签会自动补全）</label>
+    <div class="chips" id="chips"><input id="tagInput" list="tagList" placeholder="如：商业化城市"></div>
+    <datalist id="tagList"></datalist>
+
+    <div style="border:0.5px solid var(--line);border-radius:8px;margin-top:10px;overflow:hidden;">
+      <div style="display:flex;align-items:stretch;">
+        <div class="dimtabs" id="dimTabs" style="border-bottom:0.5px solid var(--line);border-radius:0;flex:1;min-width:0;overflow-x:auto;"></div>
+        <button id="addDimBtn" title="添加维度：任何卡片都可以用维度池里的任何维度" style="border:none;border-left:0.5px solid var(--line);border-radius:0;background:var(--bg);font-size:12px;padding:0 10px;white-space:nowrap;">＋ 维度</button>
+      </div>
+      <div class="duo" style="padding:8px 10px;">
+        <textarea id="dimText" rows="8" placeholder="写 2-5 句'当时的常态'，求具体：有数据、有名物、有例证"></textarea>
+        <div class="exbox"><span class="extag">示例</span><p class="exq" id="dimHint"></p><p class="exbody" id="dimExample"></p></div>
+      </div>
+    </div>
+
+    <div id="drop">把图片拖到这里，或点击选择（可多张）<input id="fileInput" type="file" accept="image/*" multiple hidden></div>
+    <div id="imgList"></div>
+
+    <div style="display:flex;justify-content:space-between;align-items:baseline;">
+      <label style="margin:8px 0 3px;">关系（双链，每行一条）</label>
+      <button id="linkPick" style="font-size:11px;padding:2px 8px;margin:8px 0 3px;">+ 从库中选卡</button>
+    </div>
+    <div class="duo">
+      <textarea id="links" rows="3" placeholder="参见 [[另一张卡片]]：一句话说明为什么相关"></textarea>
+      <div class="exbox"><span class="extag">示例</span><p class="exbody" id="linksEx"></p></div>
+    </div>
+
+    <label>来源（至少一条，哪怕是"《梦粱录》卷十三"）</label>
+    <div class="duo">
+      <textarea id="source" rows="3"></textarea>
+      <div class="exbox"><span class="extag">示例</span><p class="exbody" id="sourceEx"></p></div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+      <button class="primary" id="saveBtn">保存卡片</button>
+      <button id="inboxBtn">先存入收件箱</button>
+      <button id="copyBtn">复制文本</button>
+      <button id="resetBtn">清空</button>
+    </div>
+    <div id="status"></div>
+    <p class="hint">保存时自动创建 卡片/系列/坐标/卡片.md 与 图/；图片自动按规范改名。数据永远只存在你的文件夹里。</p>
+  </div>
+
+  <div class="card">
+    <label style="margin-top:0;">将生成的文件（实时预览）</label>
+    <div id="preview">（开始填写后此处显示卡片内容）</div>
+  </div>
+</main>
+
+<div id="pickModal" style="display:none;position:fixed;inset:0;background:rgba(40,40,36,.4);z-index:60;align-items:center;justify-content:center;">
+  <div style="background:var(--bg);border:0.5px solid var(--line);border-radius:12px;padding:16px 18px;width:min(540px,92vw);max-height:72vh;display:flex;flex-direction:column;gap:10px;">
+    <b style="font-weight:500;">选择要打开的卡片</b>
+    <div id="pickList" style="overflow:auto;border:0.5px solid var(--line);border-radius:8px;max-height:52vh;"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;"><button id="pickCancel">取消</button></div>
+  </div>
+</div>
+
+<div id="dimModal" style="display:none;position:fixed;inset:0;background:rgba(40,40,36,.4);z-index:65;align-items:center;justify-content:center;">
+  <div style="background:var(--bg);border:0.5px solid var(--line);border-radius:12px;padding:16px 18px;width:min(520px,92vw);display:flex;flex-direction:column;gap:10px;">
+    <b style="font-weight:500;">添加维度</b>
+    <input id="dimNameInput" placeholder="输入维度名，或点下方维度池里的词（用词与池一致才能跨卡聚合）">
+    <div id="dimPoolChips" style="display:flex;flex-wrap:wrap;gap:6px;max-height:40vh;overflow:auto;"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button id="dimAdd" class="primary">添加</button>
+      <button id="dimCancel">取消</button>
+    </div>
+  </div>
+</div>
+
+<div id="serModal" style="display:none;position:fixed;inset:0;background:rgba(40,40,36,.4);z-index:68;align-items:center;justify-content:center;">
+  <div style="background:var(--bg);border:0.5px solid var(--line);border-radius:12px;padding:16px 18px;width:min(780px,94vw);max-height:86vh;overflow:auto;display:flex;flex-direction:column;gap:10px;">
+    <b style="font-weight:500;">系列管理</b>
+    <p class="hint" style="margin:0;line-height:1.7;">系列 = 一套「必填坐标 + 推荐维度」的透镜。这里的修改会写入库内纯文本 <b>模板/系列配置.md</b>（随时可手工编辑，不绑定本工具）。<br>注意：<b>改系列名不会自动改写已有卡片</b>——旧卡片的 系列 字段保留旧名，仍可检索，需要的话以后再批量替换；删除系列也不动任何卡片文件。</p>
+    <div id="serRows"></div>
+    <div><button id="serAdd">＋ 新增系列</button></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button id="serCancel">取消</button>
+      <button id="serSave" class="primary">保存并写入配置文件</button>
+    </div>
+  </div>
+</div>
+
+<div id="msgModal" style="display:none;position:fixed;inset:0;background:rgba(40,40,36,.4);z-index:70;align-items:center;justify-content:center;">
+  <div style="background:var(--bg);border:0.5px solid var(--line);border-radius:12px;padding:18px 20px;width:min(460px,92vw);display:flex;flex-direction:column;gap:12px;">
+    <b id="msgTitle" style="font-weight:500;">提示</b>
+    <div id="msgText" style="font-size:13px;color:var(--tx2);line-height:1.7;"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+      <button id="msgAction" class="primary" style="display:none;">操作</button>
+      <button id="msgClose">知道了</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============ 坐标池（全系列统一，README 已登记；系列只声明必填项） ============ */
+const AXES_POOL = [
+  { k: "年份", ph: "如 1195-1205 / 2007 / 1888", w: 0.7 },
+  { k: "地点", ph: "如 杭州 / 阿尔勒（可空）", w: 1 },
+  { k: "对象", ph: "如 夜间咖啡馆 / iPhone", w: 1.2 },
+  { k: "范式", ph: "如 对话式交互（可空）", w: 1.2 },
+  { k: "时期", ph: "如 阿尔勒时期（可空）", w: 1 },
+  { k: "别名", ph: "逗号分隔（可空）", arr: true, w: 1.2 }
+];
+
+/* ============ 内置示例与引导问题（v8 起只存"重内容"：示范卡片、引导问题、内置命名规则。
+   系列结构本身（名称/目录/必填/维度）以库内纯文本 模板/系列配置.md 为准，见下方 SERIES） ============ */
+const BUILTIN = {
+  chronicle: {
+    name: "编年卡片", folder: "编年",
+    req: ["年份", "地点"],
+    dims: ["政治", "经济", "社会", "科技", "日常生活", "艺术"],
+    dimHints: {
+      "政治": "谁说了算？权力怎么分配？——例：君主官僚制成熟期，科举文官主导朝政。",
+      "经济": "人们靠什么谋生？买卖怎么进行？——例：纸币会子流通，瓦舍勾栏构成庞大服务业经济。",
+      "社会": "人和人怎么分层、怎么抱团？——例：科举使阶层流动制度化，城市行会组织发达。",
+      "科技": "当时的新玩意是什么？怎么传播？——例：雕版印刷极盛，指南针已用于航海。",
+      "日常生活": "吃穿住行、作息、消遣、声音与气味——例：早市至夜市几无间断，午后听平话看傀儡戏。",
+      "艺术": "谁在创作、为谁创作？——例：院体画与文人画并立，话本小说成熟。"
+    },
+    slug: f => [f["年份"], f["地点"]].filter(Boolean).join("-"),
+    imgName: (f, img, i) => [f["年份"], f["地点"], img.内容 || ("图" + (i + 1)), img.作者].filter(Boolean).join("-"),
+    example: {
+      title: "1200-杭州",
+      fields: { "年份": "1195-1205", "地点": "杭州", "别名": "临安, 南宋行在" },
+      overview: "南宋行在，人口逾百万的当时世界最大城市之一。政治中心与商业中心重合，市民文化极度繁荣。",
+      tags: ["商业化城市", "官僚制", "禅宗", "稻作农业", "市民文化", "印刷术"],
+      dims: {
+        "政治": "君主官僚制成熟期：科举出身的文官集团主导朝政，宰相权重。皇室南迁后礼制重建，太庙与郊坛俱在城内。",
+        "经济": "纸币（会子）已为主要流通货币，是世界最早的大规模纸币经济之一。市舶司年收入可观，泉州、明州海外贸易兴旺。瓦舍勾栏、酒楼茶肆构成庞大的服务业经济。",
+        "社会": "科举使阶层流动通道制度化，\u201c取士不问家世\u201d。城市平民（坊郭户）成为显著群体，行会（团行）组织发达。",
+        "科技": "活字印刷已发明但雕版仍为主流，官私刻书业极盛，为当时世界最大出版中心。造船采用水密隔舱，指南针已用于航海。",
+        "日常生活": "主食稻米，市面百味小食。市民午后听平话、看傀儡戏，夜有瓦子百戏。全年节庆密集：元夕灯山、清明踏青、西湖竞渡。",
+        "艺术": "院体画与文人画并立：李嵩、马远、夏圭供职画院；山水从全景转向边角构图。话本小说成熟，是后世章回小说的源头。"
+      },
+      links: "参见 [[1700-阿姆斯特丹]]：同样高度商业化、印刷业发达的口岸城市，可对比行会制度与信用工具。",
+      source: "《梦粱录》吴自牧，卷十三、卷十六；《武林旧事》周密"
+    }
+  },
+  interaction: {
+    name: "交互设计", folder: "交互",
+    req: ["年份", "对象", "范式"],
+    dims: ["技术基础", "交互隐喻", "美学风格", "用户群体", "商业模式", "争议与批评"],
+    dimHints: {
+      "技术基础": "什么技术让这种交互成为可能？——例：关键词匹配+模板改写，算力极小却制造理解错觉。",
+      "交互隐喻": "用户靠什么心智模型操作？核心手势/操作是什么？——例：\u201c对话即界面\u201d，说人话即可。",
+      "美学风格": "它看起来/听起来什么感觉？——例：终端绿字、逐字打印的延迟感。",
+      "用户群体": "第一批用户是谁？如何扩散？——例：来访者自发倾诉，即\u201cELIZA 效应\u201d。",
+      "商业模式": "怎么赚钱？对交互设计有什么反作用？——例：无商业化，学术项目。",
+      "争议与批评": "当时怎么批评它？后来怎么反思？——例：Weizenbaum 本人转向批判人工智能。"
+    },
+    slug: f => [f["年份"], f["对象"]].filter(Boolean).join("-"),
+    imgName: (f, img, i) => [f["年份"], f["对象"], img.内容 || ("图" + (i + 1)), img.作者].filter(Boolean).join("-"),
+    example: {
+      title: "1966-ELIZA",
+      fields: { "年份": "1966", "地点": "麻省理工学院", "对象": "ELIZA", "范式": "对话式交互" },
+      overview: "Weizenbaum 用模式匹配模拟心理治疗师，是\u201c用自然语言对话操作机器\u201d的第一次大众化演示。拟人化交互的魔力与危险在 1966 年就已全部登场。",
+      tags: ["对话式交互", "拟人化", "聊天机器人", "图灵测试"],
+      dims: {
+        "技术基础": "无任何\u201c理解\u201d：关键词匹配 + 模板改写（\u201c我头疼\u201d→\u201c你说你头疼？\u201d）。技术越简单，拟人效果越惊人。",
+        "交互隐喻": "\u201c对话即界面\u201d：用户不需要学任何命令语法，说人话即可。机器用反问维持对话——这个话术五十八年后仍是大语言模型的基本盘。",
+        "美学风格": "终端绿字、逐字打印的延迟感——反应速度反而增强了\u201c对方在思考\u201d的错觉。第一次确立：等待也是体验的一部分。",
+        "用户群体": "秘书与来访者在实验中自发对其倾诉，即\u201cELIZA 效应\u201d：人类会对最低限度的语言线索投注情感。",
+        "商业模式": "无商业化，学术项目。但它定义了此后所有对话产品的验收幻想：图灵测试从科学问题变成了产品营销词。",
+        "争议与批评": "Weizenbaum 本人对\u201cELIZA 效应\u201d深感不安，1976 年出版《计算机能力与人类理性》，成为人机交互伦理学的起点批评。"
+      },
+      links: "参见 [[2007-iPhone]]：手势直接操纵与语言对话是交互的两个极点，2023 年后重新汇合。",
+      source: "Weizenbaum, J. \u201cELIZA—A Computer Program...\u201d (1966)；《计算机能力与人类理性》1976"
+    }
+  },
+  vangogh: {
+    name: "梵高研究", folder: "梵高研究",
+    req: ["年份", "地点", "对象", "时期"],
+    dims: ["构图与笔触", "色彩策略", "题材与动机", "心理与书信", "技法实验", "后世影响"],
+    dimHints: {
+      "构图与笔触": "画面结构、视线引导、笔触方向与速度——例：反透视压扁空间，笔触粗短成几何块面。",
+      "色彩策略": "用了什么色彩关系？想达到什么情绪？——例：红绿互补对撞是全画的发动机。",
+      "题材与动机": "为什么画这个？——例：想表现咖啡馆是让人发疯、犯罪的地方。",
+      "心理与书信": "创作时的状态，写给谁、说了什么？——例：失眠严重，靠咖啡与酒维持创作。",
+      "技法实验": "这幅画在试验什么新画法？——例：厚涂不调匀，学日本主义的平涂轮廓。",
+      "后世影响": "影响了谁？作品怎么流转？——例：表现主义先声，生前抵押抵房租。"
+    },
+    slug: f => [f["年份"], f["地点"], f["对象"]].filter(Boolean).join("-"),
+    imgName: (f, img, i) => [f["年份"], f["地点"], f["对象"], img.内容 || ("图" + (i + 1)), img.作者].filter(Boolean).join("-"),
+    example: {
+      title: "1888-阿尔勒-夜间咖啡馆",
+      fields: { "年份": "1888", "地点": "阿尔勒", "对象": "夜间咖啡馆", "时期": "阿尔勒时期" },
+      overview: "用刺目的色彩关系做\u201c情绪武器\u201d的宣言式作品——梵高自称想表现咖啡馆是让人发疯、犯罪的地方。",
+      tags: ["互补色", "夜景", "日本主义", "颜料厚涂", "反透视"],
+      dims: {
+        "构图与笔触": "反透视：天花板绿光把空间压扁，球台画得歪斜，视线被逼向挂钟——无处可逃的构图。笔触粗、快、短，明显受日本版画平面化影响。",
+        "色彩策略": "红与绿的互补对撞是全画的发动机：血红墙壁、绿灯天花板。他在信中说要用色彩制造\u201c恶魔的熔炉\u201d——色彩不描摹现实，直接承担心理功能。",
+        "题材与动机": "画的是火车站旁一家通宵营业的咖啡馆，流浪汉与醉汉在此过夜。这也是他为筹备\u201c南方画室\u201d期间的系列室内画之一。",
+        "心理与书信": "1888 年夏给提奥的信中详细解释了用色意图；同期失眠严重、靠咖啡与酒维持高强度创作。三个月后高更抵达，年末即发生割耳事件。",
+        "技法实验": "粗笔厚涂，颜料近乎不调匀地并置；以轮廓线和平涂组织画面。同期《夜间露天咖啡座》是同一课题的\u201c室外对照组\u201d。",
+        "后世影响": "表现主义\u201c色彩即情绪\u201d的先声参考；原作现藏耶鲁大学美术馆。生前曾被他抵押抵房租，死后成为其市场神话的标本之一。"
+      },
+      links: "参见 [[1200-杭州]]：日本浮世绘绕道巴黎改变欧洲绘画——版画传播链的两端。",
+      source: "《梵高书信全集》第 676、677 号信（1888-09 致提奥）；Yale University Art Gallery 藏品档案"
+    }
+  }
+};
+
+/* ============ 状态 ============ */
+let root = null;                 // 项目文件夹句柄
+let curTpl = "chronicle";
+let tags = [];                   // 标签
+let images = [];                 // {file, 内容, 作者}
+let dimValues = {};              // {维度: 文本}
+let customDims = [];             // 本卡片自选维度（超出系列推荐清单的部分，保存为独立标题节）
+let curDim = 0;
+let editTarget = null;           // 编辑模式：{type:"local", dir, path, extra, rawImages} 或 {type:"gh", path, extra, rawImages}
+
+/* ============ 系列注册表（v8：默认取内置三项；连接数据源后从 模板/系列配置.md 重读，「系列管理」可改） ============ */
+let SERIES = Object.keys(BUILTIN).map(k => ({
+  id: k, name: BUILTIN[k].name, folder: BUILTIN[k].folder,
+  req: BUILTIN[k].req.slice(), dims: BUILTIN[k].dims.slice(), exKey: k, slug: BUILTIN[k].slug || null
+}));
+const HINTS = {}; for (const k of Object.keys(BUILTIN)) Object.assign(HINTS, BUILTIN[k].dimHints); // 引导问题池全局合并
+function tpl(){ return SERIES.find(s => s.id === curTpl) || SERIES[0]; }
+function exOf(){ const s = tpl(); return s.exKey && BUILTIN[s.exKey] ? BUILTIN[s.exKey].example : null; }
+function imgNameOf(s, f, im, i){ return [...s.req.map(k => f[k]), im.内容 || ("图" + (i + 1)), im.作者].filter(Boolean).join("-"); }
+
+/* ============ 工具函数（必须最先定义，后续所有接线都依赖 $） ============ */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+/* ============ 系列配置：注册表 = 库内纯文本 模板/系列配置.md（v8） ============ */
+function seriesToText(list){
+  const L = [
+    "# 系列配置 —— 录入卡片.html 的系列注册表",
+    "",
+    "> 本文件是纯文本，可随时用任何编辑器手工修改；在录入卡片里点「系列管理」保存也会改写它。",
+    "> 规则：每个「## 名称」小节 = 一个系列，字段如下——",
+    "> · 目录：卡片/ 下的文件夹名；",
+    "> · 必填：坐标池里的词（年份/地点/对象/范式/时期/别名），逗号分隔；",
+    "> · 维度：推荐维度，逗号分隔（新维度请先到 README 的维度池登记）；",
+    "> · 示例：编年卡片 / 交互设计 / 梵高研究 之一（给「载入示例」挂内置示范卡片，可省略）。",
+    "> 删除小节即删除系列；改「## 名称」即改名——注意已有卡片的 系列 字段不会自动跟着改。",
+    ""
+  ];
+  for (const s of list){
+    L.push("## " + s.name);
+    L.push("目录: " + (s.folder || s.name));
+    L.push("必填: " + s.req.join(", "));
+    L.push("维度: " + s.dims.join(", "));
+    if (s.exKey && BUILTIN[s.exKey]) L.push("示例: " + BUILTIN[s.exKey].name);
+    L.push("");
+  }
+  return L.join("\n");
+}
+function parseSeriesText(text){
+  const out = []; let cur = null;
+  for (const raw of text.split(/\r?\n/)) {
+    const h = raw.match(/^##\s+(.+?)\s*$/);
+    if (h) { cur = { name: h[1], folder: "", req: [], dims: [], exKey: "" }; out.push(cur); continue; }
+    if (!cur) continue;
+    const kv = raw.match(/^(目录|必填|维度|示例)\s*[:：]\s*(.*)$/);
+    if (!kv) continue;
+    const v = kv[2].trim();
+    if (kv[1] === "目录") cur.folder = v;
+    else if (kv[1] === "必填") cur.req = v.split(/[,，、]/).map(x => x.trim()).filter(x => AXES_POOL.some(a => a.k === x));
+    else if (kv[1] === "维度") cur.dims = v.split(/[,，、]/).map(x => x.trim()).filter(Boolean);
+    else if (kv[1] === "示例") { const b = Object.keys(BUILTIN).find(k => BUILTIN[k].name === v); cur.exKey = b || ""; }
+  }
+  return out.filter(s => s.name && s.dims.length);
+}
+function applySeries(list){
+  const prevName = tpl().name;
+  SERIES = list.map(s => {
+    const bid = Object.keys(BUILTIN).find(k => BUILTIN[k].name === s.name); // 内置系列保名时沿用其 id 与命名规则
+    return { id: bid || s.name, name: s.name, folder: s.folder || s.name, req: s.req.length ? s.req : ["年份"],
+             dims: s.dims, exKey: s.exKey || "", slug: bid ? BUILTIN[bid].slug : null };
+  });
+  if (!SERIES.find(s => s.name === prevName)) curTpl = SERIES[0].id;
+  renderTplSel(); renderAll();
+}
+async function loadSeriesConfig(){
+  try {
+    let txt = null;
+    if (gh.repo && gh.token) txt = await ghGet((gh.base ? gh.base + "/" : "") + "模板/系列配置.md");
+    else if (root) {
+      const fh = await (await root.getDirectoryHandle("模板")).getFileHandle("系列配置.md");
+      txt = await (await fh.getFile()).text();
+    }
+    if (txt) { const list = parseSeriesText(txt); if (list.length) applySeries(list); }
+  } catch (e) { /* 文件不存在或读取失败 → 沿用当前系列列表 */ }
+}
+/* ---- 系列管理弹窗 ---- */
+let serDraft = null;
+function renderTplSel(){
+  $("tplSel").innerHTML = SERIES.map(s => '<option value="' + esc(s.id) + '">系列：' + esc(s.name) + "</option>").join("");
+  $("tplSel").value = tpl().id;
+}
+function serRowHtml(s, i){
+  const exOpts = ['<option value="">（无示例）</option>'].concat(
+    Object.keys(BUILTIN).map(k => '<option value="' + k + '"' + (s.exKey === k ? " selected" : "") + ">" + esc(BUILTIN[k].name) + "</option>")
+  ).join("");
+  return '<div class="serrow" data-i="' + i + '">' +
+    '<div><label>系列名称（写入 YAML 系列）</label><input class="s-name" value="' + esc(s.name) + '"></div>' +
+    '<div><label>目录（卡片/ 下的文件夹名）</label><input class="s-folder" value="' + esc(s.folder) + '"></div>' +
+    '<div><label>必填坐标（逗号分隔，选自 年份/地点/对象/范式/时期/别名）</label><input class="s-req" value="' + esc(s.req.join(", ")) + '"></div>' +
+    '<div><label>推荐维度（逗号分隔）</label><input class="s-dims" value="' + esc(s.dims.join(", ")) + '"></div>' +
+    '<div><label>示例（挂内置示范卡片）</label><select class="s-ex">' + exOpts + "</select></div>" +
+    '<div style="display:flex;align-items:end;"><button class="s-del">删除系列</button></div>' +
+    "</div>";
+}
+function renderSerRows(){
+  $("serRows").innerHTML = serDraft.map(serRowHtml).join("");
+  $("serRows").querySelectorAll(".s-del").forEach(b => b.onclick = () => {
+    serDraft.splice(+b.closest(".serrow").dataset.i, 1); renderSerRows();
+  });
+}
+$("seriesBtn").onclick = async () => { await loadSeriesConfig(); serDraft = SERIES.map(s => ({ name: s.name, folder: s.folder, req: s.req.slice(), dims: s.dims.slice(), exKey: s.exKey || "" })); renderSerRows(); $("serModal").style.display = "flex"; };
+$("serCancel").onclick = () => { $("serModal").style.display = "none"; };
+$("serAdd").onclick = () => {
+  serDraft.push({ name: "新系列", folder: "新系列", req: ["年份"], dims: ["背景", "过程", "影响"], exKey: "" });
+  renderSerRows();
+  const rows = $("serRows").querySelectorAll(".serrow");
+  rows[rows.length - 1].querySelector(".s-name").focus();
+};
+function collectSerDraft(){
+  return [...$("serRows").querySelectorAll(".serrow")].map(row => ({
+    name: row.querySelector(".s-name").value.trim(),
+    folder: row.querySelector(".s-folder").value.trim(),
+    req: row.querySelector(".s-req").value.split(/[,，、]/).map(x => x.trim()).filter(x => AXES_POOL.some(a => a.k === x)),
+    dims: row.querySelector(".s-dims").value.split(/[,，、]/).map(x => x.trim()).filter(Boolean),
+    exKey: row.querySelector(".s-ex").value
+  }));
+}
+$("serSave").onclick = async () => {
+  const list = collectSerDraft();
+  if (!list.length) { showMessage("至少保留一个系列。"); return; }
+  for (const s of list) {
+    if (!s.name) { showMessage("每个系列都需要名称。"); return; }
+    if (!s.req.length) { showMessage("系列「" + s.name + "」至少要有一个必填坐标（建议包含 年份）。"); return; }
+    if (!s.dims.length) { showMessage("系列「" + s.name + "」至少要有一个推荐维度。"); return; }
+  }
+  const text = seriesToText(list);
+  try {
+    if (gh.repo && gh.token) {
+      await ghPut((gh.base ? gh.base + "/" : "") + "模板/系列配置.md", utf8ToB64(text), "更新系列配置");
+      applySeries(list); $("serModal").style.display = "none";
+      setStatus("系列配置已提交到 GitHub：模板/系列配置.md", "ok");
+    } else if (root) {
+      const mh = await root.getDirectoryHandle("模板", { create: true });
+      await saveInto(mh, "系列配置.md", new Blob([text], { type: "text/markdown;charset=utf-8" }));
+      applySeries(list); $("serModal").style.display = "none";
+      setStatus("系列配置已写入：模板/系列配置.md", "ok");
+    } else {
+      applySeries(list); $("serModal").style.display = "none";
+      showMessage("系列修改已在本页生效，但当前没有连接数据源，配置无处保存——刷新页面后会丢失。\n\n先连接项目文件夹（或配置 GitHub）再保存一次，即可永久写入 模板/系列配置.md。",
+        window.showDirectoryPicker ? "立即连接项目文件夹" : null,
+        window.showDirectoryPicker ? () => $("pickBtn").click() : null);
+    }
+  } catch (e) { showMessage("保存系列配置失败：" + e.message); }
+};
+
+/* ============ GitHub 主库配置 ============ */
+let gh = { repo: "", branch: "main", base: "编年卡片", token: "" };
+try { Object.assign(gh, JSON.parse(localStorage.getItem("nb-gh") || "{}")); } catch (e) {}
+function loadGhForm(){
+  $("ghRepo").value = gh.repo || ""; $("ghBranch").value = gh.branch || "main";
+  $("ghBase").value = gh.base || "编年卡片"; $("ghToken").value = gh.token || "";
+  refreshGhSummary();
+}
+function refreshGhSummary(){
+  $("ghSummary").textContent = gh.repo
+    ? "GitHub 主库：已配置 " + gh.repo + "（点击展开修改）"
+    : "GitHub 主库设置（未配置，点击展开）";
+}
+function saveGh(){
+  gh.repo = $("ghRepo").value.trim();
+  gh.branch = $("ghBranch").value.trim() || "main";
+  gh.base = $("ghBase").value.trim() || "编年卡片";
+  gh.token = $("ghToken").value.trim();
+  try { localStorage.setItem("nb-gh", JSON.stringify(gh)); } catch (e) {}
+  ghStatus("设置已保存（仅在本机浏览器）", "ok"); refreshGhSummary();
+  if (gh.repo && gh.token) loadSeriesConfig(); // v8：GitHub 模式下从仓库重读系列配置
+}
+function ghStatus(m, c){ const s = $("ghStatus"); s.textContent = m; s.style.color = c === "ok" ? "var(--ok)" : "var(--warn)"; }
+function ghHeaders(){ return { "Authorization": "Bearer " + gh.token, "Accept": "application/vnd.github+json" }; }
+function ghUrl(p){ return "https://api.github.com/repos/" + gh.repo + "/contents/" + p.split("/").map(encodeURIComponent).join("/"); }
+function utf8ToB64(str){
+  const bytes = new TextEncoder().encode(str); let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+function fileB64(file){
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(file); });
+}
+async function ghPut(path, b64, message){
+  let sha = null;
+  const g = await fetch(ghUrl(path), { headers: ghHeaders() });
+  if (g.ok) sha = (await g.json()).sha;
+  else if (g.status !== 404) throw new Error("GitHub 读取失败：" + g.status + "（检查仓库名与令牌）");
+  const res = await fetch(ghUrl(path), {
+    method: "PUT", headers: { ...ghHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ message, content: b64, branch: gh.branch || "main", ...(sha ? { sha } : {}) })
+  });
+  if (!res.ok) { const t = await res.text(); throw new Error("GitHub 写入失败：" + res.status + " " + t.slice(0, 140)); }
+}
+async function ghTest(){
+  ghStatus("测试中…", "ok");
+  try {
+    const res = await fetch("https://api.github.com/repos/" + $("ghRepo").value.trim(), { headers: ghHeaders() });
+    if (res.ok) ghStatus("连接成功：" + $("ghRepo").value.trim(), "ok");
+    else if (res.status === 401) ghStatus("令牌无效（401）", "err");
+    else if (res.status === 404) ghStatus("仓库不存在或无权访问（404）", "err");
+    else ghStatus("失败：" + res.status, "err");
+  } catch (e) { ghStatus("网络错误：" + e.message, "err"); }
+}
+async function ghListCards(){
+  const url = "https://api.github.com/repos/" + gh.repo + "/git/trees/" + (gh.branch || "main") + "?recursive=1";
+  const res = await fetch(url, { headers: ghHeaders() });
+  if (!res.ok) throw new Error("GitHub 目录读取失败：" + res.status + "（检查令牌是否含 Contents 读权限）");
+  const data = await res.json();
+  const bp = gh.base ? gh.base + "/" : "";
+  return data.tree.filter(x => x.type === "blob" && x.path.startsWith(bp + "卡片/") && x.path.endsWith("/卡片.md")).map(x => x.path);
+}
+async function ghGet(path){
+  const res = await fetch(ghUrl(path), { headers: ghHeaders() });
+  if (!res.ok) throw new Error("GitHub 读取失败：" + res.status);
+  const j = await res.json();
+  const bin = atob((j.content || "").replace(/\n/g, ""));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+$("ghSave").onclick = saveGh;
+$("ghTest").onclick = ghTest;
+loadGhForm();
+
+/* ============ 文件夹连接（v10：句柄记忆，与阅读卡片共用 IndexedDB 库 nb-folder / 键 root） ============ */
+let _idbPromise;
+function idbOpen(){
+  if (_idbPromise) return _idbPromise;
+  _idbPromise = new Promise(res => {
+    try {
+      const q = indexedDB.open("nb-folder", 1);
+      q.onupgradeneeded = () => { try { q.result.createObjectStore("kv"); } catch(e){} };
+      q.onsuccess = () => res(q.result);
+      q.onerror = () => { _idbPromise = null; res(null); };
+    } catch(e){ _idbPromise = null; res(null); }
+  });
+  return _idbPromise;
+}
+async function idbGet(k){
+  const db = await idbOpen(); if (!db) return null;
+  return new Promise(res => { try { const r = db.transaction("kv").objectStore("kv").get(k); r.onsuccess = () => res(r.result || null); r.onerror = () => res(null); } catch(e){ res(null); } });
+}
+async function idbPut(k, v){
+  const db = await idbOpen(); if (!db) return;
+  return new Promise(res => { try { const tx = db.transaction("kv","readwrite"); tx.objectStore("kv").put(v, k); tx.oncomplete = () => res(); tx.onerror = () => res(); } catch(e){ res(); } });
+}
+async function idbDel(k){
+  const db = await idbOpen(); if (!db) return;
+  return new Promise(res => { try { const tx = db.transaction("kv","readwrite"); tx.objectStore("kv").delete(k); tx.oncomplete = () => res(); tx.onerror = () => res(); } catch(e){ res(); } });
+}
+async function permState(h, mode){   // 老内核无权限 API：当作已授权，实际读写失败再走 catch
+  try { return h.queryPermission ? await h.queryPermission({ mode }) : "granted"; }
+  catch(e){ return "prompt"; }
+}
+async function askPerm(h, mode){    // 必须由用户点击触发；浏览器弹的是轻量授权条，不是目录树
+  try { return h.requestPermission ? (await h.requestPermission({ mode }) === "granted") : true; }
+  catch(e){ return false; }
+}
+async function attachRoot(h){
+  root = h;
+  $("dirStatus").textContent = "已连接：" + h.name + "/";
+  $("dirStatus").classList.add("on");
+  setStatus("已连接项目文件夹。", "ok");
+  idbPut("root", h);                // 连接成功才记住
+  loadSeriesConfig(); // v8：连接后重读 模板/系列配置.md，系列列表以库内注册表为准
+}
+$("pickBtn").onclick = async () => {
+  if (!window.showDirectoryPicker) {
+    setStatus("此浏览器不支持直接写入文件夹（需电脑版 Edge/Chrome）。仍可填写，保存时将降级为下载文件。", "err");
+    return;
+  }
+  try {
+    const h = await showDirectoryPicker({ mode: "readwrite" });
+    await attachRoot(h);
+    $("reconnectBtn").style.display = "none";
+  } catch (e) { if (e.name !== "AbortError") setStatus("连接失败：" + e.message, "err"); }
+};
+
+/* v10：记住的文件夹——本会话已授权自动连；跨会话显示一键「继续使用」（授权必须由用户手势触发） */
+(async () => {
+  const h = await idbGet("root");
+  if (!h) return;
+  try {
+    if (await permState(h, "readwrite") === "granted"){
+      await h.getDirectoryHandle("卡片");   // 探测：云盘未就绪/文件夹已移动时及早发现
+      await attachRoot(h);
+    } else {
+      $("rcName").textContent = h.name;
+      $("reconnectBtn").style.display = "";
+      $("reconnectBtn").onclick = async () => {
+        if (!(await askPerm(h, "readwrite"))){ setStatus("已取消授权，可重新选择项目文件夹。", "err"); return; }
+        try {
+          await h.getDirectoryHandle("卡片");
+          await attachRoot(h);
+          $("reconnectBtn").style.display = "none";
+        } catch(e){
+          await idbDel("root");
+          $("reconnectBtn").style.display = "none";
+          setStatus("记住的文件夹打不开（可能已移动或云盘未就绪），请重新选择项目文件夹。", "err");
+        }
+      };
+    }
+  } catch(e){
+    await idbDel("root");
+    setStatus("记住的文件夹打不开（可能已移动或云盘未就绪），已请你重新选择。", "err");
+  }
+})();
+
+/* ============ 系列切换 ============ */
+$("tplSel").onchange = () => {
+  if (!confirm("切换系列将清空当前表单（已填内容不会写入任何文件）" + (editTarget ? "，并退出当前编辑" : "") + "，确定？")) {
+    $("tplSel").value = curTpl; return;
+  }
+  exitEdit();
+  curTpl = $("tplSel").value;
+  tags = []; images = []; dimValues = {}; customDims = []; curDim = 0; $("dimText").value = "";
+  ["overview","links","source"].forEach(id => $(id).value = "");
+  $("exBanner").style.display = "none";
+  renderAll();
+};
+
+/* ============ 渲染 ============ */
+function renderAll(){
+  renderTplSel(); renderAxes(); renderDims(); renderTags(); renderImages(); renderExamples(); updatePreview();
+}
+
+function renderExamples(){
+  const ex = exOf();
+  $("overviewEx").textContent = ex ? (ex.overview || "") : "";
+  $("linksEx").textContent = ex ? (ex.links || "") : "";
+  $("sourceEx").textContent = ex ? (ex.source || "") : "";
+}
+
+function renderAxes(){
+  const t = tpl();
+  $("axes").innerHTML = '<div class="axrow">' + AXES_POOL.map(a =>
+    '<div style="flex:' + (a.w || 1) + ' 1 130px;"><label>' + a.k + (a.arr ? "（数组）" : "") + (t.req.includes(a.k) ? ' <span style="color:var(--warn)" title="本系列必填">✱</span>' : "") + '</label><input data-k="' + a.k + '" placeholder="' + a.ph + '"></div>'
+  ).join("") + "</div>";
+  $("axes").querySelectorAll("input").forEach(inp => inp.addEventListener("input", updatePreview));
+}
+
+/* 当前卡片的全部维度 = 系列推荐 + 自选 */
+function allDims(){ const t = tpl(); return [...t.dims, ...customDims.filter(d => !t.dims.includes(d))]; }
+
+function renderDims(){
+  const t = tpl();
+  const list = allDims();
+  if (curDim >= list.length) curDim = 0;
+  $("dimTabs").innerHTML = list.map((d, i) => {
+    const isCustom = customDims.includes(d) && !t.dims.includes(d);
+    return '<button data-i="' + i + '" class="' + (i === curDim ? "on" : "") + '" title="' + (isCustom ? "自选维度" : "") + '">' + d + (dimValues[d] ? '<span class="dot">●</span>' : "") + (isCustom ? '<span class="rm" data-k="' + esc(d) + '" title="移除此维度（未保存的文字会丢失）">×</span>' : "") + "</button>";
+  }).join("");
+  $("dimTabs").querySelectorAll("button").forEach(b => b.onclick = () => {
+    saveCurDim(); curDim = +b.dataset.i; renderDims();
+  });
+  $("dimTabs").querySelectorAll(".rm").forEach(r => r.onclick = e => {
+    e.stopPropagation();
+    if (!confirm("移除自选维度「" + r.dataset.k + "」？（该维度下未保存的文字会丢失）")) return;
+    customDims = customDims.filter(d => d !== r.dataset.k);
+    delete dimValues[r.dataset.k];
+    saveCurDim();
+    curDim = 0;
+    renderDims(); updatePreview();
+  });
+  $("dimText").value = dimValues[list[curDim]] || "";
+  const hint = HINTS[list[curDim]] || "";
+  const ex = exOf();
+  const exd = ex && ex.dims ? (ex.dims[list[curDim]] || "") : "";
+  $("dimHint").textContent = hint || (customDims.includes(list[curDim]) ? "自定义维度：用 2-5 句说清它问什么、答案的常态是什么。" : "");
+  $("dimExample").textContent = exd || (customDims.includes(list[curDim]) ? "（自选维度无内置示例，直接照引导问题写即可）" : "（该维度暂无示例，直接照引导问题写即可）");
+  $("dimText").placeholder = hint ? hint.split("——")[0] : "写 2-5 句" + list[curDim] + "维度的常态，求具体";
+}
+function saveCurDim(){ const list = allDims(); if (list[curDim]) dimValues[list[curDim]] = $("dimText").value; }
+$("dimText").addEventListener("input", () => { saveCurDim(); updatePreview(); });
+
+function renderTags(){
+  const chips = tags.map(t => '<span class="chip">' + esc(t) + '<b data-t="' + esc(t) + '">×</b></span>').join("");
+  $("chips").innerHTML = chips + '<input id="tagInput" list="tagList" placeholder="回车添加">';
+  const inp = $("tagInput");
+  inp.addEventListener("keydown", e => {
+    if (e.key === "Enter" && inp.value.trim()) {
+      const v = inp.value.trim();
+      if (!tags.includes(v)) tags.push(v);
+      addTagMemory(v); renderTags(); updatePreview();
+    }
+  });
+  inp.addEventListener("change", () => { if (inp.value.trim() && !tags.includes(inp.value.trim())) { tags.push(inp.value.trim()); addTagMemory(inp.value.trim()); renderTags(); updatePreview(); } });
+  $("chips").querySelectorAll("b").forEach(b => b.onclick = () => { tags = tags.filter(x => x !== b.dataset.t); renderTags(); updatePreview(); });
+  $("tagList").innerHTML = getTagMemory().map(t => "<option value='" + esc(t) + "'>").join("");
+}
+function getTagMemory(){ try { return JSON.parse(localStorage.getItem("nb-tags") || "[]"); } catch(e){ return []; } }
+function addTagMemory(t){ const m = getTagMemory(); if (!m.includes(t)) { m.push(t); try { localStorage.setItem("nb-tags", JSON.stringify(m.slice(-200))); } catch(e){} } }
+
+/* ============ 图片 ============ */
+$("drop").onclick = () => $("fileInput").click();
+$("fileInput").onchange = e => { addImages(e.target.files); e.target.value = ""; };
+$("drop").addEventListener("dragover", e => { e.preventDefault(); $("drop").classList.add("over"); });
+$("drop").addEventListener("dragleave", () => $("drop").classList.remove("over"));
+$("drop").addEventListener("drop", e => { e.preventDefault(); $("drop").classList.remove("over"); addImages(e.dataTransfer.files); });
+
+/* v9：拖入即压缩。长边 >2000px 缩到 2000px 并转 JPEG；已达标原样保留，不重复有损编码 */
+async function compressImage(f){
+  if (!f.type.startsWith("image/")) return { file:f, compressed:false };
+  const objUrl = URL.createObjectURL(f);
+  let im;
+  try {
+    im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = objUrl; });
+  } catch (e) { URL.revokeObjectURL(objUrl); return { file:f, compressed:false }; }
+  const w = im.naturalWidth, h = im.naturalHeight;
+  if (!w || !h || Math.max(w, h) <= 2000) { URL.revokeObjectURL(objUrl); return { file:f, compressed:false }; }
+  const scale = 2000 / Math.max(w, h);
+  const cv = document.createElement("canvas");
+  cv.width = Math.round(w * scale); cv.height = Math.round(h * scale);
+  cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
+  URL.revokeObjectURL(objUrl);
+  const blob = await new Promise(res => cv.toBlob(res, "image/jpeg", 0.88));
+  const base = f.name.replace(/\.[^.]+$/, "");
+  return { file:new File([blob], base + ".jpg", { type:"image/jpeg" }), compressed:true, dims:cv.width + "×" + cv.height };
+}
+async function addImages(files){
+  let n = 0; const dimsList = [];
+  for (const f of files) {
+    if (!f.type.startsWith("image/")) continue;
+    let out = f, dims = "";
+    try { const r = await compressImage(f); out = r.file; if (r.compressed){ n++; dims = r.dims; } } catch (e) {}
+    const reader = new FileReader();
+    reader.onload = () => { images.push({ file: out, url: reader.result, 内容: "", 作者: "" }); renderImages(); updatePreview(); };
+    reader.readAsDataURL(out);
+    if (dims) dimsList.push(dims);
+  }
+  if (n) setStatus("已自动压缩 " + n + " 张图至长边 ≤2000px（" + dimsList.join("、") + "，转 JPEG）；保存时按规范改名。", "ok");
+}
+function renderImages(){
+  $("imgList").innerHTML = images.map((im, i) =>
+    '<div class="imgrow"><img src="' + im.url + '">' +
+    '<div class="meta"><input data-i="' + i + '" data-f="内容" placeholder="内容，如 西湖图" value="' + esc(im.内容) + '">' +
+    '<input data-i="' + i + '" data-f="作者" placeholder="作者/来源，可空" value="' + esc(im.作者) + '"></div>' +
+    '<button class="del" data-i="' + i + '">移除</button></div>'
+  ).join("");
+  $("imgList").querySelectorAll("input").forEach(inp => inp.addEventListener("input", e => {
+    images[+e.target.dataset.i][e.target.dataset.f] = e.target.value; updatePreview();
+  }));
+  $("imgList").querySelectorAll(".del").forEach(b => b.onclick = () => { images.splice(+b.dataset.i, 1); renderImages(); updatePreview(); });
+}
+
+/* ============ 生成 Markdown ============ */
+function collectFields(){
+  const t = tpl(), f = {};
+  $("axes").querySelectorAll("input").forEach(inp => { f[inp.dataset.k] = inp.value.trim(); });
+  f["概述"] = ($("overview").value || "").trim();
+  f["系列"] = [t.name]; f["标签"] = tags.slice();
+  saveCurDim();
+  return f;
+}
+function yamlList(arr){ return arr.length ? "\n" + arr.map(x => "  - " + x).join("\n") : " []"; }
+function todayStr(){ const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+
+function buildMarkdown(){
+  const t = tpl(), f = collectFields();
+  const missing = t.req.filter(k => !f[k]);
+  if (missing.length) return null;   // 必填坐标（✱ 标记）未填齐时不生成
+
+  let md = "---\n";
+  for (const a of AXES_POOL) {
+    if (a.arr) { if (f[a.k]) md += a.k + ": [" + f[a.k] + "]\n"; }
+    else if (f[a.k]) md += a.k + ": " + f[a.k] + "\n";   // 空坐标不写入 YAML（坐标池统一，各系列按需取用）
+  }
+  md += "系列:" + yamlList(f["系列"]) + "\n";
+  md += "标签:" + yamlList(f["标签"]) + "\n";
+  md += "更新: " + todayStr() + "\n---\n\n";
+
+  md += "# 概述\n\n" + (f["概述"] || "（待补：这个卡片最突出的面貌）") + "\n\n";
+  for (const d of t.dims) md += "## " + d + "\n\n" + (dimValues[d] || "").trim() + "\n\n";
+  for (const d of customDims) if ((dimValues[d] || "").trim()) md += "## " + d + "\n\n" + dimValues[d].trim() + "\n\n"; // 自选维度作为独立标题节
+  if (images.length || (editTarget && editTarget.rawImages)) {
+    md += "## 图像\n\n";
+    if (editTarget && editTarget.rawImages) md += editTarget.rawImages + "\n\n"; // 原有图片引用原样保留
+    images.forEach((im, i) => {
+      const name = t.imgName(f, im, i) + extOf(im.file);
+      md += "![" + (im.内容 || name) + "](图/" + name + ")\n> " + (im.内容 || "") + (im.作者 ? "　—— " + im.作者 : "") + "\n\n";
+    });
+  }
+  const links = $("links").value.trim();
+  md += "## 关系\n\n" + (links || "（待补：与其他卡片的双链）") + "\n\n";
+  md += "## 来源\n\n" + ($("source").value.trim() || "（待补）") + "\n";
+  if (editTarget && editTarget.extra) md += editTarget.extra; // 编辑模式：模板之外的自定义节原样拼回（预览与保存一致）
+  return { fields: f, md };
+}
+function extOf(file){ const m = (file.name.match(/\.\w+$/) || [".jpg"])[0]; return m.toLowerCase(); }
+function slugOf(f){ const s = tpl(); return (s.slug ? s.slug(f) : s.req.map(k => f[k]).filter(Boolean).join("-")) || "未命名"; }
+
+function updatePreview(){
+  const r = buildMarkdown();
+  $("preview").textContent = r ? r.md : "（填写必填坐标：" + tpl().req.join("、") + " 后，此处显示将生成的卡片）";
+}
+
+/* ============ 示例模式 ============ */
+function formHasContent(){
+  return tags.length > 0 || images.length > 0 ||
+    Object.values(dimValues).some(v => (v || "").trim()) ||
+    ($("overview").value || "").trim() || ($("links").value || "").trim() || ($("source").value || "").trim() ||
+    [...$("axes").querySelectorAll("input")].some(inp => inp.value.trim());
+}
+$("exBtn").onclick = () => {
+  if (formHasContent() && !confirm("载入示例将覆盖当前表单内容（不会写入任何文件），继续？")) return;
+  const t = tpl(), ex = exOf();
+  if (!ex) { showMessage("系列「" + t.name + "」还没有挂示例。可以在「系列管理」里给它挂一个内置示范（编年卡片 / 交互设计 / 梵高研究）。"); return; }
+  curDim = 0;
+  tags = ex.tags.slice();
+  customDims = [];
+  dimValues = Object.assign({}, ex.dims);
+  $("links").value = ex.links || "";
+  $("source").value = ex.source || "";
+  renderAll();
+  $("axes").querySelectorAll("input").forEach(inp => { inp.value = ex.fields[inp.dataset.k] || ""; });
+  $("overview").value = ex.overview || "";
+  renderDims(); renderTags(); updatePreview();
+  $("exBanner").style.display = "block";
+  setStatus("已载入示例《" + ex.title + "》（取自库内真实卡片）——照着改成你的内容即可。", "ok");
+};
+
+/* ============ 添加维度（维度推荐制：任何卡片可用维度池任何维度） ============ */
+function dimPool(){ const s = []; for (const ser of SERIES) for (const d of ser.dims) if (!s.includes(d)) s.push(d); return s; }
+$("addDimBtn").onclick = () => {
+  const cur = allDims();
+  $("dimNameInput").value = "";
+  $("dimPoolChips").innerHTML = dimPool().filter(d => !cur.includes(d)).map(d =>
+    '<button data-d="' + esc(d) + '" style="border:0.5px solid var(--line);border-radius:999px;background:var(--bg);font-size:12px;padding:3px 10px;">' + esc(d) + "</button>"
+  ).join("");
+  $("dimPoolChips").querySelectorAll("button").forEach(b => b.onclick = () => { $("dimNameInput").value = b.dataset.d; });
+  $("dimModal").style.display = "flex";
+  $("dimNameInput").focus();
+};
+function addDimCommit(){
+  const name = $("dimNameInput").value.trim();
+  if (!name) return;
+  $("dimModal").style.display = "none";
+  if (allDims().includes(name)) { curDim = allDims().indexOf(name); renderDims(); return; }
+  saveCurDim(); // 先还原当前页签的草稿
+  customDims.push(name); dimValues[name] = "";
+  curDim = allDims().length - 1;
+  renderDims(); updatePreview();
+  setStatus("已添加维度「" + name + "」。若它是新发明的维度，记得去 README 的维度池登记。", "ok");
+}
+$("dimAdd").onclick = addDimCommit;
+$("dimCancel").onclick = () => { $("dimModal").style.display = "none"; };
+$("dimNameInput").addEventListener("keydown", e => { if (e.key === "Enter") addDimCommit(); });
+
+/* ============ 打开与编辑已有卡片（v5） ============ */
+function showMessage(text, actionLabel, actionFn){
+  $("msgText").textContent = text;
+  const act = $("msgAction");
+  if (actionLabel) {
+    act.textContent = actionLabel; act.style.display = "inline-block";
+    act.onclick = () => { $("msgModal").style.display = "none"; if (actionFn) actionFn(); };
+  } else act.style.display = "none";
+  $("msgClose").onclick = () => { $("msgModal").style.display = "none"; };
+  $("msgModal").style.display = "flex";
+}
+function exitEdit(){
+  editTarget = null;
+  $("editBanner").style.display = "none";
+  $("saveBtn").textContent = "保存卡片";
+}
+function cleanSection(s){
+  s = (s || "").trim();
+  return /^（待补|^（未|^（暂/.test(s) ? "" : s;
+}
+/* 反解析：把标准卡片.md 拆回表单字段 */
+function parseCard(md, tpl){
+  const r = { fields: {}, arrays: {}, overview: "", dims: {}, links: "", source: "", rawImages: "", extra: "" };
+  const ym = md.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (ym) {
+    let key = null;
+    for (const line of ym[1].split(/\r?\n/)) {
+      const li = line.match(/^\s+-\s*(.*)$/);
+      if (li && key) { (r.arrays[key] = r.arrays[key] || []).push(li[1].trim()); continue; }
+      const kv = line.match(/^([^:#]+):\s*(.*)$/);
+      if (!kv) continue;
+      key = kv[1].trim();
+      const v = kv[2].trim();
+      if (/^\[.+\]$/.test(v)) r.arrays[key] = v.slice(1, -1).split(",").map(s => s.trim()).filter(Boolean);
+      else { r.fields[key] = v; }
+    }
+  }
+  const body = md.slice(ym ? ym[0].length : 0);
+  const buf = {}; const order = []; let cur = null;
+  for (const line of body.split(/\r?\n/)) {
+    const h = line.match(/^#{1,2}\s+(.+?)\s*$/);
+    if (h) { cur = h[1]; if (!(cur in buf)) { buf[cur] = ""; order.push(cur); } }
+    else if (cur) buf[cur] += line + "\n";
+  }
+  r.overview = cleanSection(buf["概述"]);
+  r.links = cleanSection(buf["关系"]);
+  r.source = cleanSection(buf["来源"]);
+  r.rawImages = (buf["图像"] || "").trim();
+  for (const d of tpl.dims) r.dims[d] = cleanSection(buf[d]);
+  const known = new Set([...tpl.dims, "概述", "图像", "关系", "来源"]);
+  r.extraList = order.filter(k => !known.has(k)).map(k => ({ k, txt: cleanSection(buf[k]) })); // 模板之外的标题节（自选维度）
+  r.extra = r.extraList.map(it => "## " + it.k + "\n\n" + it.txt + "\n").join("\n");
+  return r;
+}
+function loadCardIntoForm(md, label){
+  const probe = parseCard(md, tpl());
+  const series = probe.arrays["系列"] || [];
+  const hit = SERIES.find(s => series.includes(s.name));
+  if (hit && hit.id !== curTpl) { curTpl = hit.id; $("tplSel").value = curTpl; }
+  const t = tpl();
+  const p = parseCard(md, t);
+  curDim = 0;
+  tags = p.arrays["标签"] || [];
+  dimValues = p.dims;
+  customDims = []; // 模板外的标题节还原为自选维度页签，可继续编辑
+  for (const it of (p.extraList || [])) { if (it.txt) { customDims.push(it.k); dimValues[it.k] = it.txt; } }
+  p.extra = "";
+  $("overview").value = p.overview;
+  $("links").value = p.links;
+  $("source").value = p.source;
+  renderAll();
+  $("axes").querySelectorAll("input").forEach(inp => { inp.value = p.fields[inp.dataset.k] || ""; });
+  updatePreview();
+  $("exBanner").style.display = "none";
+  $("editBanner").style.display = "block";
+  $("editPath").textContent = label;
+  const n = (p.rawImages.match(/!\[/g) || []).length;
+  $("editImgs").textContent = n ? "　（原卡片已有图片 " + n + " 张，原样保留）" : "";
+  $("saveBtn").textContent = "保存修改（覆盖原文件）";
+  return p;
+}
+/* 统一收集全部卡片：优先 GitHub，其次本地文件夹。返回 [{path, dir, txt}] */
+async function collectCards(){
+  const items = [];
+  if (gh.repo && gh.token) {
+    const paths = await ghListCards();
+    for (const p of paths) { try { items.push({ path: p, dir: null, txt: await ghGet(p) }); } catch (e) {} }
+  } else if (root) {
+    const slices = await root.getDirectoryHandle("卡片");
+    for await (const [series, sh] of slices.entries()) {
+      if (sh.kind !== "directory") continue;
+      for await (const [slug, dh] of sh.entries()) {
+        if (dh.kind !== "directory") continue;
+        try {
+          const fh = await dh.getFileHandle("卡片.md");
+          items.push({ path: "卡片/" + series + "/" + slug + "/卡片.md", dir: dh, txt: await (await fh.getFile()).text() });
+        } catch (e) {}
+      }
+    }
+  }
+  return items;
+}
+/* 列表展示文案：路径 + 更新日期 + 概述摘要 */
+function describeCard(path, txt){
+  const base = path.replace(/\/卡片\.md$/, "");
+  const ym = (txt.match(/^---\r?\n([\s\S]*?)\r?\n---/) || [,""])[1];
+  const upd = ((ym.match(/^更新:\s*(.+)$/m) || [,""])[1] || "").trim();
+  const ov = (((txt.match(/#\s*概述\s*\r?\n+([^\r\n#]{0,60})/) || [,""])[1]) || "").trim();
+  let label = base;
+  if (upd) label += "（更新 " + upd + "）";
+  if (ov) label += "\n　" + ov;
+  return label;
+}
+function pickFrom(list){ // list: [{label, value}] → Promise<item|null>
+  return new Promise(res => {
+    const box = $("pickList");
+    box.innerHTML = list.map((it, i) =>
+      '<button data-i="' + i + '" style="display:block;width:100%;text-align:left;white-space:pre-wrap;border:none;border-bottom:0.5px solid var(--line);border-radius:0;padding:8px 10px;">' + esc(it.label) + "</button>"
+    ).join("");
+    box.querySelectorAll("button").forEach(b => b.onclick = () => { $("pickModal").style.display = "none"; res(list[+b.dataset.i]); });
+    $("pickCancel").onclick = () => { $("pickModal").style.display = "none"; res(null); };
+    $("pickModal").style.display = "flex";
+  });
+}
+$("exitEditBtn").onclick = () => {
+  if (!confirm("退出编辑并清空表单？（原文件不受影响，只有点「保存修改」才会写入）")) return;
+  exitEdit();
+  tags = []; images = []; dimValues = {}; customDims = []; curDim = 0;
+  ["overview","links","source","dimText"].forEach(id => $(id).value = "");
+  renderAll();
+};
+$("openBtn").onclick = async () => {
+  if (!gh.repo || !gh.token) {
+    if (!root) {
+      showMessage("打开已有卡片需要先连接一个数据源：\n\n· 电脑上——点下面按钮，选择你的编年卡片项目文件夹（云盘同步目录里的那个）；\n· 或在「GitHub 主库设置」里配置仓库和令牌。\n\n连接后这里会列出所有卡片供你挑选编辑。",
+        window.showDirectoryPicker ? "立即连接项目文件夹" : null,
+        window.showDirectoryPicker ? () => $("pickBtn").click() : null);
+      return;
+    }
+  }
+  try {
+    setStatus("正在读取卡片列表…", "ok");
+    const items = await collectCards();
+    setStatus("", "");
+    if (!items.length) {
+      showMessage(gh.repo && gh.token
+        ? "仓库内 " + (gh.base || "") + "/卡片/ 下没有找到任何卡片。"
+        : "已连接文件夹的 卡片/ 下没有找到任何卡片。\n\n确认结构为：卡片/系列/坐标/卡片.md（例如 卡片/编年/1200-杭州/卡片.md）。刚建的库还没有卡片的话，先用表单保存第一张。",
+        null, null);
+      return;
+    }
+    const pick = await pickFrom(items.map(it => ({ label: describeCard(it.path, it.txt), value: it })));
+    if (!pick) return;
+    const it = pick.value;
+    const p = loadCardIntoForm(it.txt, it.path);
+    editTarget = { type: it.dir ? "local" : "gh", dir: it.dir, path: it.path, extra: p.extra, rawImages: p.rawImages };
+    updatePreview(); // extra/rawImages 就位后刷新预览
+    setStatus("已打开：" + it.path + "。改完点「保存修改」将覆盖原文件。", "ok");
+  } catch (e) { setStatus("打开失败：" + e.message, "err"); }
+};
+/* 「关系」选卡插入：列出库内卡片（含概述摘要），选中后自动写一条双链 */
+$("linkPick").onclick = async () => {
+  if (!gh.repo || !gh.token) {
+    if (!root) {
+      showMessage("选卡插入需要先连接数据源（项目文件夹或 GitHub）。", window.showDirectoryPicker ? "立即连接项目文件夹" : null,
+        window.showDirectoryPicker ? () => $("pickBtn").click() : null);
+      return;
+    }
+  }
+  try {
+    setStatus("正在读取卡片列表…", "ok");
+    const items = await collectCards();
+    setStatus("", "");
+    const usable = items.filter(it => it.path !== (editTarget && editTarget.path));
+    if (!usable.length) { showMessage("库里还没有其他卡片，先保存一张再来做双链。", null, null); return; }
+    const pick = await pickFrom(usable.map(it => ({ label: describeCard(it.path, it.txt), value: it })));
+    if (!pick) return;
+    const slug = pick.value.path.split("/").slice(-2, -1)[0];
+    const ta = $("links");
+    ta.value = (ta.value.trim() ? ta.value.trimEnd() + "\n" : "") + "参见 [[" + slug + "]]：";
+    updatePreview();
+    setStatus("已插入 [[" + slug + "]]，补一句为什么相关即可。", "ok");
+  } catch (e) { setStatus("读取失败：" + e.message, "err"); }
+};
+
+/* ============ 保存 ============ */
+async function saveInto(dirHandle, name, blob){
+  const fh = await dirHandle.getFileHandle(name, { create: true });
+  const w = await fh.createWritable(); await w.write(blob); await w.close();
+}
+async function getDir(parent, name){ return parent.getDirectoryHandle(name, { create: true }); }
+
+/* v9：新建卡片前探测同坐标同名卡片，防止静默覆盖。编辑模式（editTarget）不走这里 */
+async function localCardExists(folder, slug){
+  try {
+    const d = await getDir(await getDir(await getDir(root, "卡片"), folder), slug);
+    await d.getFileHandle("卡片.md");
+    return true;
+  } catch (e) { return false; }
+}
+async function ghCardExists(path){
+  const res = await fetch(ghUrl(path), { headers: ghHeaders() });
+  if (res.ok) return true;
+  if (res.status === 404) return false;
+  throw new Error("GitHub 检查失败：" + res.status);
+}
+
+async function saveSlice(){
+  const r = buildMarkdown();
+  if (!r) { setStatus("请填写必填坐标（✱ 标记）：" + tpl().req.join("、") + "。", "err"); return; }
+  const t = tpl();
+
+  /* 编辑模式：覆盖原文件 */
+  if (editTarget) {
+    const mdOut = r.md; // extra 已在 buildMarkdown 内拼回
+    const blob = new Blob([mdOut], { type: "text/markdown;charset=utf-8" });
+    try {
+      if (editTarget.type === "local") {
+        await saveInto(editTarget.dir, "卡片.md", blob);
+        if (images.length) {
+          const imgDir = await getDir(editTarget.dir, "图");
+          for (let i = 0; i < images.length; i++) {
+            const name = imgNameOf(t, r.fields, images[i], i) + extOf(images[i].file);
+            await saveInto(imgDir, name, images[i].file);
+          }
+        }
+      } else {
+        const dir = editTarget.path.replace(/\/卡片\.md$/, "");
+        await ghPut(editTarget.path, utf8ToB64(mdOut), "更新卡片 " + dir.split("/").pop());
+        for (let i = 0; i < images.length; i++) {
+          const name = imgNameOf(t, r.fields, images[i], i) + extOf(images[i].file);
+          await ghPut(dir + "/图/" + name, await fileB64(images[i].file), "图片 " + name);
+        }
+      }
+      rememberTags();
+      exitEdit();
+      setStatus("已保存修改（覆盖原文件）。", "ok");
+    } catch (e) { setStatus("保存失败：" + e.message, "err"); }
+    return;
+  }
+
+  const slug = slugOf(r.fields);
+  const blob = new Blob([r.md], { type: "text/markdown;charset=utf-8" });
+
+  /* v9：同坐标同名卡片已存在 → 先确认，避免静默覆盖（下载兜底模式无需检查） */
+  let exists = false;
+  try {
+    if (gh.repo && gh.token) {
+      const bp0 = gh.base ? gh.base + "/" : "";
+      exists = await ghCardExists(bp0 + "卡片/" + t.folder + "/" + slug + "/卡片.md");
+    } else if (root) {
+      exists = await localCardExists(t.folder, slug);
+    }
+  } catch (e) { setStatus("保存前检查重名失败：" + e.message, "err"); return; }
+  if (exists && !confirm("同坐标卡片已存在：卡片/" + t.folder + "/" + slug + "/卡片.md\n\n继续保存将【覆盖】原文件。\n建议取消后用「打开已有卡片」在原卡上修改。仍要覆盖？")) {
+    setStatus("已取消：存在同坐标同名卡片，未覆盖。可点「打开已有卡片」编辑原卡。", "err");
+    return;
+  }
+
+  if (gh.repo && gh.token) {
+    try {
+      const bp = gh.base ? gh.base + "/" : "";
+      const dir = bp + "卡片/" + t.folder + "/" + slug;
+      await ghPut(dir + "/卡片.md", utf8ToB64(r.md), "卡片 " + slug + "（" + t.name + "）");
+      for (let i = 0; i < images.length; i++) {
+        const name = imgNameOf(t, r.fields, images[i], i) + extOf(images[i].file);
+        await ghPut(dir + "/图/" + name, await fileB64(images[i].file), "图片 " + name);
+      }
+      rememberTags();
+      const cnt = await countCardsMsg();
+      setStatus("已提交到 GitHub：" + dir + "/（含 " + images.length + " 张图片）" + cnt, "ok");
+    } catch (e) { setStatus(e.message + " —— 可点「复制文本」手动保存。", "err"); }
+    return;
+  }
+
+  if (!root) { downloadFile(slug + "-卡片.md", blob); setStatus("未连接文件夹，已降级为浏览器下载。请手动放入对应目录。", "err"); return; }
+  try {
+    const sliceDir = await getDir(await getDir(await getDir(root, "卡片"), t.folder), slug);
+    await saveInto(sliceDir, "卡片.md", blob);
+    if (images.length) {
+      const imgDir = await getDir(sliceDir, "图");
+      for (let i = 0; i < images.length; i++) {
+        const name = imgNameOf(t, r.fields, images[i], i) + extOf(images[i].file);
+        await saveInto(imgDir, name, images[i].file);
+      }
+    }
+    rememberTags();
+    const cnt = await countCardsMsg();
+    setStatus("已保存：卡片/" + t.folder + "/" + slug + "/（含 " + images.length + " 张图片）" + cnt, "ok");
+  } catch (e) { setStatus("保存失败：" + e.message, "err"); }
+}
+
+/* 保存成功后的激励反馈：数一数库里现在有多少张卡片 */
+async function countCardsMsg(){
+  try { const n = (await collectCards()).length; return n ? "　—— 这是库里第 " + n + " 张卡片！" : ""; }
+  catch (e) { return ""; }
+}
+
+async function saveInbox(){
+  const r = buildMarkdown();
+  const t = tpl(), f = r ? r.fields : collectFields();
+  const now = new Date();
+  const ds = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,"0") + "-" + String(now.getDate()).padStart(2,"0") + "-" + String(now.getHours()).padStart(2,"0") + String(now.getMinutes()).padStart(2,"0");
+  const name = ds + "-" + (slugOf(f) || "未命名") + ".md";
+  let raw = "# 收件箱草稿（" + ds + "，系列：" + t.name + "）\n\n";
+  raw += "坐标：" + AXES_POOL.map(a => a.k + "=" + (f[a.k] || "—")).join("；") + "\n标签：" + (tags.join("、") || "—") + "\n\n";
+  for (const d of [...t.dims, ...customDims]) if ((dimValues[d] || "").trim()) raw += "## " + d + "\n\n" + dimValues[d].trim() + "\n\n";
+  raw += "## 来源\n\n" + ($("source").value.trim() || "—") + "\n";
+
+  const blob = new Blob([raw], { type: "text/markdown;charset=utf-8" });
+
+  if (gh.repo && gh.token) {
+    try {
+      const bp = gh.base ? gh.base + "/" : "";
+      await ghPut(bp + "_收件箱/" + name, utf8ToB64(raw), "收件箱草稿 " + name);
+      setStatus("已提交到 GitHub 收件箱：" + bp + "_收件箱/" + name, "ok");
+    } catch (e) { setStatus(e.message + " —— 可改用「复制文本」。", "err"); }
+    return;
+  }
+
+  if (!root) { downloadFile(name, blob); setStatus("未连接文件夹，已降级为浏览器下载。", "err"); return; }
+  try {
+    await saveInto(await getDir(root, "_收件箱"), name, blob);
+    setStatus("已存入收件箱：" + name, "ok");
+  } catch (e) { setStatus("保存失败：" + e.message, "err"); }
+}
+
+async function copyText(){
+  const r = buildMarkdown();
+  if (!r) { setStatus("请填写必填坐标（✱ 标记）：" + tpl().req.join("、") + "。", "err"); return; }
+  try {
+    await navigator.clipboard.writeText(r.md);
+    setStatus("卡片文本已复制，可粘贴到备忘录 / Obsidian。", "ok");
+  } catch (e) { setStatus("复制失败，请在右侧预览区手动全选复制。", "err"); }
+}
+
+function downloadFile(name, blob){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+}
+function rememberTags(){ tags.forEach(addTagMemory); }
+function setStatus(msg, cls){ const s = $("status"); s.textContent = msg; s.className = cls; }
+
+$("saveBtn").onclick = saveSlice;
+$("inboxBtn").onclick = saveInbox;
+$("copyBtn").onclick = copyText;
+$("resetBtn").onclick = () => { if (confirm("清空当前表单？")) { exitEdit(); tags = []; images = []; dimValues = {}; customDims = []; curDim = 0; ["links","source","dimText","overview"].forEach(id => $(id).value = ""); $("exBanner").style.display = "none"; renderAll(); } };
+
+["overview","links","source"].forEach(id => $(id).addEventListener("input", updatePreview));
+renderAll();
+</script>
+</body>
+</html>
