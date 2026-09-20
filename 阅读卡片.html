@@ -705,6 +705,7 @@ async function loadGh(){
     }
     finishLoad(items, "已连接 GitHub：" + gh.repo);
     ghStatus("连接成功", true);
+    $("ghPanel").open = false;
   } catch(e){ setMsg(e.message); ghStatus(e.message, false); }
 }
 function finishLoad(items, statusText){
