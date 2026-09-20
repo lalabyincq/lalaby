@@ -95,6 +95,9 @@
   .reader figure{margin:12px 0;}
   .reader figure img{max-width:100%;border-radius:8px;border:0.5px solid var(--line);display:block;background:var(--bg2);min-height:120px;}
   .reader figure img.missing{outline:2px dashed var(--warn);padding:20px;min-height:auto;}
+  /* #9 图片加载骨架屏 */
+  .reader figure img.loading{background:linear-gradient(90deg,var(--bg2) 25%,var(--line2) 50%,var(--bg2) 75%);background-size:200% 100%;animation:skeleton 1.4s ease-in-out infinite;min-height:120px;}
+  @keyframes skeleton{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
   .reader figcaption{font-size:12px;color:var(--tx3);margin-top:5px;}
   .wikilink{border:none;background:var(--ac-bg);color:var(--ac);border-radius:5px;padding:0 6px;font-size:inherit;cursor:pointer;}
   .wikilink:hover{text-decoration:underline;color:var(--ac);}
@@ -193,7 +196,34 @@
   .exbox .exbody{white-space:pre-wrap;margin:0;line-height:1.7;}
   .exbox .extag{display:inline-block;font-size:11px;color:var(--tx3);border:0.5px solid var(--line);border-radius:99px;padding:0 8px;margin-bottom:5px;}
   #editCardBtn{float:right;}
-  @media (max-width:700px){.duo{grid-template-columns:1fr;}}
+  /* 浮动翻卡按钮（屏幕下方两侧，拇指易触） */
+  .nav-flot{position:fixed;bottom:24px;z-index:50;
+    width:48px;height:48px;border-radius:50%;border:0.5px solid var(--line);
+    background:var(--bg);opacity:.85;cursor:pointer;font-size:22px;color:var(--ac);
+    display:none;box-shadow:0 2px 10px rgba(0,0,0,.15);touch-action:manipulation;}
+  .nav-flot:hover{opacity:1;}
+  .nav-flot:disabled{opacity:.25;cursor:default;}
+  #navPrev{left:16px;}
+  #navNext{right:16px;}
+  /* 浮动对比切换 */
+  .cmp-flot{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:50;
+    display:none;background:var(--bg);border:0.5px solid var(--line);
+    border-radius:20px;padding:4px;box-shadow:0 2px 10px rgba(0,0,0,.15);}
+  .cmp-flot button{font-size:12px;padding:6px 12px;border:none;background:none;border-radius:16px;color:var(--tx2);}
+  .cmp-flot button.on{background:var(--ac-bg);color:var(--ac);}
+  @media (max-width:700px){
+    .duo{grid-template-columns:1fr;}
+    /* #6 移动端分析视图适配 */
+    .vtabs button{padding:6px 8px;font-size:12px;}
+    .tl{padding-left:20px;margin-left:2px;}
+    .tl .item{padding:6px 0 6px 4px;}
+    .tl .item::before{left:-27px;width:8px;height:8px;top:12px;}
+    .tl .item .yr{font-size:11.5px;min-width:72px;}
+    .tl .item .nm{font-size:13px;}
+    #graphSvg{height:55vh;min-height:300px;}
+    .matrixwrap{font-size:11px;}
+    table.matrix th,table.matrix td{padding:4px 5px;}
+  }
   @media (max-width:900px){
     main{padding:12px;}
     .cmpwrap{grid-template-columns:1fr;}
@@ -391,6 +421,15 @@
     </div>
   </div>
 </main>
+
+<!-- 浮动操作按钮（阅读/对比视图用） -->
+<button id="navHome" class="nav-flot" style="left:16px;" aria-label="返回书架" title="返回书架">⌂</button>
+<button id="navPrev" class="nav-flot" style="right:68px;" aria-label="上一张" title="上一张">‹</button>
+<button id="navNext" class="nav-flot" style="right:16px;" aria-label="下一张" title="下一张">›</button>
+<div id="cmpToggle" class="cmp-flot">
+  <button id="cmpModeSeries">同系列对齐</button>
+  <button id="cmpModeAll">跨系列并排</button>
+</div>
 
 <!-- v4：编辑视图弹窗（选卡/加维度/系列管理/消息） -->
 <div id="pickModal" style="display:none;position:fixed;inset:0;background:rgba(40,40,36,.4);z-index:60;align-items:center;justify-content:center;">
@@ -736,8 +775,21 @@ function finishLoad(items, statusText){
   show("homeView");
   if (curPane !== "shelf") switchPane(curPane);   // 刷新数据时重渲染当前分析视图
   if (location.hash) {
-    const sl = decodeURIComponent(location.hash.replace(/^#\/?/, ""));
-    if (slugIndex[sl]) openCard(slugIndex[sl].uid);
+    // #10 解析 hash：支持 #c=slug1,slug2&m=series 对比快照 和 #/slug 单卡
+    const h = location.hash.replace(/^#/, "");
+    const cmpMatch = h.match(/^c=([^&]+)(?:&m=(\w+))?/);
+    if (cmpMatch) {
+      const slugs = cmpMatch[1].split(",").map(s => decodeURIComponent(s.trim())).filter(s => slugIndex[s]);
+      if (slugs.length >= 2) {
+        chosen = new Set(slugs.map(s => slugIndex[s].uid));
+        cmpForceMode = cmpMatch[2] === "series" || cmpMatch[2] === "all" ? cmpMatch[2] : null;
+        // openCompare 在数据加载完成后调用会被 setMsg 中的 renderHome 覆盖，这里延迟调用
+        setTimeout(() => openCompare(cmpForceMode), 50);
+      }
+    } else {
+      const sl = decodeURIComponent(h.replace(/^\/?/, ""));
+      if (slugIndex[sl]) openCard(slugIndex[sl].uid);
+    }
   }
 }
 
@@ -822,8 +874,12 @@ function materializeImages(container){
   container.querySelectorAll("img.lazyimg").forEach(async img => {
     const card = cards.find(c => c.uid === img.dataset.uid);
     if (!card) return;
-    try { img.src = await resolveImgUrl(card, img.dataset.ref); }
-    catch(e){ img.classList.add("missing"); img.title = "图片缺失：" + img.dataset.ref; }
+    img.classList.add("loading");
+    try {
+      img.src = await resolveImgUrl(card, img.dataset.ref);
+      img.onload = () => img.classList.remove("loading");
+    }
+    catch(e){ img.classList.add("missing"); img.classList.remove("loading"); img.title = "图片缺失：" + img.dataset.ref; }
   });
 }
 
@@ -831,6 +887,13 @@ function materializeImages(container){
 function show(view){
   for (const v of ["emptyView","homeView","readerView","compareView","editView"]) $(v).style.display = v === view ? "" : "none";
   $("homeBtn").style.display = (view === "readerView" || view === "compareView" || view === "editView") ? "" : "none";
+  // 浮动按钮显隐
+  const isReader = view === "readerView";
+  const isCmp = view === "compareView";
+  $("navPrev").style.display = isReader ? "" : "none";
+  $("navNext").style.display = isReader ? "" : "none";
+  $("navHome").style.display = (isReader || isCmp) ? "" : "none";
+  $("cmpToggle").style.display = isCmp ? "" : "none";
 }
 $("homeBtn").onclick = () => goHome();
 function goHome(){
@@ -1081,7 +1144,7 @@ function renderHealth(){
   if (broken.size){
     h += '<div style="margin-top:6px;color:var(--warn);">断链（缺失的卡片 = 待写线索）：</div>';
     for (const [sl, cs] of broken){
-      h += '<div class="hrow">→ [[' + esc(sl) + "]]　被引于 " +
+      h += '<div class="hrow">→ <button class="linklike" data-new="' + escAttr(sl) + '">[[' + esc(sl) + ']]</button>　被引于 ' +
         cs.map(c => '<button class="linklike" data-open="' + escAttr(c.uid) + '">' + esc(c.slug) + "</button>").join("、") + "</div>";
     }
   }
@@ -1099,11 +1162,15 @@ function renderHealth(){
   }
   $("healthBody").innerHTML = h;
   $("healthBody").querySelectorAll("[data-open]").forEach(b => b.onclick = () => openCard(b.dataset.open));
+  $("healthBody").querySelectorAll("[data-new]").forEach(b => b.onclick = () => openNewFromSlug(b.dataset.new));
 }
 $("searchInput").addEventListener("input", renderHome);
 $("sortSel").addEventListener("change", renderHome);
-$("cmpGoBtn").addEventListener("click", openCompare);
-$("cmpGoBtn").addEventListener("touchend", (e) => { e.preventDefault(); openCompare(); });
+$("cmpGoBtn").addEventListener("click", () => { cmpForceMode = null; openCompare(); });
+$("cmpGoBtn").addEventListener("touchend", (e) => { e.preventDefault(); cmpForceMode = null; openCompare(); });
+// #4 对比模式手动切换
+$("cmpModeSeries").addEventListener("click", () => { cmpForceMode = "series"; openCompare("series"); });
+$("cmpModeAll").addEventListener("click", () => { cmpForceMode = "all"; openCompare("all"); });
 
 /* ================= 阅读视图 ================= */
 function openCard(uid){
@@ -1138,21 +1205,33 @@ function openCard(uid){
     else chosen.delete(c.uid);
   };
   show("readerView");
+  // 更新浮动翻卡按钮状态
+  const ci = cards.findIndex(x => x.uid === uid);
+  $("navPrev").disabled = ci <= 0;
+  $("navNext").disabled = ci < 0 || ci >= cards.length - 1;
   window.scrollTo(0,0);
   materializeImages($("readerBox"));
 }
 
 /* ================= 对比视图 ================= */
 const MAX_CMP = 4;
-function openCompare(){
+let cmpForceMode = null; // 用户强制的对比模式："series" / "all" / null(自动)
+function openCompare(forceMode){
   try{
   const pair = [...chosen].map(uid => cards.find(c => c.uid === uid)).filter(Boolean);
   if (pair.length < 2 || pair.length > MAX_CMP) return;
   // 判定同系列：所有卡至少共享一个系列
   const shared = pair.reduce((a,c)=>{ const s=new Set(); for(const x of c.series) if(a.has(x)) s.add(x); return s; }, new Set(pair[0].series));
   const sameSeries = shared.size > 0;
+  // 决定实际模式：强制优先，否则自动判断
+  const useSeries = (forceMode === "series") || (forceMode !== "all" && sameSeries);
+  // 更新按钮状态：用 on 类高亮
+  $("cmpModeSeries").classList.toggle("on", useSeries);
+  $("cmpModeAll").classList.toggle("on", !useSeries);
+  // 只有存在同系列条件时才允许 series 模式按钮生效（否则置灰）
+  $("cmpModeSeries").style.opacity = sameSeries ? "" : "0.4";
   let h = "";
-  if (sameSeries){
+  if (useSeries){
     // 同系列：以所有卡的小节并集（保序）逐行对齐
     const titles = [];
     for (const c of pair) for (const s of c.sections) if (!titles.includes(s.title)) titles.push(s.title);
@@ -1172,6 +1251,9 @@ function openCompare(){
   $("cmpBox").innerHTML = h;
   $("cmpBox").querySelectorAll("[data-slug]").forEach(b => b.onclick = () => { const t = slugIndex[b.dataset.slug]; if (t) openCard(t.uid); });
   $("cmpBox").querySelectorAll("h2[data-open]").forEach(b => b.onclick = () => openCard(b.dataset.open));
+  // #10 将对比快照写入 URL
+  const modeStr = forceMode ? "&m=" + forceMode : "";
+  location.hash = "c=" + pair.map(c => encodeURIComponent(c.slug)).join(",") + modeStr;
   show("compareView");
   window.scrollTo(0,0);
   materializeImages($("cmpBox"));
@@ -1995,6 +2077,14 @@ function startNewCard(){
   window.scrollTo(0,0);
   setStatus("新建卡片：填完点「保存卡片」将写入 " + (source.type === "gh" ? "GitHub 仓库" : "项目文件夹") + "。", "ok");
 }
+function openNewFromSlug(sl){
+  startNewCard();
+  const [yearPart, ...rest] = sl.split("-");
+  const placePart = rest.join("-");
+  if (/^-?\d+$/.test(yearPart)) $("fYear").value = yearPart;
+  if (placePart) $("fPlace").value = placePart;
+  setStatus("从断链 [[ " + sl + " ]] 新建卡片：坐标已预填。", "ok");
+}
 async function readRelFile(rt, rel){
   const parts = rel.split("/"); const name = parts.pop();
   const d = await walkDir(rt, parts.join("/"));
@@ -2062,6 +2152,17 @@ $("emptyPick").onclick = pickLocal;
 $("emptyGh").onclick = () => { $("menuPopup").style.display = ""; $("ghPanel").open = true; $("ghRepo").focus(); };
 $("menuBtn").onclick = () => { const p=$("menuPopup"); p.style.display = p.style.display === "none" ? "" : "none"; };
 document.addEventListener("click", (e) => { const p=$("menuPopup"); if (!p.contains(e.target) && e.target.id!=="menuBtn") p.style.display="none"; });
+
+/* ================= #5 浮动翻卡按钮 ================= */
+$("navHome").onclick = () => goHome();
+$("navPrev").onclick = () => {
+  const idx = cards.findIndex(c => c.uid === curReaderUid);
+  if (idx > 0) openCard(cards[idx - 1].uid);
+};
+$("navNext").onclick = () => {
+  const idx = cards.findIndex(c => c.uid === curReaderUid);
+  if (idx >= 0 && idx < cards.length - 1) openCard(cards[idx + 1].uid);
+};
 $("reloadBtn").onclick = () => {
   if (source.type === "gh") loadGh();
   else if (source.root) readLocalRoot(source.root).catch(e => setMsg("刷新失败：" + e.message));
