@@ -28,17 +28,28 @@
   :root{--bg:#ffffff;--bg2:#f5f4f0;--line:#d9d7cf;--line2:#b4b2a9;--tx:#2c2c2a;--tx2:#5f5e5a;--tx3:#888780;--ac:#185fa5;--ac-bg:#e6f1fb;--ok:#0f6e56;--ok-bg:#e1f5ee;--warn:#993c1d;--warn-bg:#faece7;}
   *{box-sizing:border-box;}
   body{margin:0;font-family:"Segoe UI","Microsoft YaHei",sans-serif;font-size:13px;color:var(--tx);background:var(--bg2);line-height:1.7;}
-  header{background:var(--bg);border-bottom:0.5px solid var(--line);padding:10px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:5;}
-  header h1{font-size:15px;font-weight:500;margin:0;}
+  header{background:var(--bg);border-bottom:0.5px solid var(--line);padding:8px 16px;display:flex;align-items:center;gap:8px;flex-wrap:nowrap;position:sticky;top:0;z-index:5;}
+  header h1{font-size:15px;font-weight:500;margin:0;display:inline-flex;align-items:center;gap:6px;}
   header .spacer{flex:1;}
+  .src-dot{width:10px;height:10px;border-radius:50%;background:var(--line2);display:inline-block;cursor:pointer;transition:.2s;}
+  .src-dot.ok{background:var(--ok);}
+  .src-dot.err{background:var(--warn);}
+  .menu-btn{border:none;background:transparent;font-size:20px;line-height:1;padding:2px 8px;cursor:pointer;color:var(--tx2);}
+  .menu-btn:hover{color:var(--ac);}
+  .menu-popup{position:absolute;top:100%;right:8px;background:var(--bg);border:0.5px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.08);padding:6px;min-width:240px;max-width:92vw;max-height:85vh;overflow:auto;z-index:10;}
+  .menu-popup button{width:100%;text-align:left;margin:2px 0;padding:7px 10px;}
+  .menu-popup #ghPanel{margin:4px 0;}
+  .menu-popup #ghPanel summary{cursor:pointer;font-size:13px;color:var(--tx2);padding:6px 8px;border-radius:6px;}
+  .menu-popup #ghPanel summary:hover{background:var(--bg2);}
+  .menu-popup #ghPanel .row{display:flex;flex-direction:column;gap:6px;margin:6px 0;}
+  .menu-popup #ghPanel input{width:100%;}
+  .menu-popup #ghPanel > div:last-child{font-size:11px;color:var(--tx3);padding:4px 6px 8px;}
   button{font:inherit;cursor:pointer;background:transparent;border:0.5px solid var(--line2);border-radius:6px;padding:5px 12px;color:var(--tx);}
   button:hover{border-color:var(--ac);color:var(--ac);}
   button.primary{background:var(--ac);border-color:var(--ac);color:#fff;}
   button.primary:hover{opacity:.9;color:#fff;}
   button:disabled{opacity:.4;cursor:not-allowed;}
   select,input{font:inherit;color:var(--tx);background:var(--bg);border:0.5px solid var(--line2);border-radius:6px;padding:5px 8px;}
-  #srcStatus{font-size:12px;color:var(--tx3);border:0.5px solid var(--line);border-radius:99px;padding:2px 10px;}
-  #srcStatus.on{color:var(--ok);border-color:var(--ok);}
   main{max-width:1180px;margin:0 auto;padding:16px 24px 60px;}
   .card{background:var(--bg);border:0.5px solid var(--line);border-radius:10px;padding:14px 16px;}
   .chip{display:inline-block;border:0.5px solid var(--line2);border-radius:99px;padding:1px 11px;font-size:12px;margin:0 6px 6px 0;cursor:pointer;background:var(--bg);color:var(--tx2);user-select:none;}
@@ -200,26 +211,28 @@
 </noscript>
 
 <header>
-  <h1>阅读卡片</h1>
-  <button id="homeBtn" style="display:none;">← 返回书架</button>
+  <h1>阅读卡片<span id="srcDot" class="src-dot" title="未连接数据源"></span></h1>
   <span class="spacer"></span>
-  <span id="srcStatus">未连接数据源</span>
-  <button id="pickBtn">选择项目文件夹</button>
-  <details id="ghPanel">
-    <summary id="ghSummary">GitHub 主库</summary>
-    <div class="row">
-      <input id="ghRepo" placeholder="用户名/仓库名（建议私有）">
-      <input id="ghBranch" placeholder="分支 main" style="width:90px;">
-      <input id="ghBase" placeholder="库内根目录，如 编年卡片" style="width:140px;">
-      <input id="ghToken" type="password" placeholder="细粒度 PAT" style="min-width:180px;">
-      <button id="ghSave" class="primary">保存并连接</button>
-      <button id="ghTestBtn" title="只测试，不读取卡片">测试连接</button>
-      <span id="ghStatus"></span>
-    </div>
-    <div style="font-size:11px;color:var(--tx3);padding-bottom:6px;">令牌只存本机浏览器 localStorage（键 nb-gh，与录入卡片共享）；阅读不触网写入，仅编辑视图保存卡片时才提交仓库，PAT 需 Contents 读写权限。</div>
-  </details>
-  <button id="reloadBtn" style="display:none;">刷新</button>
-  <button id="newCardBtn" class="primary" style="display:none;">+ 新增卡片</button>
+  <button id="menuBtn" class="menu-btn" aria-label="菜单" title="菜单">⋮</button>
+  <div id="menuPopup" class="menu-popup" style="display:none;">
+    <button id="homeBtn" style="display:none;">← 返回书架</button>
+    <button id="newCardBtn" class="primary" style="display:none;">+ 新增卡片</button>
+    <button id="reloadBtn" style="display:none;">刷新数据</button>
+    <details id="ghPanel">
+      <summary id="ghSummary">数据源设置</summary>
+      <div class="row">
+        <input id="ghRepo" placeholder="用户名/仓库名">
+        <input id="ghBranch" placeholder="分支 main">
+        <input id="ghBase" placeholder="库内根目录（可空）">
+        <input id="ghToken" type="password" placeholder="细粒度 PAT">
+        <button id="ghSave" class="primary">保存并连接</button>
+        <button id="ghTestBtn" title="只测试，不读取卡片">测试连接</button>
+        <span id="ghStatus"></span>
+      </div>
+      <div style="font-size:11px;color:var(--tx3);">令牌只存本机 localStorage；阅读只读，编辑保存才提交仓库。</div>
+    </details>
+    <button id="pickBtn">选择项目文件夹（电脑）</button>
+  </div>
 </header>
 
 <main>
@@ -455,7 +468,7 @@ function fillGhForm(){
   $("ghBranch").value = gh.branch || "main";
   $("ghBase").value = gh.base || "";
   $("ghToken").value = gh.token || "";
-  $("ghSummary").textContent = gh.repo ? "GitHub 主库：" + gh.repo : "GitHub 主库（未配置）";
+  $("ghSummary").textContent = gh.repo ? "数据源：" + gh.repo : "数据源设置（未配置）";
 }
 function ghStatus(m, ok){ const el=$("ghStatus"); el.textContent=m||""; el.style.color = (ok===false || ok==="err") ? "var(--warn)" : "var(--ok)"; }
 function ghHeaders(){ return { "Authorization":"Bearer "+gh.token, "Accept":"application/vnd.github+json" }; }
@@ -679,7 +692,7 @@ async function reconnectLocal(h){
   }
 }
 async function loadGh(){
-  if (!gh.repo || !gh.token){ $("ghPanel").open = true; ghStatus("先填仓库与令牌", false); return; }
+  if (!gh.repo || !gh.token){ $("ghPanel").open = true; $("menuPopup").style.display = ""; ghStatus("先填仓库与令牌", false); return; }
   source = { type:"gh" };
   try {
     setMsg("正在读取 GitHub 卡片目录……");
@@ -706,6 +719,7 @@ async function loadGh(){
     finishLoad(items, "已连接 GitHub：" + gh.repo);
     ghStatus("连接成功", true);
     $("ghPanel").open = false;
+    $("menuPopup").style.display = "none";
   } catch(e){ setMsg(e.message); ghStatus(e.message, false); }
 }
 function finishLoad(items, statusText){
@@ -714,8 +728,8 @@ function finishLoad(items, statusText){
   if (!items.length){ setMsg("数据源里没有找到卡片（需要 卡片/系列/坐标/卡片.md 结构）。点右上角「+ 新增卡片」建第一张。"); return; }
   ingest(items);
   setMsg("");
-  $("srcStatus").textContent = statusText;
-  $("srcStatus").classList.add("on");
+  $("srcDot").classList.add("ok");
+  $("srcDot").title = statusText;
   $("reloadBtn").style.display = "";
   $("emptyView").style.display = "none";
   renderHome();
@@ -2041,7 +2055,9 @@ $("pickBtn").onclick = pickLocal;
 $("newCardBtn").onclick = startNewCard;
 $("ghTestBtn").onclick = ghTest;
 $("emptyPick").onclick = pickLocal;
-$("emptyGh").onclick = () => { $("ghPanel").open = true; $("ghRepo").focus(); };
+$("emptyGh").onclick = () => { $("menuPopup").style.display = ""; $("ghPanel").open = true; $("ghRepo").focus(); };
+$("menuBtn").onclick = () => { const p=$("menuPopup"); p.style.display = p.style.display === "none" ? "" : "none"; };
+document.addEventListener("click", (e) => { const p=$("menuPopup"); if (!p.contains(e.target) && e.target.id!=="menuBtn") p.style.display="none"; });
 $("reloadBtn").onclick = () => {
   if (source.type === "gh") loadGh();
   else if (source.root) readLocalRoot(source.root).catch(e => setMsg("刷新失败：" + e.message));
