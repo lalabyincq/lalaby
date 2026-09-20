@@ -1149,7 +1149,7 @@ function openCompare(){
   const pair = [...chosen].map(uid => cards.find(c => c.uid === uid)).filter(Boolean);
   if (pair.length < 2 || pair.length > MAX_CMP) return;
   // 判定同系列：所有卡至少共享一个系列
-  const shared = pair.reduce((a,c)=>a.intersection(new Set(c.series)), new Set(pair[0].series));
+  const shared = pair.reduce((a,c)=>{ const s=new Set(); for(const x of c.series) if(a.has(x)) s.add(x); return s; }, new Set(pair[0].series));
   const sameSeries = shared.size > 0;
   let h = "";
   if (sameSeries){
