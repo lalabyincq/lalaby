@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>绘画风格生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, sans-serif;
+        }
+
+        body {
+            background: #f7f8fa;
+            padding: 10px;
+            font-size: 12px;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .main-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .group {
+            background: #fff;
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 1px 3px #00000010;
+        }
+
+        .group-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #722ed1;
+            margin-bottom: 6px;
+        }
+
+        .items {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 4px;
+        }
+
+        .label {
+            flex: 1;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        select {
+            flex: 1;
+            padding: 3px 4px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .btns {
+            display: flex;
+            gap: 8px;
+            margin: 8px 0;
+        }
+
+        button {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 13px;
+        }
+
+        #gen { background: #722ed1; }
+        #random { background: #13c2c2; }
+        #copy { background: #fa8c16; }
+
+        .result {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 13px;
+            line-height: 1.7;
+            color: #222;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            white-space: pre-line;
+        }
+    </style>
+</head>
+
+<body>
+    <h1 class="title">🎨 绘画风格生成器</h1>
+
+    <div class="main-box">
+        <!-- 1 -->
+        <div class="group">
+            <div class="group-title">1. 线条与轮廓</div>
+            <div class="items">
+                <div class="row"><span class="label">轮廓清晰度</span><select class="opt"><option>清晰轮廓</option><option>模糊边缘</option><option>色块分割</option><option>无轮廓</option></select></div>
+                <div class="row"><span class="label">线条风格</span><select class="opt"><option>流畅连续</option><option>断续笔触</option><option>硬朗有力</option><option>柔和放松</option></select></div>
+                <div class="row"><span class="label">线条粗细</span><select class="opt"><option>统一粗细</option><option>粗细变化</option><option>极细线</option><option>极粗线</option></select></div>
+            </div>
+        </div>
+
+        <!-- 2 -->
+        <div class="group">
+            <div class="group-title">2. 光影系统</div>
+            <div class="items">
+                <div class="row"><span class="label">光影强度</span><select class="opt"><option>强烈光影</option><option>柔和光影</option><option>弱光影</option><option>平涂无光</option></select></div>
+                <div class="row"><span class="label">明暗对比</span><select class="opt"><option>高对比戏剧性</option><option>低对比朦胧感</option><option>中间调为主</option></select></div>
+                <div class="row"><span class="label">光源设计</span><select class="opt"><option>单一光源</option><option>多重光源</option><option>漫射光</option><option>逆光剪影</option></select></div>
+                <div class="row"><span class="label">阴影处理</span><select class="opt"><option>硬阴影</option><option>软阴影</option><option>纯色阴影</option><option>环境色阴影</option></select></div>
+            </div>
+        </div>
+
+        <!-- 3 -->
+        <div class="group">
+            <div class="group-title">3. 色彩维度</div>
+            <div class="items">
+                <div class="row"><span class="label">色彩数量</span><select class="opt"><option>多色丰富</option><option>有限色调</option><option>单色系</option><option>灰度</option></select></div>
+                <div class="row"><span class="label">饱和度</span><select class="opt"><option>高饱和</option><option>中等饱和</option><option>低饱和</option><option>去色</option></select></div>
+                <div class="row"><span class="label">冷暖倾向</span><select class="opt"><option>偏暖</option><option>偏冷</option><option>冷暖对比</option><option>冷暖平衡</option></select></div>
+                <div class="row"><span class="label">配色方案</span><select class="opt"><option>类比色</option><option>互补色</option><option>三角色</option><option>分裂互补色</option></select></div>
+                <div class="row"><span class="label">色彩主观性</span><select class="opt"><option>写实色彩</option><option>主观变形</option><option>风格化色彩</option><option>装饰性色彩</option></select></div>
+            </div>
+        </div>
+
+        <!-- 4 -->
+        <div class="group">
+            <div class="group-title">4. 造型与体积</div>
+            <div class="items">
+                <div class="row"><span class="label">体积感</span><select class="opt"><option>强体积感</option><option>弱体积感</option><option>平面化</option><option>抽象化</option></select></div>
+                <div class="row"><span class="label">造型严谨度</span><select class="opt"><option>严谨写实</option><option>略有夸张</option><option>大胆变形</option><option>符号化</option></select></div>
+                <div class="row"><span class="label">透视系统</span><select class="opt"><option>标准透视</option><option>广角夸张</option><option>鸟瞰</option><option>倾斜多视点</option><option>无透视</option></select></div>
+            </div>
+        </div>
+
+        <!-- 5 -->
+        <div class="group">
+            <div class="group-title">5. 质感与肌理</div>
+            <div class="items">
+                <div class="row"><span class="label">质感呈现</span><select class="opt"><option>精细刻画</option><option>概括暗示</option><option>忽略质感</option></select></div>
+                <div class="row"><span class="label">笔触质感</span><select class="opt"><option>细腻平滑</option><option>明显笔触</option><option>厚涂</option><option>刮刀肌理</option><option>综合材料肌理</option></select></div>
+                <div class="row"><span class="label">肌理丰富度</span><select class="opt"><option>丰富肌理</option><option>单一肌理</option><option>无肌理</option></select></div>
+            </div>
+        </div>
+
+        <!-- 6 -->
+        <div class="group">
+            <div class="group-title">6. 节奏与对比</div>
+            <div class="items">
+                <div class="row"><span class="label">明暗节奏</span><select class="opt"><option>强明暗交替</option><option>渐变过渡</option><option>块状分割</option><option>随机分布</option></select></div>
+                <div class="row"><span class="label">大小节奏</span><select class="opt"><option>强烈大小对比</option><option>渐进变化</option><option>均匀分布</option></select></div>
+                <div class="row"><span class="label">曲直节奏</span><select class="opt"><option>曲直交替</option><option>全曲线</option><option>全直线</option><option>主导倾向</option></select></div>
+                <div class="row"><span class="label">疏密节奏</span><select class="opt"><option>强烈疏密对比</option><option>均匀分布</option><option>有疏密节奏但不极端</option></select></div>
+            </div>
+        </div>
+
+        <!-- 7 -->
+        <div class="group">
+            <div class="group-title">7. 构图与空间</div>
+            <div class="items">
+                <div class="row"><span class="label">构图框架</span><select class="opt"><option>黄金分割</option><option>三分法</option><option>对称</option><option>居中</option><option>不规则</option></select></div>
+                <div class="row"><span class="label">空间深度</span><select class="opt"><option>强纵深感</option><option>弱纵深感</option><option>平面化</option><option>破坏空间</option></select></div>
+                <div class="row"><span class="label">焦点设置</span><select class="opt"><option>单焦点</option><option>多焦点</option><option>散点</option><option>无焦点</option></select></div>
+                <div class="row"><span class="label">画面平衡</span><select class="opt"><option>对称平衡</option><option>动态平衡</option><option>不平衡</option><option>极端不平衡</option></select></div>
+            </div>
+        </div>
+
+        <!-- 8 -->
+        <div class="group">
+            <div class="group-title">8. 强调与减弱</div>
+            <div class="items">
+                <div class="row"><span class="label">强调方式</span><select class="opt"><option>明暗强调</option><option>色彩强调</option><option>尺寸强调</option><option>细节强调</option><option>边缘强调</option></select></div>
+                <div class="row"><span class="label">强调强度</span><select class="opt"><option>强烈对比</option><option>温和对比</option><option>微弱对比</option></select></div>
+                <div class="row"><span class="label">区域处理</span><select class="opt"><option>主次分明</option><option>均匀分布</option><option>虚实结合</option></select></div>
+            </div>
+        </div>
+
+        <!-- 9 -->
+        <div class="group">
+            <div class="group-title">9. 画面氛围</div>
+            <div class="items">
+                <div class="row"><span class="label">情感基调</span><select class="opt"><option>愉悦</option><option>忧郁</option><option>宁静</option><option>紧张</option><option>神秘</option><option>激烈</option><option>冷漠</option></select></div>
+                <div class="row"><span class="label">时代感</span><select class="opt"><option>古典</option><option>现代</option><option>未来感</option><option>复古</option><option>超现实</option></select></div>
+                <div class="row"><span class="label">文化语境</span><select class="opt"><option>东方</option><option>西方</option><option>民族</option><option>跨文化融合</option></select></div>
+            </div>
+        </div>
+
+        <!-- 10 -->
+        <div class="group">
+            <div class="group-title">10. 技法特征</div>
+            <div class="items">
+                <div class="row"><span class="label">绘画技法</span><select class="opt"><option>写实</option><option>写意</option><option>抽象</option><option>装饰</option><option>卡通</option><option>插画风格</option></select></div>
+                <div class="row"><span class="label">笔触速度</span><select class="opt"><option>快速即兴</option><option>缓慢细致</option><option>混合</option></select></div>
+                <div class="row"><span class="label">完成度</span><select class="opt"><option>高度完成</option><option>适度完成</option><option>未完成感</option></select></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="btns">
+        <button id="gen">生成风格</button>
+        <button id="random">随机生成</button>
+        <button id="copy">一键复制</button>
+    </div>
+
+    <div class="result" id="result">风格组合将显示在这里...</div>
+
+    <script>
+        const opts = document.querySelectorAll('.opt');
+        const res = document.getElementById('result');
+
+        // 专为豆包AI绘图优化：纯描述、无多余符号、适合直接作为提示词
+        document.getElementById('gen').onclick = () => {
+            let txt = "专属艺术绘画风格：\n\n";
+            let groups = document.querySelectorAll('.group');
+            
+            groups.forEach(g => {
+                let title = g.querySelector('.group-title').textContent;
+                txt += title + "：\n";
+                
+                let rows = g.querySelectorAll('.row');
+                rows.forEach(r => {
+                    let label = r.querySelector('.label').textContent;
+                    let val = r.querySelector('select').value;
+                    txt += label + "：" + val + "，";
+                });
+                // 去掉每组最后多余的逗号
+                txt = txt.slice(0, -1);
+                txt += "\n\n";
+            });
+            res.textContent = txt;
+        };
+
+        // 随机生成
+        document.getElementById('random').onclick = () => {
+            opts.forEach(s => {
+                let len = s.options.length;
+                s.selectedIndex = Math.floor(Math.random() * len);
+            });
+            document.getElementById('gen').click();
+        };
+
+        // 一键复制 + 复制成功提示
+        document.getElementById('copy').onclick = async () => {
+            try {
+                await navigator.clipboard.writeText(res.textContent);
+                alert("已复制！直接粘贴到豆包生成图片即可");
+            } catch (e) {
+                // 降级兼容复制
+                const textarea = document.createElement('textarea');
+                textarea.value = res.textContent;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert("复制成功，可直接粘贴");
+            }
+        };
+    </script>
+</body>
+</html>
