@@ -28,7 +28,7 @@
   :root{--bg:#ffffff;--bg2:#f5f4f0;--line:#d9d7cf;--line2:#b4b2a9;--tx:#2c2c2a;--tx2:#5f5e5a;--tx3:#888780;--ac:#185fa5;--ac-bg:#e6f1fb;--ok:#0f6e56;--ok-bg:#e1f5ee;--warn:#993c1d;--warn-bg:#faece7;}
   *{box-sizing:border-box;}
   body{margin:0;font-family:"Segoe UI","Microsoft YaHei",sans-serif;font-size:13px;color:var(--tx);background:var(--bg2);line-height:1.7;}
-  header{background:var(--bg);border-bottom:0.5px solid var(--line);padding:8px 16px;display:flex;align-items:center;gap:8px;flex-wrap:nowrap;position:sticky;top:0;z-index:5;}
+  header{background:var(--bg);border-bottom:0.5px solid var(--line);padding:8px 16px;display:flex;align-items:center;gap:8px;flex-wrap:nowrap;position:sticky;top:0;z-index:5;isolation:isolate;}
   header h1{font-size:15px;font-weight:500;margin:0;display:inline-flex;align-items:center;gap:6px;}
   header .spacer{flex:1;}
   .src-dot{width:10px;height:10px;border-radius:50%;background:var(--line2);display:inline-block;cursor:pointer;transition:.2s;}
@@ -1102,7 +1102,8 @@ function renderHealth(){
 }
 $("searchInput").addEventListener("input", renderHome);
 $("sortSel").addEventListener("change", renderHome);
-$("cmpGoBtn").onclick = () => openCompare();
+$("cmpGoBtn").addEventListener("click", openCompare);
+$("cmpGoBtn").addEventListener("touchend", (e) => { e.preventDefault(); openCompare(); });
 
 /* ================= 阅读视图 ================= */
 function openCard(uid){
@@ -1144,6 +1145,7 @@ function openCard(uid){
 /* ================= 对比视图 ================= */
 const MAX_CMP = 4;
 function openCompare(){
+  try{
   const pair = [...chosen].map(uid => cards.find(c => c.uid === uid)).filter(Boolean);
   if (pair.length < 2 || pair.length > MAX_CMP) return;
   // 判定同系列：所有卡至少共享一个系列
@@ -1173,6 +1175,7 @@ function openCompare(){
   show("compareView");
   window.scrollTo(0,0);
   materializeImages($("cmpBox"));
+  } catch(err){ alert("对比出错：" + err.message + "\n" + err.stack); }
 }
 function cmpHead(c){
   return '<div class="cmpcol"><h2 data-open="' + escAttr(c.uid) + '">' + esc(c.slug) + "</h2>" +
