@@ -968,12 +968,8 @@ function removeFromWrongBook(qid) {
         renderAll();
         return;
     }
-    // 非错题集模式：仅刷新当前题与统计
-    let item = app.filteredList[app.pos];
-    if (item && item.kind === 'question') renderQuestion(item.ref);
-    renderQGrid();
-    updateSummary(app.pos + 1, app.filteredList.length);
-    updateFooter();
+    // 非错题集模式：移除后自动跳到下一题（最后一题则停在当前题，按钮已消失）
+    goQuestion(1);
 }
 
 // ====== 遮罩（保留接口，无UI入口） ======
