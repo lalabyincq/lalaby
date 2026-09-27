@@ -807,9 +807,9 @@ function renderQuestion(q) {
             cls += ' disabled';
             if (isCorrect) { cls += ' correct'; tag = '<span class="option-tag" style="color:#38a169">✓</span>'; }
         } else if (app.mode === 'test' && already) {
+            // 已答题：只标出正确答案（绿色），不再显示用户之前选错的红色标记
             cls += ' disabled';
             if (isCorrect) { cls += ' correct'; tag = '<span class="option-tag" style="color:#38a169">✓</span>'; }
-            else if (isUserSel) { cls += ' wrong-selected'; tag = '<span class="option-tag" style="color:#c53030">✗</span>'; }
         } else if (isUserSel) { cls += ' selected'; }
         optsHtml += `<div class="${cls}" data-k="${k}" ${(!already && app.mode==='test') ? 'onclick="onOptionClick(\''+k+'\')"' : ''}><span class="option-letter">${k}</span><span>${q.options[k]}</span>${tag}</div>`;
     });
