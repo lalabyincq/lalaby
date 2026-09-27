@@ -906,12 +906,21 @@ function submitAnswer() {
     saveUserData();
     renderQuestion(q);   // 正确答案直接在页面标出（对=绿、错选=红）
     updateFooter();
-    // 用轻提示替代弹窗：答对绿色鼓励语、答错红色提示，均自动消失无需点击
-    if (isRight) showToast('✓ ' + getRandomEncouragement(), 'correct', 1500);
-    else showToast('✗ 答错了，正确答案已标出', 'wrong', 1400);
+    // 用轻提示替代弹窗：答对绿色鼓励语并自动跳下一题、答错红色提示，均短时间自动消失无需点击
+    if (isRight) {
+        showToast('✓ ' + getRandomEncouragement(), 'correct', 750);
+        // 答对后短延迟自动跳到下一题（最后一题除外）
+        if (app.pos < app.filteredList.length - 1) {
+            if (_autoNextTimer) clearTimeout(_autoNextTimer);
+            _autoNextTimer = setTimeout(() => { _autoNextTimer = null; goQuestion(1); }, 750);
+        }
+    } else {
+        showToast('✗ 答错了，正确答案已标出', 'wrong', 700);
+    }
 }
 // 轻提示：type=correct/wrong，ms 后自动消失
 let _toastTimer = null;
+let _autoNextTimer = null;
 function showToast(text, type, ms) {
     let t = $('resultToast');
     if (!t) return;
@@ -920,6 +929,8 @@ function showToast(text, type, ms) {
     if (_toastTimer) clearTimeout(_toastTimer);
     _toastTimer = setTimeout(() => { t.className = 'toast'; }, ms || 1500);
 }
+// 翻题/切模式时清理自动跳题定时器，避免竞态重复跳转
+function clearAutoNext() { if (_autoNextTimer) { clearTimeout(_autoNextTimer); _autoNextTimer = null; } }
 function closeFeedback() { $('feedbackModal').classList.remove('active'); }
 function closeFeedbackAndNext() { $('feedbackModal').classList.remove('active'); goQuestion(1); }
 function getRandomEncouragement() {
@@ -1010,10 +1021,11 @@ function updateWrongCount() {
     let el = $('wrongCount'); if (el) el.textContent = n;
     let fab = $('fabWrongCount'); if (fab) fab.textContent = n;
 }
-function jumpTo(i) { app.pos = i; app.selected = []; renderAll(); }
+function jumpTo(i) { clearAutoNext(); app.pos = i; app.selected = []; renderAll(); }
 
 // ====== 导航 ======
 function goQuestion(dir) {
+    clearAutoNext();
     let np = app.pos + dir;
     if (np < 0 || np >= app.filteredList.length) return;
     app.pos = np;
@@ -1094,6 +1106,7 @@ function updateSummary(curNo, total) {
 
 // ====== 摘要行滑块拖动跳题 ======
 function onSliderInput(val) {
+    clearAutoNext();
     let idx = parseInt(val) - 1;
     if (idx < 0 || idx >= app.filteredList.length) return;
     app.pos = idx;
