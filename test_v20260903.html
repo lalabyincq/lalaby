@@ -944,12 +944,31 @@ function getRandomEncouragement() {
 // ====== 错题本 ======
 function toggleWrongBook() {
     app.wrongBookOnly = !app.wrongBookOnly;
-    applyFilter();
-    if (!app.wrongBookOnly) jumpToFirstUnanswered();
+    applyFilter();   // applyFilter 内已定位到第一道未做题
 }
 function removeFromWrongBook(qid) {
     delete userData.wrongBook[qid];
     saveUserData();
+    // 若在错题集模式：重建错题列表，自动定位到下一道错题
+    if (app.wrongBookOnly) {
+        let list = [];
+        ALL_QUESTIONS.forEach(q => { if (userData.wrongBook[q.qid]) list.push({kind:'question', qid:q.qid, ref:q}); });
+        app.filteredList = list;
+        if (list.length === 0) {
+            // 错题集已清空：提示并退出错题集模式，回到正常模块第一道未做题
+            showToast('🎉 恭喜，已解决所有错题！', 'correct', 1800);
+            app.wrongBookOnly = false;
+            syncWrongBookBtn();
+            applyFilter();
+            return;
+        }
+        // 当前索引指向移除后的下一道错题；若越界则停在最后一道
+        if (app.pos >= list.length) app.pos = list.length - 1;
+        app.selected = [];
+        renderAll();
+        return;
+    }
+    // 非错题集模式：仅刷新当前题与统计
     let item = app.filteredList[app.pos];
     if (item && item.kind === 'question') renderQuestion(item.ref);
     renderQGrid();
