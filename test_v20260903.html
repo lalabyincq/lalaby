@@ -133,6 +133,12 @@ body{background:#f5f7fa;font-size:14px;color:#333;width:100%;-webkit-text-size-a
 .user-item .del{color:#e53e3e;cursor:pointer;font-size:16px;padding:0 4px}
 .empty-hint{text-align:center;color:#a0aec0;padding:20px;font-size:13px}
 .user-modal-content{max-width:320px}
+/* ===== 答题结果轻提示（居中顶部，自动淡出，无需点击） ===== */
+.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.8);z-index:10000;padding:16px 28px;border-radius:12px;font-size:16px;font-weight:bold;color:#fff;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.toast.correct{background:#38a169}
+.toast.wrong{background:#e53e3e}
+
 /* ===== 右下角浮动操作组：默认桌面端隐藏，手机断点内显示 ===== */
 .fab-group{display:none}
 /* ===== 手机端适配（右手单手持机） ===== */
@@ -261,6 +267,8 @@ body{background:#f5f7fa;font-size:14px;color:#333;width:100%;-webkit-text-size-a
         </div>
     </div>
 </div>
+<!-- 答题结果轻提示（自动消失，无需点击） -->
+<div class="toast" id="resultToast"></div>
 <!-- 工号弹窗 -->
 <div class="modal" id="userModal">
     <div class="modal-content user-modal-content">
@@ -896,13 +904,21 @@ function submitAnswer() {
     userData.userAnswers[q.qid] = app.selected.slice();
     if (!isRight) userData.wrongBook[q.qid] = true;
     saveUserData();
-    renderQuestion(q);
+    renderQuestion(q);   // 正确答案直接在页面标出（对=绿、错选=红）
     updateFooter();
-    $('fbIcon').className = 'modal-icon ' + (isRight ? 'correct' : 'incorrect');
-    $('fbIcon').textContent = isRight ? '✓' : '✗';
-    $('fbMsg').textContent = isRight ? getRandomEncouragement() : '仔细看看正确答案';
-    $('fbAnswer').textContent = '正确答案：' + q.answer;
-    $('feedbackModal').classList.add('active');
+    // 用轻提示替代弹窗：答对绿色鼓励语、答错红色提示，均自动消失无需点击
+    if (isRight) showToast('✓ ' + getRandomEncouragement(), 'correct', 1500);
+    else showToast('✗ 答错了，正确答案已标出', 'wrong', 1400);
+}
+// 轻提示：type=correct/wrong，ms 后自动消失
+let _toastTimer = null;
+function showToast(text, type, ms) {
+    let t = $('resultToast');
+    if (!t) return;
+    t.textContent = text;
+    t.className = 'toast show ' + (type || 'correct');
+    if (_toastTimer) clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => { t.className = 'toast'; }, ms || 1500);
 }
 function closeFeedback() { $('feedbackModal').classList.remove('active'); }
 function closeFeedbackAndNext() { $('feedbackModal').classList.remove('active'); goQuestion(1); }
