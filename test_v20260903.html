@@ -151,8 +151,8 @@ body{background:#f5f7fa;font-size:14px;color:#333;width:100%;-webkit-text-size-a
     .fab{border:none;border-radius:24px;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(0,0,0,.22);-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center}
     .fab:active{transform:scale(.94)}
     .fab:disabled{opacity:.35;box-shadow:none}
-    .fab-wrong{position:relative;width:46px;height:46px;border-radius:50%;background:#fff;font-size:20px;border:1px solid #fed7d7}
-    .fab-wrong.active{background:#e53e3e;border-color:#e53e3e}
+    .fab-wrong{position:relative;padding:10px 16px;border-radius:20px;background:#fff;color:#e53e3e;font-size:14px;font-weight:bold;border:1px solid #fed7d7}
+    .fab-wrong.active{background:#e53e3e;border-color:#e53e3e;color:#fff}
     .fab-badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#e53e3e;color:#fff;font-size:11px;line-height:18px;text-align:center;font-style:normal}
     .fab-wrong.active .fab-badge{background:#fff;color:#e53e3e}
     .fab-prev{padding:11px 18px;background:#fff;color:#3182ce;border:1px solid #bee3f8;font-size:14px}
@@ -251,7 +251,7 @@ body{background:#f5f7fa;font-size:14px;color:#333;width:100%;-webkit-text-size-a
 </div>
 <!-- 手机端右下角浮动操作组（右手单手）：错题本/上一题/下一题（已选未答时下一题=确认答案） -->
 <div class="fab-group" id="fabGroup">
-    <button class="fab fab-wrong" id="fabWrong" onclick="quickToggleWrongBook()" aria-label="错题本">📕<span class="fab-badge" id="fabWrongCount">0</span></button>
+    <button class="fab fab-wrong" id="fabWrong" onclick="quickToggleWrongBook()"><span id="fabWrongText">错题集</span><span class="fab-badge" id="fabWrongCount">0</span></button>
     <button class="fab fab-prev" id="fabPrev" onclick="goQuestion(-1)">上一题</button>
     <button class="fab fab-next" id="fabNext" onclick="fabNextAction()">下一题</button>
 </div>
@@ -741,7 +741,12 @@ function applyFilter() {
         ALL_RECITE.forEach(g => { if (g.moduleIdx === app.moduleIdx) list.push({kind:'recite', rid:g.rid, ref:g}); });
     }
     app.filteredList = list;
-    app.pos = 0;
+    // 默认定位到第一道未做的题（全部做完则回到第1题）
+    let firstIdx = list.findIndex(item => {
+        if (item.kind === 'question') return userData.answered[item.ref.qid] === undefined;
+        return true;
+    });
+    app.pos = firstIdx === -1 ? 0 : firstIdx;
     app.selected = [];
     renderAll();
 }
@@ -749,12 +754,10 @@ function applyFilter() {
 // ====== 模式切换 ======
 function switchMode(m) {
     app.mode = m;
-    app.pos = 0;
     app.selected = [];
     if (app.wrongBookOnly) { app.wrongBookOnly = false; syncWrongBookBtn(); }
     ['test','review'].forEach(x => $('mode-' + x).classList.toggle('active', x === m));
-    applyFilter();
-    jumpToFirstUnanswered();
+    applyFilter();   // applyFilter 内已定位到第一道未做题
 }
 
 // ====== 渲染主流程 ======
@@ -1076,17 +1079,20 @@ function syncWrongBookBtn() {
             sumBtn.style.color = '#e53e3e';
         }
     }
-    // 手机端浮动错题本按钮激活态
+    // 手机端浮动错题集按钮：进入错题集时显示"退出错题集"，否则显示"错题集"
     let fabWrong = $('fabWrong');
-    if (fabWrong) fabWrong.classList.toggle('active', !!app.wrongBookOnly);
+    if (fabWrong) {
+        fabWrong.classList.toggle('active', !!app.wrongBookOnly);
+        let txt = $('fabWrongText');
+        if (txt) txt.textContent = app.wrongBookOnly ? '退出错题集' : '错题集';
+    }
     updateWrongCount();
 }
 
 // ====== 摘要区错题本按钮快捷切换 ======
 function quickToggleWrongBook() {
     app.wrongBookOnly = !app.wrongBookOnly;
-    applyFilter();
-    if (!app.wrongBookOnly) jumpToFirstUnanswered();
+    applyFilter();   // applyFilter 内已定位到第一道未做题
 }
 
 // ====== 顶部信息栏摘要更新 ======
