@@ -638,8 +638,8 @@ async function ghCardExists(path){
   if (res.status === 404) return false;
   throw new Error("GitHub 检查失败：" + res.status);
 }
-async function ghGetText(path){
-  const res = await fetch(ghApiUrl(path), { headers: ghHeaders() });
+async function ghGetText(path, signal){
+  const res = await fetch(ghApiUrl(path), { headers: ghHeaders(), ...(signal ? { signal } : {}) });
   if (!res.ok) throw new Error("GitHub 读取失败 " + res.status);
   const j = await res.json();
   const bin = atob((j.content||"").replace(/\n/g,""));
@@ -748,11 +748,13 @@ function reindexMaps(){
 }
 
 /* ================= v7 加载提速：索引摘要 + 全文按需读取 + SHA 缓存 ================= */
-async function pool(items, n, fn){
+async function pool(items, n, fn, epoch){
   const ret = new Array(items.length); let i = 0;
   await Promise.all(Array.from({ length: Math.min(n, Math.max(items.length,1)) }, async () => {
     while (i < items.length){
       while (window._pauseFull) await new Promise(r => setTimeout(r, 200));  // 图片加载期间让路
+      // 被打断过就整体退出，避免旧队列与 resumeFullText 续跑的新队列重复拉同一批卡片
+      if (epoch != null && window._fullEpoch !== epoch) return;
       const k = i++; try { ret[k] = await fn(items[k], k); } catch(e){ ret[k] = null; }
     }
   }));
@@ -779,13 +781,29 @@ function ingestIndex(idx, bp){
   reindexMaps();
 }
 let _allFullPromise = null;
-async function ensureFull(c){
+let _fullAbort = null;
+/* 图片优先：中断后台全文预加载（含已在飞的请求），把带宽与主线程让给图片 */
+window._fullEpoch = 0;
+function pauseFullText(){
+  window._pauseFull = true;
+  window._fullEpoch = (window._fullEpoch || 0) + 1;
+  if (_fullAbort){ try { _fullAbort.abort(); } catch(e){} _fullAbort = null; }
+}
+function resumeFullText(){
+  window._pauseFull = false;
+  _fullAbort = null;
+  // 延后到空闲时再续跑，避免刚加载完的图片又被后台请求挤掉
+  const kick = () => setTimeout(() => { if (!window._pauseFull) ensureAllFull(); }, 1200);
+  if (window.requestIdleCallback) try { requestIdleCallback(kick, { timeout: 4000 }); return; } catch(e){}
+  kick();
+}
+async function ensureFull(c, sig){
   if (!c || !c.summaryOnly) return c;
   let txt = null;
   if (source && source.type === "gh"){
     if (c.sha) txt = await idbGet("sha:" + c.sha);
     if (txt == null){
-      txt = await ghGetText((gh.base ? gh.base.replace(/\/+$/,"") + "/" : "") + c.path);
+      txt = await ghGetText((gh.base ? gh.base.replace(/\/+$/,"") + "/" : "") + c.path, sig);
       if (c.sha) idbPut("sha:" + c.sha, txt);
     }
   } else if (source && source.type === "local"){
@@ -807,9 +825,21 @@ function ensureAllFull(){
   if (_allFullPromise) return _allFullPromise;
   const todo = cards.filter(c => c.summaryOnly);
   let done = 0;
+  _fullAbort = new AbortController();
+  const sig = _fullAbort.signal;
+  const epoch = window._fullEpoch;
   setMsg("正在读取卡片全文 0 / " + todo.length + "……");
-  _allFullPromise = pool(todo, 16, async c => { await ensureFull(c); done++; if (done % 8 === 0 || done === todo.length) setMsg("正在读取卡片全文 " + done + " / " + todo.length + "……"); })
-    .then(() => { setMsg(""); renderHome(); if (curPane !== "shelf") switchPane(curPane); })
+  // 并发 4（带宽是瓶颈，16 并发只会让图片排在更长的队尾），且每个任务可被打断
+  _allFullPromise = pool(todo, 4, async c => {
+    if (sig.aborted) throw new Error("abort");
+    await ensureFull(c, sig); done++; if (done % 8 === 0 || done === todo.length) setMsg("正在读取卡片全文 " + done + " / " + todo.length + "……");
+  }, epoch)
+    .then(() => {
+      setMsg("");
+      if (sig.aborted) return;          // 被图片加载打断：不重绘，稍后由 resumeFullText 续跑
+      const readerOpen = $("readerView").style.display !== "none";
+      if (!readerOpen) renderHome();    // 正在看卡片时不做 136 张的整体重绘（会阻塞主线程十几秒）
+    })
     .catch(() => {})
     .finally(() => { _allFullPromise = null; });
   return _allFullPromise;
@@ -962,7 +992,10 @@ async function loadGh(){
       ghStatus("连接成功", true);
       $("ghPanel").open = false;
       $("menuPopup").style.display = "none";
-      ensureAllFull();               // 后台补全文：SHA 缓存命中则近乎瞬时
+      // 后台补全文：SHA 缓存命中则近乎瞬时；延后到空闲启动，不与首屏渲染/图片抢带宽
+      const kick0 = () => setTimeout(() => { if (!window._pauseFull) ensureAllFull(); }, 600);
+      if (window.requestIdleCallback) try { requestIdleCallback(kick0, { timeout: 2500 }); } catch(e){ kick0(); }
+      else kick0();
       return;
     }
     /* 回退：并发全量读取（每张卡先查 SHA 缓存） */
@@ -1130,10 +1163,11 @@ async function resolveImgUrl(card, ref){
 function materializeImages(container){
   const imgs = Array.from(container.querySelectorAll("img.lazyimg"));
   if (!imgs.length) return;
-  // 图片加载期间暂停后台全文补充：16 并发的全文请求会占满带宽，导致图片排队几分钟
-  window._pauseFull = true;
+  // 图片加载期间：中断后台全文预加载（含已在飞的请求）并阻止新的，
+  // 否则 4 并发的全文请求会占满带宽、且收尾时的整体重绘会阻塞主线程，图片被挤到队尾等几十秒
+  pauseFullText();
   let pending = imgs.length;
-  const finish = () => { if (--pending <= 0) window._pauseFull = false; };
+  const finish = () => { if (--pending <= 0) resumeFullText(); };
   imgs.forEach(async img => {
     const card = cards.find(c => c.uid === img.dataset.uid);
     if (!card){ finish(); return; }
