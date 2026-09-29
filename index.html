@@ -1099,17 +1099,16 @@ async function resolveImgUrl(card, ref){
     const metaRes = await fetch(ghApiUrl(key), { headers: ghHeaders() });
     if (!metaRes.ok) throw new Error("imgMeta " + metaRes.status);
     const meta = await metaRes.json();
-    if (meta.download_url){
-      try {
-        const imgRes = await fetch(meta.download_url); // download_url 已含 token，无需额外 header
-        if (imgRes.ok) blob = await imgRes.blob();
-      } catch(e){ /* 继续 base64 兜底 */ }
-    }
-    if (!blob && meta.content){
-      // 直接返回 data URL：绕开 Blob/objectURL，避免某些浏览器在 file:// 或移动端的兼容问题
+    // 实测：私有仓库的 download_url（raw）恒返回 404，故 content（≤1MB）存在时直接用它，
+    // 省掉一次必然失败的往返；只有 >1MB（无 content 字段）才尝试 download_url。
+    if (meta.content){
       const dataUrl = "data:" + mimeFromName(meta.name) + ";base64," + meta.content.replace(/\n/g, "");
       imgUrlCache.set(key, dataUrl);
       return dataUrl;
+    }
+    if (meta.download_url){
+      const imgRes = await fetch(meta.download_url); // download_url 已含 token，无需额外 header
+      if (imgRes.ok) blob = await imgRes.blob();
     }
     if (!blob) throw new Error("img404");
   }
