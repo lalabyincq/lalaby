@@ -751,7 +751,10 @@ function reindexMaps(){
 async function pool(items, n, fn){
   const ret = new Array(items.length); let i = 0;
   await Promise.all(Array.from({ length: Math.min(n, Math.max(items.length,1)) }, async () => {
-    while (i < items.length){ const k = i++; try { ret[k] = await fn(items[k], k); } catch(e){ ret[k] = null; } }
+    while (i < items.length){
+      while (window._pauseFull) await new Promise(r => setTimeout(r, 200));  // 图片加载期间让路
+      const k = i++; try { ret[k] = await fn(items[k], k); } catch(e){ ret[k] = null; }
+    }
   }));
   return ret;
 }
@@ -1094,16 +1097,24 @@ async function resolveImgUrl(card, ref){
     if (!h) throw new Error("missing");
     blob = await h.getFile();
   } else {
-    // 私有仓库下 raw.githubusercontent.com 容易因 CORS/认证头直接抛异常，
-    // 优先用 Contents API 返回的 download_url（自带短期 token），再用 base64 data URL 兜底。
+    // ① 本地 IndexedDB 缓存（7 天内有效）：第二次打开同一张图直接本地取，不再走网络
+    const ck = "img:" + key;
+    try {
+      const c = await idbGet(ck);
+      if (c && c.t && (Date.now() - c.t < 7 * 24 * 3600 * 1000) && c.url){
+        imgUrlCache.set(key, c.url);
+        return c.url;
+      }
+    } catch(e){}
+    // ② 未命中：Contents API → content → data URL（≤1MB）
+    //    （实测私有仓库的 download_url/raw 恒 404，故不再优先尝试）
     const metaRes = await fetch(ghApiUrl(key), { headers: ghHeaders() });
     if (!metaRes.ok) throw new Error("imgMeta " + metaRes.status);
     const meta = await metaRes.json();
-    // 实测：私有仓库的 download_url（raw）恒返回 404，故 content（≤1MB）存在时直接用它，
-    // 省掉一次必然失败的往返；只有 >1MB（无 content 字段）才尝试 download_url。
     if (meta.content){
       const dataUrl = "data:" + mimeFromName(meta.name) + ";base64," + meta.content.replace(/\n/g, "");
       imgUrlCache.set(key, dataUrl);
+      try { await idbPut(ck, { t: Date.now(), url: dataUrl }); } catch(e){}
       return dataUrl;
     }
     if (meta.download_url){
@@ -1117,15 +1128,22 @@ async function resolveImgUrl(card, ref){
   return url;
 }
 function materializeImages(container){
-  container.querySelectorAll("img.lazyimg").forEach(async img => {
+  const imgs = Array.from(container.querySelectorAll("img.lazyimg"));
+  if (!imgs.length) return;
+  // 图片加载期间暂停后台全文补充：16 并发的全文请求会占满带宽，导致图片排队几分钟
+  window._pauseFull = true;
+  let pending = imgs.length;
+  const finish = () => { if (--pending <= 0) window._pauseFull = false; };
+  imgs.forEach(async img => {
     const card = cards.find(c => c.uid === img.dataset.uid);
-    if (!card) return;
+    if (!card){ finish(); return; }
     img.classList.add("loading");
     try {
       img.src = await resolveImgUrl(card, img.dataset.ref);
       img.onload = () => img.classList.remove("loading");
     }
     catch(e){ img.classList.add("missing"); img.classList.remove("loading"); img.title = "图片缺失：" + img.dataset.ref; }
+    finish();
   });
 }
 
