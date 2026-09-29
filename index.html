@@ -1131,16 +1131,30 @@ async function resolveImgUrl(card, ref){
     blob = await h.getFile();
   } else {
     // ① 本地 IndexedDB 缓存（7 天内有效）：第二次打开同一张图直接本地取，不再走网络
+    //    存的是 Blob 而不是 base64 字符串——359KB 的字符串读写与反序列化本身就慢，
+    //    会让人误以为「缓存没生效、每次都在重新下载」
     const ck = "img:" + key;
     try {
       const c = await idbGet(ck);
-      if (c && c.t && (Date.now() - c.t < 7 * 24 * 3600 * 1000) && c.url){
-        imgUrlCache.set(key, c.url);
-        return c.url;
+      if (c && c.t && (Date.now() - c.t < 7 * 24 * 3600 * 1000) && c.blob){
+        const u = URL.createObjectURL(c.blob);
+        imgUrlCache.set(key, u);
+        return u;
       }
     } catch(e){}
-    // ② 未命中：Contents API → content → data URL（≤1MB）
-    //    （实测私有仓库的 download_url/raw 恒 404，故不再优先尝试）
+    // ② 未命中：用 raw media type 直接取原始字节（259KB，比 JSON+base64 的 359KB 省 28%，且免编解码）。
+    //    （实测私有仓库的 download_url/raw.githubusercontent 恒 404，故仍走 Contents API 域名）
+    const res = await fetch(ghApiUrl(key), { headers: Object.assign(ghHeaders(), { Accept: "application/vnd.github.raw" }) });
+    if (res.ok){
+      const blob2 = await res.blob();
+      if (blob2 && blob2.size){
+        const url2 = URL.createObjectURL(blob2);
+        imgUrlCache.set(key, url2);
+        try { await idbPut(ck, { t: Date.now(), blob: blob2 }); } catch(e){}
+        return url2;
+      }
+    }
+    // ③ 兜底：老路子 JSON + content → data URL（老内核不支持 raw media type 时）
     const metaRes = await fetch(ghApiUrl(key), { headers: ghHeaders() });
     if (!metaRes.ok) throw new Error("imgMeta " + metaRes.status);
     const meta = await metaRes.json();
@@ -1171,13 +1185,17 @@ function materializeImages(container){
   imgs.forEach(async img => {
     const card = cards.find(c => c.uid === img.dataset.uid);
     if (!card){ finish(); return; }
-    img.classList.add("loading");
+    let url;
     try {
-      img.src = await resolveImgUrl(card, img.dataset.ref);
-      img.onload = () => img.classList.remove("loading");
+      url = await resolveImgUrl(card, img.dataset.ref);
     }
-    catch(e){ img.classList.add("missing"); img.classList.remove("loading"); img.title = "图片缺失：" + img.dataset.ref; }
-    finish();
+    catch(e){ img.classList.add("missing"); img.classList.remove("loading"); img.title = "图片缺失：" + img.dataset.ref; finish(); return; }
+    img.src = url;
+    // 必须等真正解码显示出来才释放后台：只赋值 img.src 时图片还没渲染，
+    // 此时放行后台预加载会重新抢走带宽和主线程，把最后一段渲染又拖长
+    const done = () => { img.classList.remove("loading"); finish(); };
+    if (img.complete && img.naturalWidth > 0) done();
+    else { img.onload = done; img.onerror = done; }
   });
 }
 
@@ -2002,6 +2020,9 @@ $("cmpModeAll").addEventListener("click", () => { cmpForceMode = "all"; openComp
 async function openCard(uid){
   const c = cards.find(x => x.uid === uid);
   if (!c) return;
+  // 打开卡片的第一步就让路：否则拉正文的请求要排在后台预加载的队列后面，
+  // 用户感知的「打开到出图」从第一个字节起就在排队
+  pauseFullText();
   if (c.summaryOnly){ setMsg("正在读取卡片全文……"); try { await ensureFull(c); } catch(e){} setMsg(""); }
   curReaderUid = uid;
   location.hash = "/" + encodeURIComponent(c.slug);
