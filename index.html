@@ -1121,6 +1121,13 @@ function mimeFromName(name){
   if (n.endsWith(".svg")) return "image/svg+xml";
   return "image/jpeg";
 }
+/* 图片 CDN：卡数据仍在私有仓库 Yearlog，图片同步到公开仓库 lalaby 后走 jsDelivr。
+   好处：① 国内可达且带 CDN 缓存，比 api.github.com 快一个数量级；
+        ② 直接给 <img src>，浏览器原生流式加载，不用 fetch 整包再转 Blob；
+        ③ 不需要 token，也不占 IndexedDB 配额。
+   同步方式见 README / 开发日志：新增图片后需跑一次同步，把 图/ 推到公开仓库同路径。 */
+const IMG_CDN_BASE = "https://cdn.jsdelivr.net/gh/lalabyincq/lalaby@main/";
+function cdnImgUrl(rel){ return IMG_CDN_BASE + rel.split("/").map(encodeURIComponent).join("/"); }
 async function resolveImgUrl(card, ref){
   const key = (source && source.type==="gh" ? card.repoDir : card.fsDir) + "/" + ref;
   if (imgUrlCache.has(key)) return imgUrlCache.get(key);
@@ -1130,46 +1137,55 @@ async function resolveImgUrl(card, ref){
     if (!h) throw new Error("missing");
     blob = await h.getFile();
   } else {
-    // ① 本地 IndexedDB 缓存（7 天内有效）：第二次打开同一张图直接本地取，不再走网络
-    //    存的是 Blob 而不是 base64 字符串——359KB 的字符串读写与反序列化本身就慢，
-    //    会让人误以为「缓存没生效、每次都在重新下载」
+    // ① 先看本地 IndexedDB 有没有旧缓存（离线场景；走 CDN 后不再写入，避免占配额）
     const ck = "img:" + key;
     try {
       const c = await idbGet(ck);
-      if (c && c.t && (Date.now() - c.t < 7 * 24 * 3600 * 1000) && c.blob){
+      if (c && c.t && (Date.now() - c.t < 30 * 24 * 3600 * 1000) && c.blob){
         const u = URL.createObjectURL(c.blob);
         imgUrlCache.set(key, u);
         return u;
       }
     } catch(e){}
-    // ② 未命中：用 raw media type 直接取原始字节（259KB，比 JSON+base64 的 359KB 省 28%，且免编解码）。
-    //    （实测私有仓库的 download_url/raw.githubusercontent 恒 404，故仍走 Contents API 域名）
-    const res = await fetch(ghApiUrl(key), { headers: Object.assign(ghHeaders(), { Accept: "application/vnd.github.raw" }) });
-    if (res.ok){
-      const blob2 = await res.blob();
-      if (blob2 && blob2.size){
-        const url2 = URL.createObjectURL(blob2);
-        imgUrlCache.set(key, url2);
-        try { await idbPut(ck, { t: Date.now(), blob: blob2 }); } catch(e){}
-        return url2;
-      }
-    }
-    // ③ 兜底：老路子 JSON + content → data URL（老内核不支持 raw media type 时）
-    const metaRes = await fetch(ghApiUrl(key), { headers: ghHeaders() });
-    if (!metaRes.ok) throw new Error("imgMeta " + metaRes.status);
-    const meta = await metaRes.json();
-    if (meta.content){
-      const dataUrl = "data:" + mimeFromName(meta.name) + ";base64," + meta.content.replace(/\n/g, "");
-      imgUrlCache.set(key, dataUrl);
-      try { await idbPut(ck, { t: Date.now(), url: dataUrl }); } catch(e){}
-      return dataUrl;
-    }
-    if (meta.download_url){
-      const imgRes = await fetch(meta.download_url); // download_url 已含 token，无需额外 header
-      if (imgRes.ok) blob = await imgRes.blob();
-    }
-    if (!blob) throw new Error("img404");
+    // ② 直接返回 CDN 地址，让浏览器去取；失败时由 resolveImgFallback 回退私有 API
+    const cdn = cdnImgUrl(key);
+    imgUrlCache.set(key, cdn);
+    return cdn;
   }
+  const url = URL.createObjectURL(blob);
+  imgUrlCache.set(key, url);
+  return url;
+}
+/* CDN 取不到时（新图还没同步到公开仓库、或 jsdelivr 不可达）走这条老路：私有 API 取图。
+   顺序：raw media type 直取字节（省 28%） → JSON+base64 data URL → download_url。 */
+async function resolveImgFallback(card, ref){
+  const key = (source && source.type==="gh" ? card.repoDir : card.fsDir) + "/" + ref;
+  const ck = "img:" + key;
+  let blob = null;
+  const res = await fetch(ghApiUrl(key), { headers: Object.assign(ghHeaders(), { Accept: "application/vnd.github.raw" }) });
+  if (res.ok){
+    const b = await res.blob();
+    if (b && b.size){
+      const u = URL.createObjectURL(b);
+      imgUrlCache.set(key, u);
+      try { await idbPut(ck, { t: Date.now(), blob: b }); } catch(e){}
+      return u;
+    }
+  }
+  const metaRes = await fetch(ghApiUrl(key), { headers: ghHeaders() });
+  if (!metaRes.ok) throw new Error("imgMeta " + metaRes.status);
+  const meta = await metaRes.json();
+  if (meta.content){
+    const dataUrl = "data:" + mimeFromName(meta.name) + ";base64," + meta.content.replace(/\n/g, "");
+    imgUrlCache.set(key, dataUrl);
+    try { await idbPut(ck, { t: Date.now(), url: dataUrl }); } catch(e){}
+    return dataUrl;
+  }
+  if (meta.download_url){
+    const imgRes = await fetch(meta.download_url); // download_url 已含 token，无需额外 header
+    if (imgRes.ok) blob = await imgRes.blob();
+  }
+  if (!blob) throw new Error("img404");
   const url = URL.createObjectURL(blob);
   imgUrlCache.set(key, url);
   return url;
@@ -1194,8 +1210,19 @@ function materializeImages(container){
     // 必须等真正解码显示出来才释放后台：只赋值 img.src 时图片还没渲染，
     // 此时放行后台预加载会重新抢走带宽和主线程，把最后一段渲染又拖长
     const done = () => { img.classList.remove("loading"); finish(); };
+    const markMissing = () => {
+      img.classList.add("missing"); img.classList.remove("loading");
+      img.title = "图片缺失：" + img.dataset.ref; finish();
+    };
+    // CDN 取不到（新图尚未同步到公开仓库 / jsdelivr 不可达）→ 回退私有 API；只回退一次
+    img.onerror = async () => {
+      if (img.dataset.imgFb){ markMissing(); return; }
+      img.dataset.imgFb = "1";
+      try { img.src = await resolveImgFallback(card, img.dataset.ref); }
+      catch(e){ markMissing(); }
+    };
+    img.onload = done;
     if (img.complete && img.naturalWidth > 0) done();
-    else { img.onload = done; img.onerror = done; }
   });
 }
 
