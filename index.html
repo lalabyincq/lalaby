@@ -231,7 +231,10 @@
   .minimap .mmhit{fill:transparent;stroke:none;pointer-events:all;cursor:pointer;}
   .minimap .mmhalo{fill:var(--ac);opacity:.25;pointer-events:none;}
   .minimap .mmself{fill:var(--ac);stroke:var(--bg);pointer-events:none;}
-  .minimap .mmlab{font-size:13px;fill:var(--tx);paint-order:stroke;stroke:#d9e8f3;stroke-width:3px;pointer-events:none;}   /* 与正文字号一致；实际大小由 applyMmz() 按缩放换算，屏幕上看永远是 13px */
+  .minimap .mmlab{fill:var(--tx);paint-order:stroke;stroke:#d9e8f3;pointer-events:none;}
+  /* 注意：mmlab 的 font-size / stroke-width 绝不能写进 CSS——CSS 会压过 JS 设置的 SVG 属性，
+     而 CSS 的 px 在 SVG 里是"图内单位"，会被 viewBox 缩小上百倍（v6.5b 地名小到看不见的根因）。
+     字号与描边宽度一律由 applyMmz() 按"屏幕目标值 / sc"算成属性。 */
   .mmlegend{font-size:11px;color:var(--tx3);padding:4px 2px;}
   /* ===== v4：编辑视图（原录入卡片表单，样式隔离在 #editView / 其弹窗内） ===== */
   #editView{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,0.7fr);gap:16px;max-width:1400px;margin:0 auto;align-items:start;}
@@ -1669,10 +1672,11 @@ function applyMmz(){
   el.querySelectorAll(".mmhalo").forEach(x => x.setAttribute("r", (9 / sc).toFixed(1)));
   el.querySelectorAll(".mmself").forEach(x => { x.setAttribute("r", (4.5 / sc).toFixed(1)); x.setAttribute("stroke-width", (1.5 / sc).toFixed(1)); });
   const baseFs = parseFloat(getComputedStyle(document.body).fontSize) || 13;   /* 正文字号：地名与正文同大 */
+  const off = (tr + 5) / sc;                        /* 地名偏移=圆点半径+5 屏幕像素，放大后也不压到圆点上 */
   el.querySelectorAll(".mmlab").forEach(x => {       /* 地名：屏幕字号恒等于正文字号，跟随点位，不随地图缩放变大变小 */
     const mx = Number(x.dataset.mx), my = Number(x.dataset.my);
-    x.setAttribute("x", (mx + 8 / sc).toFixed(1));
-    x.setAttribute("y", (my - 9 / sc).toFixed(1));
+    x.setAttribute("x", (mx + off).toFixed(1));
+    x.setAttribute("y", (my - off).toFixed(1));
     x.setAttribute("font-size", (baseFs / sc).toFixed(1));
     x.setAttribute("stroke-width", (3 / sc).toFixed(1));
   });
