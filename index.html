@@ -153,6 +153,14 @@
   .tl .item .nm{font-size:13.5px;color:var(--ac);cursor:pointer;}
   .tl .item .nm:hover{text-decoration:underline;}
   .tl .item .se{font-size:11px;color:var(--tx3);margin-left:8px;}
+  .tl .item.tlhit{background:var(--ac-bg);border-radius:6px;}   /* 滑条跳转后短暂高亮落点 */
+  /* 时间轴浮动年份滑条：吸顶浮在列表上方，拖动即跳到该年附近并居中 */
+  #tlBar{position:sticky;z-index:4;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+    margin:6px 0 10px;padding:7px 10px;background:var(--bg);border:0.5px solid var(--line);
+    border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,.06);}
+  #tlBar input[type=range]{flex:1;min-width:150px;width:auto;}
+  #tlBar .tly{font-size:12px;color:var(--ac);min-width:112px;white-space:nowrap;}
+  #tlBar .tlh{font-size:11px;color:var(--tx3);white-space:nowrap;}
   /* 图谱 */
   #graphBox{background:var(--bg);border:0.5px solid var(--line);border-radius:10px;overflow:hidden;position:relative;}
   #graphSvg{display:block;width:100%;height:62vh;min-height:380px;cursor:grab;background:
@@ -206,15 +214,23 @@
   #mapBtns,#gBtns{position:absolute;top:8px;right:8px;display:flex;gap:4px;z-index:5;}
   #mapBtns button,#gBtns button{width:30px;height:30px;border:0.5px solid var(--line);background:var(--bg);border-radius:8px;font-size:14px;color:var(--tx2);cursor:pointer;}
   #graphSvg{touch-action:none;}
-  /* 阅读页局部地图 */
-  .minimap{margin:8px 0 2px;}
-  .minimap svg{display:block;width:min(720px,100%);background:#d9e8f3;border:0.5px solid var(--line);border-radius:10px;}
+  /* 阅读页局部地图（v2：可缩放/拖动，圆点随放大变大） */
+  .minimap{margin:8px 0 2px;position:relative;}
+  .minimap svg{display:block;width:min(720px,100%);background:#d9e8f3;border:0.5px solid var(--line);border-radius:10px;
+    touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;}
+  .minimap svg:active{cursor:grabbing;}
+  .mmBtns{position:absolute;top:8px;right:8px;display:flex;gap:4px;z-index:5;}
+  .mmBtns button{width:30px;height:30px;border:0.5px solid var(--line);background:var(--bg);border-radius:8px;font-size:14px;color:var(--tx2);cursor:pointer;}
   #mapSvg .mhit{fill:transparent;stroke:none;pointer-events:all;cursor:pointer;}
-  .minimap .mmland{fill-rule:evenodd;fill:var(--bg2);stroke:var(--line2);stroke-width:2;}
-  .minimap .mmlake{fill-rule:evenodd;fill:#bcd9ec;stroke:#8fb8d4;stroke-width:2;}
-  .minimap .mmriver{fill:none;stroke:#6f9cbf;stroke-width:3;opacity:.55;}
-  .minimap .mmdot{cursor:pointer;}
-  .minimap .mmlab{font-size:56px;fill:var(--tx);paint-order:stroke;stroke:#d9e8f3;stroke-width:14px;}
+  .minimap .mmland{fill-rule:evenodd;fill:var(--bg2);stroke:var(--line2);stroke-width:.8;vector-effect:non-scaling-stroke;}
+  .minimap .mmlake{fill-rule:evenodd;fill:#bcd9ec;stroke:#8fb8d4;stroke-width:.8;vector-effect:non-scaling-stroke;}
+  .minimap .mmriver{fill:none;stroke:#6f9cbf;stroke-width:.8;opacity:.55;vector-effect:non-scaling-stroke;}
+  .minimap .mmdot{pointer-events:none;}                      /* 可见点极小，命中交给透明圈 */
+  .minimap .mmhit{fill:transparent;stroke:none;pointer-events:all;cursor:pointer;}
+  .minimap .mmhalo{fill:var(--ac);opacity:.25;pointer-events:none;}
+  .minimap .mmself{fill:var(--ac);stroke:var(--bg);pointer-events:none;}
+  .minimap .mmlab{font-size:12px;fill:var(--tx);paint-order:stroke;stroke:#d9e8f3;stroke-width:3px;pointer-events:none;}
+  .mmlegend{font-size:11px;color:var(--tx3);padding:4px 2px;}
   /* ===== v4：编辑视图（原录入卡片表单，样式隔离在 #editView / 其弹窗内） ===== */
   #editView{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,0.7fr);gap:16px;max-width:1400px;margin:0 auto;align-items:start;}
   #editView textarea{resize:vertical;min-height:64px;}
@@ -382,6 +398,11 @@
 
     <!-- 时间轴 -->
     <div id="timelinePane" style="display:none;">
+      <div id="tlBar">
+        <span class="tly" id="tlYearLab">全部</span>
+        <input type="range" id="tlYear" min="-500" max="2026" value="2026" title="拖动=快速跳到该年附近（公元前500 及以前停在最左）">
+        <span class="tlh">拖动跳年 · 列表自动滚到该年并居中</span>
+      </div>
       <div class="tl" id="timelineBox"></div>
     </div>
 
@@ -1579,11 +1600,16 @@ $("mapYear").addEventListener("input", function(){
   mapApplyFilter();
 });
 
-/* ---- 阅读页局部地图：以卡片坐标为中心，左右各 2000 公里、南北各 1000 公里 ---- */
+/* ---- 阅读页局部地图（v2）：以卡片坐标为中心，左右各 2000 公里、南北各 1000 公里；可缩放/拖动 ---- */
 function distKm(la1, lo1, la2, lo2){
   const x = (lo2 - lo1) * 111.32 * Math.cos(la1 * Math.PI / 180), y = (la2 - la1) * 110.574;
   return Math.hypot(x, y);
 }
+const MMW = 4000, MMH = 2000;      /* 初始视野（用户单位=公里），宽高恒 2:1，无 letterbox */
+const MM_DOT_BASE = 0.5;           /* 初始可见圆点半径（屏幕像素）：极小，密集点不再糊成一片 */
+const MM_DOT_MAX  = 11;            /* 放大上限半径：直径 22px ≈ 手指在手机上能点的最小值，再大就近邻互相盖住 */
+const MM_HIT_MIN  = 11;            /* 透明命中圈最小半径（屏幕像素）：0.5px 的点也一定点得到 */
+let mmz = { x:-MMW/2, y:-MMH/2, w:MMW, h:MMH };
 function miniMapHtml(c){
   const clat = parseFloat(c.fields["纬度"]), clon = parseFloat(c.fields["经度"]);
   if (!isFinite(clat) || !isFinite(clon)) return "";
@@ -1601,19 +1627,107 @@ function miniMapHtml(c){
   const d = { land: pathOf(featRings("land"), proj, true), lakes: pathOf(featRings("lakes"), proj, true), rivers: pathOf(featRings("rivers"), proj, false) };
   const me = proj(clon, clat);
   const nm = c.fields["地点"] || c.slug;
-  return '<div class="minimap"><svg viewBox="-2000 -1000 4000 2000" preserveAspectRatio="xMidYMid meet">' +
+  mmz = { x:-MMW/2, y:-MMH/2, w:MMW, h:MMH };
+  const tipOf = n => esc(n.o.slug) + " · " + esc(n.o.fields["年份"] || "?") + "（" +
+    Math.round(distKm(clat, clon, parseFloat(n.o.fields["纬度"]), parseFloat(n.o.fields["经度"]))) + " 公里）";
+  const pos = q => 'cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '"';
+  return '<div class="minimap">' +
+    '<div class="mmBtns"><button data-mm="in" title="放大">＋</button><button data-mm="out" title="缩小">－</button><button data-mm="reset" title="复位">⌂</button></div>' +
+    '<svg id="mmSvg" viewBox="' + mmz.x + " " + mmz.y + " " + mmz.w + " " + mmz.h + '" preserveAspectRatio="xMidYMid meet">' +
     '<path class="mmland" d="' + d.land + '"/><path class="mmlake" d="' + d.lakes + '"/><path class="mmriver" d="' + d.rivers + '"/>' +
-    near.map(n => '<circle class="mmdot" data-open="' + escAttr(n.o.uid) + '" cx="' + n.q[0].toFixed(1) + '" cy="' + n.q[1].toFixed(1) + '" r="55" fill="' + cardColor(n.o) + '"><title>' +
-      esc(n.o.slug) + " · " + esc(n.o.fields["年份"] || "?") + "（" + Math.round(distKm(clat, clon, parseFloat(n.o.fields["纬度"]), parseFloat(n.o.fields["经度"]))) + ' 公里）</title></circle>').join("") +
-    '<circle cx="' + me[0].toFixed(1) + '" cy="' + me[1].toFixed(1) + '" r="60" fill="var(--ac)" opacity=".25"/>' +
-    '<circle cx="' + me[0].toFixed(1) + '" cy="' + me[1].toFixed(1) + '" r="30" fill="var(--ac)" stroke="var(--bg)" stroke-width="10"/>' +
-    '<text class="mmlab" x="' + (me[0] + 45).toFixed(1) + '" y="' + (me[1] - 32).toFixed(1) + '">' + esc(nm) + '</text>' +
-    '</svg></div>';
+    near.map(n => '<circle class="mmdot" ' + pos(n.q) + ' r="1" fill="' + cardColor(n.o) + '"/>' +
+      '<circle class="mmhit" data-open="' + escAttr(n.o.uid) + '" ' + pos(n.q) + ' r="1"><title>' + tipOf(n) + '</title></circle>').join("") +
+    '<circle class="mmhalo" ' + pos(me) + ' r="1"/>' +
+    '<circle class="mmself" ' + pos(me) + ' r="1"/>' +
+    '<text class="mmlab" data-mx="' + me[0].toFixed(1) + '" data-my="' + me[1].toFixed(1) + '" ' + pos(me) + '>' + esc(nm) + '</text>' +
+    '</svg>' +
+    '<div class="mmlegend">附近 ' + near.length + ' 张卡（单击圆点进卡）。滚轮/捏合缩放、拖动平移、双击或 ⌂ 复位；圆点初始半径 0.5px，随放大增长，最大直径 22px（手指可点的最小值，再大就互相盖住）。</div>' +
+    '</div>';
+}
+function mmEl(){ return document.getElementById("mmSvg"); }
+function applyMmz(){
+  const el = mmEl(); if (!el) return;
+  el.setAttribute("viewBox", mmz.x + " " + mmz.y + " " + mmz.w + " " + mmz.h);
+  const r = el.getBoundingClientRect();
+  const sc = r.width / mmz.w;                       /* 每用户单位=多少屏幕像素 */
+  if (!isFinite(sc) || sc <= 0) return;             /* 阅读页还没显示时量不到宽度，显示后再量一次 */
+  const k = mmz.w / MMW;                            /* 缩放系数：越小=放得越大 */
+  const tr = Math.min(MM_DOT_MAX, MM_DOT_BASE / Math.pow(k, 0.8));   /* 可见半径：初始 0.5px，随放大增长，封顶 11px */
+  const hr = Math.max(MM_HIT_MIN, tr + 3);          /* 命中半径：不小于手指可点最小值 */
+  el.querySelectorAll(".mmdot").forEach(x => x.setAttribute("r", (tr / sc).toFixed(1)));
+  el.querySelectorAll(".mmhit").forEach(x => x.setAttribute("r", (hr / sc).toFixed(1)));
+  el.querySelectorAll(".mmhalo").forEach(x => x.setAttribute("r", (9 / sc).toFixed(1)));
+  el.querySelectorAll(".mmself").forEach(x => { x.setAttribute("r", (4.5 / sc).toFixed(1)); x.setAttribute("stroke-width", (1.5 / sc).toFixed(1)); });
+  el.querySelectorAll(".mmlab").forEach(x => {       /* 本卡标记与地名恒定屏幕尺寸，跟随点位 */
+    const mx = Number(x.dataset.mx), my = Number(x.dataset.my);
+    x.setAttribute("x", (mx + 8 / sc).toFixed(1));
+    x.setAttribute("y", (my - 8 / sc).toFixed(1));
+    x.setAttribute("font-size", (12 / sc).toFixed(1));
+    x.setAttribute("stroke-width", (3 / sc).toFixed(1));
+  });
+}
+function mmPt(el, ev){
+  const r = el.getBoundingClientRect(), sc = r.width / mmz.w;
+  return [mmz.x + (ev.clientX - r.left) / sc, mmz.y + (ev.clientY - r.top) / sc];
+}
+function mmZoomAt(px, py, f){
+  const nw = Math.min(MMW, Math.max(MMW / 32, mmz.w * f)), k = nw / mmz.w;   /* 最大放大 32 倍 */
+  mmz.x = px - (px - mmz.x) * k; mmz.y = py - (py - mmz.y) * k;
+  mmz.w = nw; mmz.h = MMH * nw / MMW;
+  mmz.x = Math.max(-MMW/2, Math.min(MMW/2 - mmz.w, mmz.x));
+  mmz.y = Math.max(-MMH/2, Math.min(MMH/2 - mmz.h, mmz.y));
+  applyMmz();
+}
+function mmReset(){ mmz = { x:-MMW/2, y:-MMH/2, w:MMW, h:MMH }; applyMmz(); }
+function initMiniMap(){
+  const el = mmEl(); if (!el) return;
+  el.parentNode.querySelectorAll(".mmBtns button").forEach(b => b.onclick = () => {
+    const m = b.dataset.mm;
+    if (m === "reset") mmReset();
+    else mmZoomAt(mmz.x + mmz.w / 2, mmz.y + mmz.h / 2, m === "in" ? 1 / 1.4 : 1.4);
+  });
+  el.addEventListener("wheel", ev => { ev.preventDefault(); const p = mmPt(el, ev); mmZoomAt(p[0], p[1], ev.deltaY < 0 ? 1 / 1.25 : 1.25); }, { passive:false });
+  el.addEventListener("dragstart", ev => ev.preventDefault());
+  let md = null, moved = false;
+  el.addEventListener("pointerdown", ev => {
+    ev.preventDefault();                            /* 防文本选择/原生拖拽，否则拖动被 pointercancel 掐断 */
+    md = { x0: ev.clientX, y0: ev.clientY, mx: mmz.x, my: mmz.y }; moved = false;
+    try { el.setPointerCapture(ev.pointerId); } catch(e){}
+  });
+  el.addEventListener("pointercancel", () => { md = null; });
+  el.addEventListener("pointermove", ev => {
+    if (!md) return;
+    const r = el.getBoundingClientRect(), sc = r.width / mmz.w;
+    const dx = ev.clientX - md.x0, dy = ev.clientY - md.y0;
+    if (Math.abs(dx) + Math.abs(dy) > 5) moved = true;
+    mmz.x = Math.max(-MMW/2, Math.min(MMW/2 - mmz.w, md.mx - dx / sc));
+    mmz.y = Math.max(-MMH/2, Math.min(MMH/2 - mmz.h, md.my - dy / sc));
+    applyMmz();
+  });
+  el.addEventListener("pointerup", ev => {
+    /* setPointerCapture 把 click 重定向到 svg，圆点自己的 onclick 收不到——在 pointerup 里定位 */
+    if (md && !moved){
+      const t = document.elementFromPoint(ev.clientX, ev.clientY);
+      const hit = t && t.closest ? t.closest(".mmhit[data-open]") : null;
+      if (hit) openCard(hit.dataset.open);
+    }
+    md = null;
+  });
+  el.addEventListener("dblclick", () => mmReset());
+  applyMmz();
 }
 
 /* ================= 时间轴 ================= */
+let tlList = [];        /* 当前顺序（与 DOM 同序），供年份滑条定位 */
+let tlBarBound = false;
+let tlSyncing = false;  /* 滑条→列表 与 列表→滑条 的回环保护（声明前置，避免 TDZ） */
+let tlYearVal = null;   /* 滑条当前年份（切走再切回时保留） */
+let tlTops = null;      /* 各项顶端位置缓存，渲染后惰性计算、resize 失效 */
+let tlHitTimer = 0;     /* 跳转落点高亮的撤销定时器 */
 function renderTimeline(){
   const list = cards.slice().sort((a,b)=> (a.yearKey==null?1:0)-(b.yearKey==null?1:0) || (a.yearKey||0)-(b.yearKey||0) || a.slug.localeCompare(b.slug));
+  tlList = list;
+  tlTops = null;
   $("timelineBox").innerHTML = list.map(c =>
     '<div class="item" style="--dot:' + cardColor(c) + '">' +
       '<input type="checkbox" class="cmp" data-uid="' + escAttr(c.uid) + '" title="加入对比" ' + (chosen.has(c.uid) ? "checked" : "") + '>' +
@@ -1623,6 +1737,70 @@ function renderTimeline(){
     "</div>").join("") || '<div style="color:var(--tx3);">暂无卡片。</div>';
   $("timelineBox").querySelectorAll(".nm").forEach(el => el.onclick = () => openCard(el.dataset.open));
   $("timelineBox").querySelectorAll(".cmp").forEach(box => box.onchange = () => { toggleCmpBox(box); graphSelDirty = true; });
+  tlBarInit();
+}
+/* ---- 浮动年份滑条：左端=公元前500 及以前，右端=系统当前年；拖动=跳到该年并居中 ---- */
+const TL_MIN = -500;
+function tlBarInit(){
+  const sl = $("tlYear");
+  if (!sl) return;
+  const nowY = new Date().getFullYear();
+  sl.min = TL_MIN; sl.max = nowY;
+  if (tlYearVal == null){                                    /* 首次=停在最晚一张卡；之后保留用户上次拖到的年份 */
+    let last = null;
+    for (let i = tlList.length - 1; i >= 0; i--) if (tlList[i].yearKey != null){ last = tlList[i].yearKey; break; }
+    tlYearVal = last == null ? nowY : Math.min(Math.max(last, TL_MIN), nowY);
+  }
+  sl.value = Math.min(Math.max(tlYearVal, TL_MIN), nowY);
+  tlBarLab(Number(sl.value));
+  const hdr = document.querySelector("header");
+  $("tlBar").style.top = ((hdr ? hdr.offsetHeight : 0) + 6) + "px";   /* 吸在页头下方，不被页头盖住 */
+  if (!tlBarBound){
+    tlBarBound = true;
+    sl.addEventListener("input", function(){ const y = Number(this.value); tlYearVal = y; tlBarLab(y); tlJumpTo(y); });
+    addEventListener("resize", () => { const h2 = document.querySelector("header"); $("tlBar").style.top = ((h2 ? h2.offsetHeight : 0) + 6) + "px"; tlTops = null; });
+    /* 滚动时反向同步滑条：让滑条始终反映「当前看到的是哪一年」（二分查找，不逐项量） */
+    addEventListener("scroll", () => {
+      const pane = $("timelinePane");
+      if (!pane || pane.style.display === "none" || tlSyncing || !tlList.length) return;
+      const bar = $("tlBar"), box = $("timelineBox");
+      if (!bar || !box) return;
+      const kids = box.children;
+      if (!kids.length) return;
+      if (!tlTops || tlTops.length !== kids.length){        /* 惰性算一次每项相对文档的顶端位置 */
+        tlTops = [];
+        for (let i = 0; i < kids.length; i++) tlTops.push(kids[i].getBoundingClientRect().top + scrollY);
+      }
+      const barBottom = bar.getBoundingClientRect().bottom;
+      const docMid = scrollY + barBottom + Math.max(40, (innerHeight - barBottom) / 2);
+      let lo = 0, hi = tlTops.length - 1, idx = 0;
+      while (lo <= hi){ const m = (lo + hi) >> 1; if (tlTops[m] <= docMid){ idx = m; lo = m + 1; } else hi = m - 1; }
+      const c = tlList[idx];
+      if (c && c.yearKey != null){
+        const v = Math.min(Math.max(c.yearKey, TL_MIN), Number(sl.max));
+        if (Number(sl.value) !== v){ tlSyncing = true; sl.value = v; tlBarLab(v); tlYearVal = v; setTimeout(() => { tlSyncing = false; }, 0); }
+      }
+    }, { passive:true });
+  }
+}
+function tlBarLab(y){ const el = $("tlYearLab"); if (el) el.textContent = y <= TL_MIN ? "公元前 500 及以前" : yrLabel(y); }
+function tlJumpTo(y){
+  const box = $("timelineBox");
+  if (!box || !tlList.length) return;
+  let idx = -1;
+  for (let i = 0; i < tlList.length; i++){
+    const k = tlList[i].yearKey;
+    if (k == null) break;            /* 无年份的卡排在末尾，不参与定位 */
+    if (k <= y) idx = i; else break;
+  }
+  if (idx < 0) idx = 0;              /* 早于全部卡片 -> 停在第一张 */
+  const el = box.children[idx];
+  if (!el) return;
+  el.scrollIntoView({ block:"center" });           /* 目标项滚到视口中央 */
+  box.querySelectorAll(".item.tlhit").forEach(x => x.classList.remove("tlhit"));
+  el.classList.add("tlhit");                       /* 落点闪一下，1.5 秒后褪去 */
+  clearTimeout(tlHitTimer);
+  tlHitTimer = setTimeout(() => el.classList.remove("tlhit"), 1500);
 }
 
 /* ================= 双链关系图谱（零依赖力学布局） ================= */
@@ -2053,10 +2231,18 @@ async function openCard(uid){
   if (c.summaryOnly){ setMsg("正在读取卡片全文……"); try { await ensureFull(c); } catch(e){} setMsg(""); }
   curReaderUid = uid;
   location.hash = "/" + encodeURIComponent(c.slug);
-  let h = '<button id="editCardBtn" type="button" title="在编辑视图中修改此卡（保存才会写回）">编辑此卡</button><h2>' + esc(c.slug) + "</h2>";
-  h += '<div class="rmeta">' + esc(coordLine(c)) +
-    (c.series.length ? " · <b>" + esc(c.series.join("/")) + "</b>" : "") +
-    (c.update ? " · 更新于 " + esc(c.update) : "") + "<br>" +
+  /* 顶部大标题 = 年份 · 地点（卡片名=文件夹名=双链锚点，移到元信息行，不丢） */
+  const headTitle = [c.fields["年份"], c.fields["地点"]].filter(Boolean).join(" · ") || c.slug;
+  const restCoord = [c.fields["时属"], c.fields["对象"], c.fields["范式"], c.fields["时期"]].filter(Boolean).join(" · ");
+  const metaBits = [];
+  if (restCoord) metaBits.push(esc(restCoord));
+  if (c.series.length) metaBits.push("<b>" + esc(c.series.join("/")) + "</b>");
+  if (c.update) metaBits.push("更新于 " + esc(c.update));
+  const metaLines = [];
+  if (metaBits.length) metaLines.push(metaBits.join(" · "));
+  if (headTitle !== c.slug) metaLines.push('<span style="color:var(--tx3);">卡片名 ' + esc(c.slug) + "</span>");
+  let h = '<button id="editCardBtn" type="button" title="在编辑视图中修改此卡（保存才会写回）">编辑此卡</button><h2>' + esc(headTitle) + "</h2>";
+  h += '<div class="rmeta">' + metaLines.join("<br>") + (metaLines.length ? "<br>" : "") +
     c.tags.map(t=>'<span class="tag" data-tagjump="' + escAttr(t) + '">' + esc(t) + "</span>").join("") +
     '　<label style="font-size:11.5px;color:var(--tx3);"><input type="checkbox" id="cmpAdd" style="width:auto;vertical-align:-2px;"> 加入对比</label></div>';
   h += miniMapHtml(c) + "<h3>概述</h3><div>" + mdHtml(c.overview || "（待补）", c) + "</div>";
@@ -2067,7 +2253,6 @@ async function openCard(uid){
                  : '<div style="font-size:12.5px;color:var(--tx3);">还没有卡片链接到这里。</div>';
   h += "</div>";
   $("readerBox").innerHTML = h;
-  $("readerBox").querySelectorAll(".mmdot[data-open]").forEach(b => b.onclick = () => openCard(b.dataset.open));
   $("readerBox").querySelectorAll(".wikilink[data-slug]").forEach(b => b.onclick = () => {
     const target = slugIndex[b.dataset.slug];
     if (target) openCard(target.uid);
@@ -2081,6 +2266,7 @@ async function openCard(uid){
     else chosen.delete(c.uid);
   };
   show("readerView");
+  initMiniMap();      // 局部地图在显示后才有宽度：此时才量得到缩放基准，绑定缩放/拖动/点选
   // 更新浮动翻卡按钮状态
   const ci = cards.findIndex(x => x.uid === uid);
   $("navPrev").disabled = ci <= 0;
