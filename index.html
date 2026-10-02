@@ -1254,13 +1254,17 @@ function materializeImages(container){
 
 /* ================= 高清灯箱：点图直接加载 图片-原图/ 存档原件；点图切换适合窗口/原始尺寸（放大看细节） ================= */
 async function resolveHiResUrl(rel){
-  if (source.type !== "local") throw new Error("高清原件仅存本地 图片-原图/（不随 git 推送），GitHub 模式不可用");
-  let h = source.root;
-  const segs = rel.replace(/^\.\//,"").split("/");
-  const file = segs.pop();
-  for (const s of segs) h = await h.getDirectoryHandle(s);
-  const fh = await h.getFileHandle(file);
-  return URL.createObjectURL(await fh.getFile());
+  rel = rel.replace(/^\.\//,"");
+  if (source.type === "local"){
+    let h = source.root;
+    const segs = rel.split("/");
+    const file = segs.pop();
+    for (const s of segs) h = await h.getDirectoryHandle(s);
+    const fh = await h.getFileHandle(file);
+    return URL.createObjectURL(await fh.getFile());
+  }
+  /* GitHub / Pages 模式：高清原件已随图片同步进公开库，与正文图走同一条 jsDelivr 链路 */
+  return cdnImgUrl(rel);
 }
 function lbImg(){ return $("lightbox").querySelector("img"); }
 async function loadHiRes(rel){
