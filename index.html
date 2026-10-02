@@ -1115,7 +1115,9 @@ function mdHtml(md, card){
       const cap = []; let j = i + 1;
       while (j < lines.length && /^\s*>\s?/.test(lines[j])){ cap.push(lines[j].replace(/^\s*>\s?/,"")); j++; }
       let hi = "";
-      while (j < lines.length && /^\s*高清\s*[:：]\s*\S/.test(lines[j])){ hi = lines[j].replace(/^\s*高清\s*[:：]\s*/,"").trim(); j++; }
+      /* 高清行格式：『高清: 图片-原图/<卡>/<文件> | 来源=… | 授权=… | 原图=URL』
+         竖线后是出处元数据，只给人看，取路径时截掉 */
+      while (j < lines.length && /^\s*高清\s*[:：]\s*\S/.test(lines[j])){ hi = lines[j].replace(/^\s*高清\s*[:：]\s*/,"").split("|")[0].trim(); j++; }
       out.push(figureHtml(card, img[2].trim().replace(/^\.\//,""), img[1], cap.join(" ").trim(), hi));
       i = j; continue;
     }
