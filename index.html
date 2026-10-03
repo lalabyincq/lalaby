@@ -60,6 +60,10 @@
   .chip.lens{background:var(--ac-bg);border-color:var(--line2);color:var(--tx);}   /* 透镜导航词：淡主题底色与普通 chip 区分，选中态仍走 .on */
   .chip.lens.on{border-color:var(--ac);color:var(--ac);}
   #tagDrawer{border:0.5px solid var(--line2);border-radius:10px;padding:8px 10px;margin:2px 0 8px;background:var(--bg);}
+  #tagDrawerList{max-height:280px;overflow-y:auto;}   /* 长尾完整列出后条数上百，限高滚动，不撑爆筛选栏 */
+  #tagDrawerList .tagmore{margin-top:6px;}
+  #tagDrawerList .tagmore button{font-size:12px;color:var(--tx3);background:none;border:none;padding:2px 0;cursor:pointer;text-decoration:underline dotted;}
+  .tagsep{font-size:11px;color:var(--tx3);margin:0 4px 0 6px;white-space:nowrap;}   /* 主栏分段标记：热度榜 / 导航保底 / 已选 */
   #tagSearch{width:96%;font-size:13px;padding:5px 9px;margin-bottom:6px;}
   .tag{background:var(--ac-bg);color:var(--ac);border-radius:99px;padding:0 9px;font-size:11.5px;margin:2px 5px 2px 0;display:inline-block;cursor:pointer;}
   .tag:hover{text-decoration:underline;}
@@ -119,8 +123,16 @@
   .wikilink:hover{text-decoration:underline;color:var(--ac);}
   .wikilink.broken{background:var(--warn-bg);color:var(--warn);cursor:default;text-decoration:none;}
   .wikilink.broken em{font-style:normal;font-size:10.5px;margin-left:3px;}
-  .backlinks{margin-top:26px;border-top:0.5px solid var(--line);padding-top:12px;}
-  .backlinks .bl{font-size:12.5px;padding:5px 0;}
+  /* 关系合并块：出边（我指向的，带自己理由）+ 入边（指向我的，照搬对方理由）；弱引用折叠 */
+  .relbox .relsub{font-size:11.5px;color:var(--tx3);margin:10px 0 2px;}
+  .relbox .relrow{font-size:12.5px;padding:3px 0;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;}
+  .relbox .relmark{font-size:11px;color:var(--tx3);white-space:nowrap;}
+  .relbox .relmark.weak{opacity:.85;}
+  .relbox .relwhy{flex:1 1 240px;color:var(--tx2);line-height:1.5;}
+  .relbox .relnone{font-size:12.5px;color:var(--tx3);}
+  .relbox .relweak{margin-top:6px;}
+  .relbox .relweakbtn{font-size:12px;color:var(--tx3);background:none;border:none;padding:0;cursor:pointer;text-decoration:underline dotted;}
+  .relbox .relweaklist{margin-top:4px;padding-left:10px;border-left:0.5px solid var(--line);}
   /* 对比页 */
   .cmpwrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;align-items:start;}
   .cmpcol{background:var(--bg);border:0.5px solid var(--line);border-radius:10px;padding:14px 18px;}
@@ -154,7 +166,7 @@
   .tl .item .yr{font-size:12.5px;color:var(--tx3);min-width:92px;display:inline-block;}
   .tl .item .nm{font-size:13.5px;color:var(--ac);cursor:pointer;}
   .tl .item .nm:hover{text-decoration:underline;}
-  .tl .item .se{font-size:11px;color:var(--tx3);margin-left:8px;}
+  .tl .item .se{font-size:11px;color:var(--tx3);margin-left:8px;display:inline-block;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;}
   .tl .item.tlhit{background:var(--ac-bg);border-radius:6px;}   /* 滑条跳转后短暂高亮落点 */
   /* 时间轴浮动年份滑条：吸顶浮在列表上方，拖动即跳到该年附近并居中 */
   #tlBar{position:sticky;z-index:4;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
@@ -235,7 +247,6 @@
   /* 注意：mmlab 的 font-size / stroke-width 绝不能写进 CSS——CSS 会压过 JS 设置的 SVG 属性，
      而 CSS 的 px 在 SVG 里是"图内单位"，会被 viewBox 缩小上百倍（v6.5b 地名小到看不见的根因）。
      字号与描边宽度一律由 applyMmz() 按"屏幕目标值 / sc"算成属性。 */
-  .mmlegend{font-size:11px;color:var(--tx3);padding:4px 2px;}
   /* ===== v4：编辑视图（原录入卡片表单，样式隔离在 #editView / 其弹窗内） ===== */
   #editView{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,0.7fr);gap:16px;max-width:1400px;margin:0 auto;align-items:start;}
   #editView textarea{resize:vertical;min-height:64px;}
@@ -278,6 +289,23 @@
   #navHome{right:16px;bottom:84px;}   /* 位于 › 正上方，竖排一列 */
   #navPrev{right:68px;}
   #navNext{right:16px;}
+  /* 阅读页目录：⌂ 上方的半透明浮层；手机默认收起成一个 ☰ 小钮，桌面常驻 */
+  #tocBox{position:fixed;right:16px;bottom:140px;z-index:50;max-width:min(210px,52vw);
+    background:var(--bg);background:color-mix(in srgb, var(--bg) 80%, transparent);
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    border:0.5px solid var(--line);border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.10);
+    padding:4px;display:flex;flex-direction:column;}
+  #tocToggle{border:none;background:none;cursor:pointer;color:var(--tx2);font-size:12px;
+    padding:5px 8px;border-radius:8px;text-align:left;white-space:nowrap;}
+  #tocToggle:hover{background:var(--ac-bg);color:var(--ac);}
+  #tocList{overflow:auto;max-height:48vh;overscroll-behavior:contain;scrollbar-width:thin;}
+  #tocBox.closed{padding:2px;}
+  #tocBox.closed #tocList{display:none;}
+  .toc-it{display:block;width:100%;border:none;background:none;cursor:pointer;text-align:left;
+    padding:4px 8px;font-size:12px;color:var(--tx2);border-radius:7px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .toc-it:hover{background:var(--ac-bg);color:var(--ac);}
+  .toc-it.on{background:var(--ac-bg);color:var(--ac);font-weight:600;}
   #cmpGoBtn{color:var(--ac);}
   #cmpGoBtn:disabled{opacity:.45;color:var(--tx3);}
   #cmpClearBtn{color:var(--warn);}
@@ -525,6 +553,10 @@
 <button id="navHome" class="nav-flot" aria-label="返回书架" title="返回书架">⌂</button>
 <button id="navPrev" class="nav-flot" aria-label="上一张" title="上一张">‹</button>
 <button id="navNext" class="nav-flot" aria-label="下一张" title="下一张">›</button>
+<div id="tocBox" style="display:none;">
+  <button id="tocToggle" type="button" title="收起 / 展开目录">☰ 目录</button>
+  <div id="tocList"></div>
+</div>
 <div id="cmpToggle" class="cmp-flot">
   <button id="cmpModeSeries">同系列对齐</button>
   <button id="cmpModeAll">跨系列并排</button>
@@ -607,7 +639,7 @@
 let source = null;                 // {type:"local", root} | {type:"gh"}
 let cards = [];                    // 解析后的卡片
 let slugIndex = {};                // slug -> card（uid=path）
-let backlinks = {};                // slug -> [card...]
+let incoming = {};                 // slug -> [{c, why, sec}]（阅读页「关系」节入边；sec==="关系"=对方关系节论证过，why 是它那句理由）
 let knownImages = new Set();       // 库内实际存在的图片路径（root 相对 / 含 GitHub 库内根目录）
 let localImgHandles = new Map();   // 本地：路径 -> FileHandle
 let localTxtHandles = new Map();   // 本地：卡片.md 路径 -> FileHandle（索引模式下按需读全文）
@@ -694,7 +726,7 @@ function parseCard(txt, path){
     repoDir: path.replace(/\/卡片\.md$/, ""),
     slug: path.split("/").slice(-2,-1)[0] || "",
     fields: {}, arrays: {}, tags: [], series: [], update: "",
-    overview: "", sections: [], links: [], imgRefs: [],
+    overview: "", sections: [], links: [], imgRefs: [], rel: [], weak: [],
     placeholders: [], yearKey: null
   };
   const ym = txt.match(/^---\r?\n([\s\S]*?)\r?\n---/);
@@ -743,6 +775,28 @@ function parseCard(txt, path){
     p = p.replace(/^\.\//, "");
     if (!card.imgRefs.includes(p)) card.imgRefs.push(p);
   }
+  /* 关系视图投影，与 gh_push2.py 的索引投影严格同构（索引模式拿不到他卡全文，
+     入边的「对方理由」只能靠这两份投影，所以两端口径必须一致，否则同一张卡两种模式显示不同）：
+       rel  = 「关系」节条目 {t:目标卡, w:作者写的理由}
+       weak = 关系节以外的双链 {t:目标卡, s:所在节标题}（顺带提及；已被 rel 覆盖的目标不重复算） */
+  const whyOf = ln => { let i = ln.indexOf("："); if (i < 0) i = ln.indexOf(":"); return i >= 0 ? ln.slice(i+1).trim() : ""; };
+  const linkRe2 = /\[\[([^\[\]|]+?)(?:\|[^\]]+)?\]\]/g;
+  const relSec = card.sections.find(s => s.title === "关系");
+  if (relSec) for (const ln of relSec.body.split(/\r?\n/)){
+    if (!ln.trim().startsWith("-")) continue;
+    const w = whyOf(ln); linkRe2.lastIndex = 0;
+    while ((m = linkRe2.exec(ln))){ const t = m[1].trim(); if (!card.rel.some(x=>x.t===t)) card.rel.push({ t, w }); }
+  }
+  const relT = new Set(card.rel.map(x => x.t));
+  for (const s of [{ title:"概述", body:card.overview }].concat(card.sections)){
+    if (s.title === "关系") continue;
+    linkRe2.lastIndex = 0;
+    while ((m = linkRe2.exec(s.body || ""))){
+      const t = m[1].trim();
+      if (relT.has(t)) continue;
+      if (!card.weak.some(x=>x.t===t)) card.weak.push({ t, s: s.title });
+    }
+  }
   card.missingImgs = card.imgRefs.filter(ref => {
     const p = (source && source.type === "gh" ? card.repoDir : card.fsDir) + "/" + ref;
     return !knownImages.has(p);
@@ -766,9 +820,20 @@ function ingest(rawItems){
 function reindexMaps(){
   cards.sort((a,b)=> (a.yearKey==null?1:0)-(b.yearKey==null?1:0) || (a.yearKey||0)-(b.yearKey||0) || a.slug.localeCompare(b.slug));
   slugIndex = {}; for (const c of cards) if (!(c.slug in slugIndex)) slugIndex[c.slug] = c;
-  backlinks = {};
-  for (const c of cards) for (const sl of c.links)
-    if (slugIndex[sl] && slugIndex[sl].uid !== c.uid) (backlinks[sl] = backlinks[sl] || []).push(c);
+  /* 入边：强引用=对方「关系」节点名我（带对方写的理由），弱引用=对方正文顺带提及（带节名）。
+     老索引没有 rel/weak 时降级用扁平 links（当弱引用、无节名），保证入边不丢。 */
+  incoming = {};
+  for (const c of cards){
+    const hasProj = (c.rel && c.rel.length) || (c.weak && c.weak.length);
+    const push = (t, why, sec) => {
+      const tgt = slugIndex[t];
+      if (tgt && tgt.uid !== c.uid) (incoming[t] = incoming[t] || []).push({ c, why: why || "", sec: sec || "" });
+    };
+    if (hasProj){
+      for (const r of (c.rel || [])) push(r.t, r.w, "关系");
+      for (const w of (c.weak || [])) push(w.t, "", w.s);
+    } else for (const sl of c.links) push(sl, "", "");
+  }
   chosen = new Set();
   graphDirty = true;
 }
@@ -797,6 +862,7 @@ function ingestIndex(idx, bp){
       fields: ic.f || {}, arrays: {}, tags: ic.tags || [], series: ic.series || [],
       update: (ic.f && ic.f["更新"]) || "",
       overview: ic.ov || "", sections: [], links: ic.links || [], imgRefs: ic.imgs || [],
+      rel: ic.rel || [], weak: ic.weak || [],
       placeholders: [], yearKey: (ic.y == null ? null : ic.y),
       sha: ic.sha, summaryOnly: true
     };
@@ -1327,6 +1393,7 @@ function show(view){
   $("navNext").style.display = isReader ? "block" : "none";
   $("navHome").style.display = (isReader || isCmp) ? "block" : "none";
   $("cmpToggle").style.display = isCmp ? "block" : "none";
+  if (!isReader) $("tocBox").style.display = "none";   /* 目录只在阅读视图出现 */
 }
 $("homeBtn").onclick = () => goHome();
 function goHome(){
@@ -1345,6 +1412,7 @@ function cardColor(c){ return c.series.length ? seriesColorOf(c.series[0]) : PAL
 let curPane = "shelf";
 let graphDirty = true;
 let graphSelDirty = false;         // 对比选择变化后，图谱需重渲染以同步选中高亮
+let graphRelOnly = false;          // 图谱只画「关系」节论证过的边（滤掉正文顺带提及的弱引用）；与阅读页关系视图同一口径
 /* 对比选择复选框：时间轴/维度矩阵共用（书架/阅读页有各自内联逻辑） */
 function toggleCmpBox(box){
   const uid = box.dataset.uid;
@@ -1627,21 +1695,29 @@ function distKm(la1, lo1, la2, lo2){
 const MMW = 4000, MMH = 2000;      /* 初始视野（用户单位=公里），宽高恒 2:1，无 letterbox */
 const MM_DOT_BASE = 1.5;           /* 初始可见圆点半径（屏幕像素） */
 const MM_DOT_MAX  = 11;            /* 放大上限半径：直径 22px ≈ 手指在手机上能点的最小值，再大就近邻互相盖住 */
+const MM_DOT_MIN  = 0.9;           /* 缩小下限半径：再小就近邻看不见了（缩小只变小到 0.9px，不消失） */
 const MM_HIT_MIN  = 11;            /* 透明命中圈最小半径（屏幕像素）：0.5px 的点也一定点得到 */
+const MM_ZOUT_MAX_MUL = 12;        /* 缩小上限＝初始视野的倍数封顶（防止高纬投影把世界压得过窄时反而放不出来） */
 let mmz = { x:-MMW/2, y:-MMH/2, w:MMW, h:MMH };
+let mmMaxW = MMW, mmMaxH = MMH;    /* 当前卡可缩小到的最大视野（=该纬度下的全球宽度，再封顶） */
+let mmWorld = { x0:-MMW, x1:MMW, y0:-MMH, y1:MMH };   /* 当前投影下陆地数据的实际范围，供平移/缩放钳位 */
 function miniMapHtml(c){
   const clat = parseFloat(c.fields["纬度"]), clon = parseFloat(c.fields["经度"]);
   if (!isFinite(clat) || !isFinite(clon)) return "";
   const kx = 111.32 * Math.cos(clat * Math.PI / 180);
   const proj = (lon, lat) => [(lon - clon) * kx, (clat - lat) * 110.574];
-  const near = [];
+  /* 可缩小的上限＝该纬度下的全球宽度（投影在本卡纬度上等距，故 360°×kx 即世界宽），再按倍数封顶 */
+  mmMaxW = Math.max(MMW * 2, Math.min(360 * kx, MMW * MM_ZOUT_MAX_MUL));
+  mmMaxH = mmMaxW / 2;
+  /* 陆地数据范围（软钳位用，避免拖到空白海图之外）：经度全域，纬度按 ±90° 留足 */
+  mmWorld = { x0: (-180 - clon) * kx, x1: (180 - clon) * kx,
+              y0: (clat - 90) * 110.574, y1: (clat + 90) * 110.574 };
+  const dots = [];
   for (const o of cards){
     if (o === c || !o.fields["纬度"]) continue;
     const ola = parseFloat(o.fields["纬度"]), olo = parseFloat(o.fields["经度"]);
     if (!isFinite(ola) || !isFinite(olo)) continue;
-    if (distKm(clat, clon, ola, olo) > 2240) continue;   /* 视野对角线 = √(2000²+1000²) ≈ 2236 */
-    const q = proj(olo, ola);
-    if (Math.abs(q[0]) < 2000 && Math.abs(q[1]) < 1000) near.push({ o, q });
+    dots.push({ o, q: proj(olo, ola) });   /* 全部有坐标的卡都画点：缩小到全球视野时才看得到远处簇 */
   }
   const d = { land: pathOf(featRings("land"), proj, true), lakes: pathOf(featRings("lakes"), proj, true), rivers: pathOf(featRings("rivers"), proj, false) };
   const me = proj(clon, clat);
@@ -1654,13 +1730,12 @@ function miniMapHtml(c){
     '<div class="mmBtns"><button data-mm="in" title="放大">＋</button><button data-mm="out" title="缩小">－</button><button data-mm="reset" title="复位">⌂</button></div>' +
     '<svg id="mmSvg" viewBox="' + mmz.x + " " + mmz.y + " " + mmz.w + " " + mmz.h + '" preserveAspectRatio="xMidYMid meet">' +
     '<path class="mmland" d="' + d.land + '"/><path class="mmlake" d="' + d.lakes + '"/><path class="mmriver" d="' + d.rivers + '"/>' +
-    near.map(n => '<circle class="mmdot" ' + pos(n.q) + ' r="1" fill="' + cardColor(n.o) + '"/>' +
+    dots.map(n => '<circle class="mmdot" ' + pos(n.q) + ' r="1" fill="' + cardColor(n.o) + '"/>' +
       '<circle class="mmhit" data-open="' + escAttr(n.o.uid) + '" ' + pos(n.q) + ' r="1"><title>' + tipOf(n) + '</title></circle>').join("") +
     '<circle class="mmhalo" ' + pos(me) + ' r="1"/>' +
     '<circle class="mmself" ' + pos(me) + ' r="1"/>' +
     '<text class="mmlab" data-mx="' + me[0].toFixed(1) + '" data-my="' + me[1].toFixed(1) + '" ' + pos(me) + '>' + esc(nm) + '</text>' +
     '</svg>' +
-    '<div class="mmlegend">附近 ' + near.length + ' 张卡（单击圆点进卡）。滚轮/捏合缩放、拖动平移、双击或 ⌂ 复位；圆点初始半径 1.5px，随放大增长，最大直径 22px（手指可点的最小值，再大就互相盖住）。</div>' +
     '</div>';
 }
 function mmEl(){ return document.getElementById("mmSvg"); }
@@ -1671,7 +1746,7 @@ function applyMmz(){
   const sc = r.width / mmz.w;                       /* 每用户单位=多少屏幕像素 */
   if (!isFinite(sc) || sc <= 0) return;             /* 阅读页还没显示时量不到宽度，显示后再量一次 */
   const k = mmz.w / MMW;                            /* 缩放系数：越小=放得越大 */
-  const tr = Math.min(MM_DOT_MAX, MM_DOT_BASE / Math.pow(k, 0.8));   /* 可见半径：初始 1.5px，随放大增长，封顶 11px */
+  const tr = Math.max(MM_DOT_MIN, Math.min(MM_DOT_MAX, MM_DOT_BASE / Math.pow(k, 0.8)));   /* 可见半径：初始 1.5px，放大增长封顶 11px，缩小只降到 0.9px 不消失 */
   const hr = Math.max(MM_HIT_MIN, tr + 3);          /* 命中半径：不小于手指可点最小值 */
   el.querySelectorAll(".mmdot").forEach(x => x.setAttribute("r", (tr / sc).toFixed(1)));
   el.querySelectorAll(".mmhit").forEach(x => x.setAttribute("r", (hr / sc).toFixed(1)));
@@ -1691,12 +1766,21 @@ function mmPt(el, ev){
   const r = el.getBoundingClientRect(), sc = r.width / mmz.w;
   return [mmz.x + (ev.clientX - r.left) / sc, mmz.y + (ev.clientY - r.top) / sc];
 }
+/* 钳位：视野不得超出「陆地数据范围 ∪ 初始视野」的并集（后者保证复位/初始视野永远合法——
+   经度接近 ±180 的卡，初始视野本来就会探出世界边界，并集可避免它被强行挪偏）；
+   若视野比这个框还大，就居中（缩小到底时不会飘进空白） */
+function mmClamp(){
+  const bx0 = Math.min(mmWorld.x0, -MMW / 2), bx1 = Math.max(mmWorld.x1, MMW / 2);
+  const by0 = Math.min(mmWorld.y0, -MMH / 2), by1 = Math.max(mmWorld.y1, MMH / 2);
+  const bw = bx1 - bx0, bh = by1 - by0;
+  mmz.x = (mmz.w >= bw) ? bx0 + (bw - mmz.w) / 2 : Math.max(bx0, Math.min(bx1 - mmz.w, mmz.x));
+  mmz.y = (mmz.h >= bh) ? by0 + (bh - mmz.h) / 2 : Math.max(by0, Math.min(by1 - mmz.h, mmz.y));
+}
 function mmZoomAt(px, py, f){
-  const nw = Math.min(MMW, Math.max(MMW / 32, mmz.w * f)), k = nw / mmz.w;   /* 最大放大 32 倍 */
+  const nw = Math.min(mmMaxW, Math.max(MMW / 32, mmz.w * f)), k = nw / mmz.w;   /* 最大放大 32 倍，最大缩小到 mmMaxW */
   mmz.x = px - (px - mmz.x) * k; mmz.y = py - (py - mmz.y) * k;
   mmz.w = nw; mmz.h = MMH * nw / MMW;
-  mmz.x = Math.max(-MMW/2, Math.min(MMW/2 - mmz.w, mmz.x));
-  mmz.y = Math.max(-MMH/2, Math.min(MMH/2 - mmz.h, mmz.y));
+  mmClamp();
   applyMmz();
 }
 function mmReset(){ mmz = { x:-MMW/2, y:-MMH/2, w:MMW, h:MMH }; applyMmz(); }
@@ -1721,8 +1805,9 @@ function initMiniMap(){
     const r = el.getBoundingClientRect(), sc = r.width / mmz.w;
     const dx = ev.clientX - md.x0, dy = ev.clientY - md.y0;
     if (Math.abs(dx) + Math.abs(dy) > 5) moved = true;
-    mmz.x = Math.max(-MMW/2, Math.min(MMW/2 - mmz.w, md.mx - dx / sc));
-    mmz.y = Math.max(-MMH/2, Math.min(MMH/2 - mmz.h, md.my - dy / sc));
+    mmz.x = md.mx - dx / sc;
+    mmz.y = md.my - dy / sc;
+    mmClamp();
     applyMmz();
   });
   el.addEventListener("pointerup", ev => {
@@ -1749,13 +1834,18 @@ function renderTimeline(){
   const list = cards.slice().sort((a,b)=> (a.yearKey==null?1:0)-(b.yearKey==null?1:0) || (a.yearKey||0)-(b.yearKey||0) || a.slug.localeCompare(b.slug));
   tlList = list;
   tlTops = null;
-  $("timelineBox").innerHTML = list.map(c =>
-    '<div class="item" style="--dot:' + cardColor(c) + '">' +
+  $("timelineBox").innerHTML = list.map(c => {
+    /* 时间轴条目：年份 / 地点 / 时属。地点缺失回退为卡名去年份前缀，时属缺失回退为「系列 · 地点」 */
+    const loc = c.fields["地点"] || c.slug.replace(/^-?\d+-/, "");
+    const shi = c.fields["时属"] || "";
+    const seText = shi || (c.series.join("/") + (c.fields["地点"] ? " · " + c.fields["地点"] : ""));
+    return '<div class="item" style="--dot:' + cardColor(c) + '" title="' + escAttr(c.series.join("/") + (shi ? " · " + shi : "")) + '">' +
       '<input type="checkbox" class="cmp" data-uid="' + escAttr(c.uid) + '" title="加入对比" ' + (chosen.has(c.uid) ? "checked" : "") + '>' +
       '<span class="yr">' + esc(c.fields["年份"] || "年份未填") + "</span>" +
-      '<span class="nm" data-open="' + escAttr(c.uid) + '">' + esc(c.slug) + "</span>" +
-      '<span class="se">' + esc(c.series.join("/")) + (c.fields["地点"] ? " · " + esc(c.fields["地点"]) : "") + "</span>" +
-    "</div>").join("") || '<div style="color:var(--tx3);">暂无卡片。</div>';
+      '<span class="nm" data-open="' + escAttr(c.uid) + '" title="' + escAttr(c.slug) + '">' + esc(loc) + "</span>" +
+      '<span class="se" title="' + escAttr(seText) + '">' + esc(seText) + "</span>" +
+    "</div>";
+  }).join("") || '<div style="color:var(--tx3);">暂无卡片。</div>';
   $("timelineBox").querySelectorAll(".nm").forEach(el => el.onclick = () => openCard(el.dataset.open));
   $("timelineBox").querySelectorAll(".cmp").forEach(box => box.onchange = () => { toggleCmpBox(box); graphSelDirty = true; });
   tlBarInit();
@@ -1828,12 +1918,22 @@ function tlJumpTo(y){
 function graphModel(){
   const map = new Map();
   for (const c of cards) map.set(c.slug, { id:c.slug, card:c, broken:false });
-  const edges = [];
-  for (const c of cards) for (const sl of c.links){
-    if (!map.has(sl)) map.set(sl, { id:sl, card:null, broken:true });
-    edges.push({ s:map.get(c.slug), t:map.get(sl) });
+  const edges = [], used = new Set();      /* used=参与边的节点，只显示关系边时用它收掉孤立点 */
+  for (const c of cards){
+    const hasProj = (c.rel && c.rel.length) || (c.weak && c.weak.length);
+    const pairs = [];
+    if (hasProj){
+      for (const r of (c.rel || [])) pairs.push({ t:r.t, strong:true });
+      if (!graphRelOnly) for (const w of (c.weak || [])) pairs.push({ t:w.t, strong:false });
+    } else if (!graphRelOnly) for (const sl of c.links) pairs.push({ t:sl, strong:false });   // 老索引无投影：全当弱引用
+    for (const p of pairs){
+      if (!map.has(p.t)) map.set(p.t, { id:p.t, card:null, broken:true });
+      edges.push({ s:map.get(c.slug), t:map.get(p.t), strong:p.strong });
+      used.add(c.slug); used.add(p.t);
+    }
   }
-  return { nodes:[...map.values()], edges };
+  const nodes = graphRelOnly ? [...map.values()].filter(n => used.has(n.id)) : [...map.values()];
+  return { nodes, edges };
 }
 let simState = null;
 let graphHover = null;            /* 悬停聚焦的节点（无悬停时聚焦=全部已选中节点） */
@@ -1952,7 +2052,13 @@ function renderGraph(){
   const { nodes, edges } = graphModel();
   $("graphLegend").innerHTML =
     allSeries().map(sn => '<span><i style="background:' + seriesColorOf(sn) + '"></i>' + esc(sn) + "</span>").join("") +
-    '<span><i class="broken"></i>断链 = 待写卡片</span><span style="margin-left:auto;">滚轮缩放 · 拖空白处平移 · 双击空白复位 · 悬停/单击圆点聚焦连线 · 双击圆点开卡 · 拖圆点调布局</span>';
+    '<span><i class="broken"></i>断链 = 待写卡片</span>' +
+    '<label style="margin-left:12px;cursor:pointer;white-space:nowrap;" title="只画「关系」节论证过的边，滤掉正文顺带提及的弱引用（与卡片页关系视图同一口径）">' +
+      '<input type="checkbox" id="gRelOnlyBox" style="width:auto;vertical-align:-2px;margin:0 4px 0 0;"' + (graphRelOnly ? " checked" : "") + '>只显示关系边</label>' +
+    '<span style="font-size:11.5px;color:var(--tx3);">共 ' + edges.length + " 条边 / " + nodes.length + " 个节点</span>" +
+    '<span style="margin-left:auto;">滚轮缩放 · 拖空白处平移 · 双击空白复位 · 悬停/单击圆点聚焦连线 · 双击圆点开卡 · 拖圆点调布局</span>';
+  const rob = $("gRelOnlyBox");
+  if (rob) rob.onchange = () => { graphRelOnly = rob.checked; renderGraph(); };
   nodes.forEach((n,i) => {
     const a = Math.PI*2*i/Math.max(nodes.length,1);
     n.x = 480 + Math.cos(a)*220; n.y = 300 + Math.sin(a)*200; n.vx = 0; n.vy = 0;
@@ -2030,10 +2136,18 @@ async function renderMatrix(){
 }
 
 /* ================= 书架 ================= */
+let tagRank = new Map();          /* 标签 -> 全库出现次数；由 allTags() 顺带刷新，供书架卡面标签按热度排序 */
+let mainTags = new Set();         /* 主栏已显示的标签；抽屉据此排除，避免同一词两处出现 */
+const MAIN_TAG_TOP = 20;          /* 主栏热度榜名额：不分身份，谁热谁上 */
 function allTags(){
   const m = new Map();
   for (const c of cards) for (const t of c.tags) m.set(t, (m.get(t)||0)+1);
-  return [...m.entries()].sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0]));
+  const arr = [...m.entries()].sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0]));
+  tagRank = new Map(arr);
+  return arr;
+}
+function sortTagsByCount(ts){     /* 数量从大到小，同数量按名称（中文）稳定排序 */
+  return ts.slice().sort((a,b)=> (tagRank.get(b)||0)-(tagRank.get(a)||0) || a.localeCompare(b, "zh"));
 }
 /* ---- 导航词（书架筛选栏分区）：透镜=标签并集，README「透镜映射表」登记；地区=README 地区词表；正式来源都在 README，以下仅为解析失败兜底 ---- */
 let navWords = {
@@ -2091,10 +2205,15 @@ function toggleTagDrawer(){
   else d.style.display = "none";
 }
 function renderTagDrawer(q){
-  const tags = allTags().filter(([t]) => !isNavTag(t));
-  const list = q ? tags.filter(([t]) => t.includes(q)) : tags.slice(0, 24);
-  $("tagDrawerList").innerHTML = list.map(([t,n]) =>
-    '<span class="chip' + (fTags.has(t)?" on":"") + '" data-t="' + escAttr(t) + '">' + esc(t) + '<span class="n">' + n + "</span></span>").join("")
+  /* 抽屉 = 没上主栏的全部标签，按热度降序、完整列出（不再截断到 24 个）；
+     只出现 1 次的占 82%，单独折叠，避免把有意义的词淹掉。搜索时搜全量，不分主栏/抽屉。 */
+  const arr = allTags();
+  const pool = q ? arr.filter(([t]) => t.includes(q)) : arr.filter(([t]) => !mainTags.has(t));
+  const chip = ([t,n]) => '<span class="chip' + (fTags.has(t)?" on":"") + '" data-t="' + escAttr(t) + '">' + esc(t) + '<span class="n">' + n + "</span></span>";
+  const many = pool.filter(([t,n]) => n >= 2), once = pool.filter(([t,n]) => n === 1);
+  $("tagDrawerList").innerHTML = many.map(chip).join("")
+    + (once.length ? '<div class="tagmore"><button id="tagOnceBtn" data-n="' + once.length + '">只出现 1 次的 ' + once.length + ' 个 ▾</button>' +
+        '<div id="tagOnceList" style="display:none">' + once.map(chip).join("") + "</div></div>" : "")
     || '<span style="font-size:12px;color:var(--tx3);">没有匹配的标签</span>';
   $("tagDrawerList").querySelectorAll(".chip").forEach(el => el.onclick = () => {
     const t = el.dataset.t;
@@ -2102,15 +2221,22 @@ function renderTagDrawer(q){
     el.classList.toggle("on", fTags.has(t));
     renderHome();
   });
+  const ob = $("tagOnceBtn");
+  if (ob) ob.onclick = () => {
+    const l = $("tagOnceList"), on = l.style.display === "none";
+    l.style.display = on ? "" : "none";
+    ob.textContent = "只出现 1 次的 " + (ob.dataset.n || "") + " 个 " + (on ? "▴" : "▾");
+  };
 }
 $("tagSearch").addEventListener("input", () => renderTagDrawer($("tagSearch").value.trim()));
 /* 书架卡面标签：导航词全显，长尾收进「…+N」，点击原地展开 */
 function footTagsHtml(c){
-  const nav = c.tags.filter(isNavTag), rest = c.tags.filter(t => !isNavTag(t));
+  const ts = sortTagsByCount(c.tags);          /* 卡面标签按全库数量从大到小：高频词先见 */
+  const nav = ts.filter(isNavTag), rest = ts.filter(t => !isNavTag(t));
   if (rest.length && !footExpanded.has(c.uid))
     return nav.map(t=>'<span class="tag" data-tagjump="' + escAttr(t) + '">' + esc(t) + "</span>").join("")
       + '<span class="tag" data-more="' + escAttr(c.uid) + '" style="background:var(--bg2);color:var(--tx3);">…+' + rest.length + "</span>";
-  return c.tags.map(t=>'<span class="tag" data-tagjump="' + escAttr(t) + '">' + esc(t) + "</span>").join("");
+  return ts.map(t=>'<span class="tag" data-tagjump="' + escAttr(t) + '">' + esc(t) + "</span>").join("");
 }
 function bindFootTags(scope){
   scope.querySelectorAll(".tag[data-tagjump]").forEach(el => el.onclick = () => { fTags.add(el.dataset.tagjump); renderHome(); window.scrollTo(0,0); });
@@ -2118,7 +2244,7 @@ function bindFootTags(scope){
     const c = cards.find(x => x.uid === el.dataset.more);
     if (!c) return;
     footExpanded.add(c.uid);
-    const rest = c.tags.filter(t => !isNavTag(t));
+    const rest = sortTagsByCount(c.tags).filter(t => !isNavTag(t));   /* 展开的「…+N」同样按数量降序，与卡面顺序一致 */
     el.insertAdjacentHTML("beforebegin", rest.map(t=>'<span class="tag" data-tagjump="' + escAttr(t) + '">' + esc(t) + "</span>").join(""));
     el.remove();
     bindFootTags(scope);
@@ -2162,12 +2288,24 @@ function renderHome(){
     '<span class="chip' + (fSeries==="全部"?" on":"") + '" data-s="全部">全部<span class="n">' + cards.length + "</span></span>" +
     allSeries().map(s => '<span class="chip' + (fSeries===s?" on":"") + '" data-s="' + escAttr(s) + '">' + esc(s) + '<span class="n">' + cards.filter(c=>c.series.includes(s)).length + "</span></span>").join("");
   $("seriesFilter").querySelectorAll(".chip").forEach(el => el.onclick = () => { fSeries = el.dataset.s; renderHome(); });
-  // 标签筛选：导航词（透镜/地区/状态）平铺，长尾收进"更多标签"搜索抽屉
+  /* 标签筛选：主栏 = 全库热度 Top N（不分身份，谁热谁上）
+     + 导航词保底（没进 Top 的透镜/地区/状态追加在后面，保证按地区筛永远点得到）
+     + 当前选中的长尾词（便于看见与取消） */
   const tags = allTags();
-  const navList = tags.filter(([t]) => isNavTag(t) || fTags.has(t));   // 当前选中的长尾词也上主栏，便于看见与取消
-  const restN = tags.length - tags.filter(([t]) => isNavTag(t)).length;
-  $("tagFilter").innerHTML = navList.map(([t,n]) =>
-      '<span class="chip' + (fTags.has(t)?" on":"") + (navWords.lenses.includes(t)?" lens":"") + '" data-t="' + escAttr(t) + '" title="' + (navWords.lenses.includes(t)?"透镜":"导航词") + '">' + esc(t) + '<span class="n">' + n + "</span></span>").join("")
+  const top = tags.slice(0, Math.min(MAIN_TAG_TOP, tags.length));
+  const inMain = new Set(top.map(x => x[0]));
+  const navBack = tags.filter(([t]) => isNavTag(t) && !inMain.has(t));
+  navBack.forEach(x => inMain.add(x[0]));
+  const picked = tags.filter(([t]) => fTags.has(t) && !inMain.has(t));
+  picked.forEach(x => inMain.add(x[0]));
+  mainTags = inMain;
+  const restN = tags.length - inMain.size;
+  const kindOf = t => navWords.lenses.includes(t) ? "透镜" : navWords.regions.includes(t) ? "地区" : t === STATUS_TAG ? "状态" : "长尾标签";
+  const chipHtml = ([t,n]) => '<span class="chip' + (fTags.has(t)?" on":"") + (navWords.lenses.includes(t)?" lens":"") + '" data-t="' + escAttr(t) + '" title="' + kindOf(t) + '（' + n + ' 张）">' + esc(t) + '<span class="n">' + n + "</span></span>";
+  const sep = (txt, tip) => '<span class="tagsep" title="' + tip + '">' + txt + "</span>";
+  $("tagFilter").innerHTML = top.map(chipHtml).join("")
+    + (navBack.length ? sep("导航 ▸", "未进热度榜 Top" + MAIN_TAG_TOP + " 的透镜/地区/状态，保底保留：按地区筛永远点得到") + navBack.map(chipHtml).join("") : "")
+    + (picked.length ? sep("已选 ▸", "当前选中的长尾词，便于看见与取消") + picked.map(chipHtml).join("") : "")
     + (restN ? '<span class="chip" id="moreTagsBtn">更多标签<span class="n">' + restN + '</span> ▾</span>' : "")
     || '<span style="font-size:12px;color:var(--tx3);">（暂无标签）</span>';
   $("tagFilter").querySelectorAll(".chip[data-t]").forEach(el => el.onclick = () => {
@@ -2243,6 +2381,33 @@ $("cmpModeSeries").addEventListener("click", () => { cmpForceMode = "series"; op
 $("cmpModeAll").addEventListener("click", () => { cmpForceMode = "all"; openCompare("all"); });
 
 /* ================= 阅读视图 ================= */
+/* ---- 关系合并块：出边（我指向的，带自己写的理由）+ 入边（指向我的，照搬对方理由）----
+   同一条边不再两端各记一遍：强引用=对方关系节论证过，把它那句理由搬过来（以前这句只活在对方卡上）；
+   弱引用=对方正文顺带提及，默认折叠。互为指向的标「↔」。 */
+function relBoxHtml(c, sec){
+  const outs = c.rel || [];
+  const ins = incoming[c.slug] || [];
+  const strong = ins.filter(x => x.sec === "关系"), weakIn = ins.filter(x => x.sec !== "关系");
+  const outT = new Set(outs.map(o => o.t));
+  const row = (slug, mark, why, cls) =>
+    '<div class="relrow"><button class="wikilink" data-slug="' + escAttr(slug) + '">' + esc(slug) + "</button>" +
+    '<span class="relmark' + (cls ? " " + cls : "") + '">' + esc(mark) + "</span>" +
+    (why ? '<span class="relwhy">' + esc(why) + "</span>" : "") + "</div>";
+  let h = '<div class="relbox"><h3>关系（出 ' + outs.length + " · 入 " + ins.length + '）</h3>';
+  h += '<div class="relsub">我指向的（' + outs.length + "）</div>";
+  if (sec && sec.body && !sec.placeholder) h += '<div class="relout">' + mdHtml(sec.body, c) + "</div>";
+  else if (outs.length) h += '<div class="relout">' + outs.map(o => row(o.t, "→", o.w)).join("") + "</div>";
+  else h += '<div class="relnone">（本卡还没写关系）</div>';
+  h += '<div class="relsub">指向我的（' + ins.length + "）</div>";
+  if (strong.length) h += strong.map(x => row(x.c.slug, outT.has(x.c.slug) ? "↔ 互为关系" : "← 对方关系节", x.why)).join("");
+  else if (!weakIn.length) h += '<div class="relnone">还没有卡片指向这里。</div>';
+  if (weakIn.length)
+    h += '<div class="relweak"><button class="relweakbtn" id="relWeakBtn" data-n="' + weakIn.length + '">正文顺带提及 ' + weakIn.length + " 处 ▾</button>" +
+         '<div class="relweaklist" id="relWeakList" style="display:none">' +
+         weakIn.map(x => row(x.c.slug, (outT.has(x.c.slug) ? "↔ 我已指向" : "←") + (x.sec ? x.sec + "节提及" : "正文提及"), "", "weak")).join("") +
+         "</div></div>";
+  return h + "</div>";
+}
 async function openCard(uid){
   const c = cards.find(x => x.uid === uid);
   if (!c) return;
@@ -2266,18 +2431,24 @@ async function openCard(uid){
     c.tags.map(t=>'<span class="tag" data-tagjump="' + escAttr(t) + '">' + esc(t) + "</span>").join("") +
     '　<label style="font-size:11.5px;color:var(--tx3);"><input type="checkbox" id="cmpAdd" style="width:auto;vertical-align:-2px;"> 加入对比</label></div>';
   h += miniMapHtml(c) + "<h3>概述</h3><div>" + mdHtml(c.overview || "（待补）", c) + "</div>";
-  for (const s of c.sections) h += "<h3>" + esc(s.title) + (s.placeholder ? ' <span class="badge info">待补</span>' : "") + "</h3><div>" + mdHtml(s.body || "（待补）", c) + "</div>";
-  const bl = backlinks[c.slug] || [];
-  h += '<div class="backlinks"><h3 style="border:none;padding:0;">反向链接（' + bl.length + "）</h3>";
-  h += bl.length ? bl.map(b => '<div class="bl"><button class="wikilink backlink" data-slug="' + escAttr(b.slug) + '">' + esc(b.slug) + "</button> <span style='color:var(--tx3);'>" + esc((b.overview||"").slice(0,48)) + "</span></div>").join("")
-                 : '<div style="font-size:12.5px;color:var(--tx3);">还没有卡片链接到这里。</div>';
-  h += "</div>";
+  let relDone = false;
+  for (const s of c.sections){
+    if (s.title === "关系"){ h += relBoxHtml(c, s); relDone = true; continue; }
+    h += "<h3>" + esc(s.title) + (s.placeholder ? ' <span class="badge info">待补</span>' : "") + "</h3><div>" + mdHtml(s.body || "（待补）", c) + "</div>";
+  }
+  if (!relDone) h += relBoxHtml(c, null);   // 全文没读到（索引模式且未补全文）时也要有这一节
   $("readerBox").innerHTML = h;
   $("readerBox").querySelectorAll(".wikilink[data-slug]").forEach(b => b.onclick = () => {
     const target = slugIndex[b.dataset.slug];
     if (target) openCard(target.uid);
   });
   $("readerBox").querySelectorAll(".tag[data-tagjump]").forEach(b => b.onclick = () => { fTags.add(b.dataset.tagjump); goHome(); });
+  const wb = $("relWeakBtn");
+  if (wb) wb.onclick = () => {
+    const l = $("relWeakList"), on = l.style.display === "none";
+    l.style.display = on ? "" : "none";
+    wb.textContent = "正文顺带提及 " + (wb.dataset.n || "") + " 处 " + (on ? "▴" : "▾");
+  };
   $("editCardBtn").onclick = () => startEditCard(c.uid);   // v4：读 → 编辑同一卡片
   const addBox = $("cmpAdd");
   addBox.checked = chosen.has(c.uid);
@@ -2292,8 +2463,55 @@ async function openCard(uid){
   $("navPrev").disabled = ci <= 0;
   $("navNext").disabled = ci < 0 || ci >= cards.length - 1;
   window.scrollTo(0,0);
+  buildToc();         // 目录在正文渲染完且滚动复位后生成（先复位再算高亮，否则 spy 会拿上一卡的滚动位置）
   materializeImages($("readerBox"));
 }
+
+/* ================= 阅读页目录（⌂ 上方半透明浮层） =================
+   只收维度节（渲染后的 h3：概述/政治/…/来源），底本引读（h4）与反向链接不进；
+   跳转不能走 #锚点——路由用 location.hash 解析卡片，锚点会把卡切走，必须 JS 现场算位置 scrollTo。
+   图片是进页后才加载、版面会后长，所以坐标只在点击那一刻算。 */
+let tocSpyTick = false;
+function tocTitle(h){   /* h3 里可能带「待补」徽标 span，只取标题文本 */
+  return ((h.firstChild && h.firstChild.nodeType === 3) ? h.firstChild.nodeValue : h.textContent).trim();
+}
+function buildToc(){
+  const box = $("readerBox"), toc = $("tocBox"), list = $("tocList");
+  if (!box || !toc || !list) return;
+  const hs = [...box.querySelectorAll("h3")];   /* 关系节现在是合并块的 h3，照常进目录 */
+  if (!hs.length){ toc.style.display = "none"; return; }
+  hs.forEach((h, i) => { if (!h.id) h.id = "tocSec" + i; });
+  list.innerHTML = hs.map(h =>
+    '<button class="toc-it" data-t="' + escAttr(h.id) + '" title="' + escAttr(tocTitle(h)) + '">' + esc(tocTitle(h)) + "</button>").join("");
+  list.querySelectorAll(".toc-it").forEach(b => b.onclick = () => {
+    const el = document.getElementById(b.dataset.t);
+    if (el) tocJumpTo(el);
+    if (matchMedia("(max-width:700px)").matches) toc.classList.add("closed");   /* 手机选完自动收起 */
+  });
+  toc.classList.toggle("closed", matchMedia("(max-width:700px)").matches);       /* 手机默认收起，桌面常驻（断点与全库移动端适配一致） */
+  toc.style.display = "";
+  tocSpy();
+}
+function tocJumpTo(el){
+  const hdrH = (document.querySelector("header") || {}).offsetHeight || 0;       /* 页头 sticky，要扣掉 */
+  window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + scrollY - hdrH - 6), behavior: "smooth" });
+}
+function tocSpy(){   /* 滚动时高亮当前读到的节 */
+  const box = $("readerBox"), toc = $("tocBox");
+  if (!box || !toc || toc.style.display === "none") return;
+  const hs = [...box.querySelectorAll("h3")].filter(h => h.id);
+  if (!hs.length) return;
+  const hdrH = (document.querySelector("header") || {}).offsetHeight || 0;
+  let cur = hs[0];
+  for (const h of hs){ if (h.getBoundingClientRect().top - hdrH <= 24) cur = h; else break; }
+  toc.querySelectorAll(".toc-it").forEach(b => b.classList.toggle("on", b.dataset.t === cur.id));
+}
+addEventListener("scroll", () => {   /* 与时间轴滑条共用 window 滚动，rAF 节流 */
+  const toc = $("tocBox");
+  if (!toc || toc.style.display === "none" || $("readerView").style.display === "none") return;
+  if (!tocSpyTick){ tocSpyTick = true; requestAnimationFrame(() => { tocSpyTick = false; tocSpy(); }); }
+}, { passive:true });
+$("tocToggle").onclick = () => $("tocBox").classList.toggle("closed");
 
 /* ================= 对比视图 ================= */
 const MAX_CMP = 4;
