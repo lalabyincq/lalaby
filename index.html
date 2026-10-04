@@ -177,17 +177,42 @@
   #tlBar .tlh{font-size:11px;color:var(--tx3);white-space:nowrap;}
   /* 图谱 */
   #graphBox{background:var(--bg);border:0.5px solid var(--line);border-radius:10px;overflow:hidden;position:relative;}
-  #graphSvg{display:block;width:100%;height:62vh;min-height:380px;cursor:grab;background:
+  #graphSvg{display:block;width:100%;height:auto;aspect-ratio:55/16;min-height:200px;cursor:grab;background:
     radial-gradient(circle at 1px 1px, var(--line) 1px, transparent 0);background-size:22px 22px;}
   #graphSvg:active{cursor:grabbing;}
-  #graphSvg line{stroke:var(--line2);stroke-width:0.8;opacity:.22;transition:opacity .15s,stroke .15s;}
-  #graphSvg line.hi{stroke:var(--ac);stroke-width:2;opacity:1;}      /* 聚焦：悬停/选中节点的边 */
-  #graphSvg line.dim{opacity:.05;}                                    /* 聚焦时无关边压到几乎不可见 */
-  #graphSvg circle.node{stroke:var(--bg);stroke-width:4;cursor:pointer;touch-action:none;}   /* 光晕：背景色宽描边，穿越线被明显截断 */
+  #graphSvg line.rul{stroke:var(--line2);stroke-width:0.8;opacity:.6;}
+  #graphSvg path.edge{fill:none;stroke:var(--ec,var(--line2));stroke-width:1;opacity:.34;transition:opacity .15s,stroke .15s;}
+  #graphSvg path.edge.weak{opacity:.13;}                               /* 弱引用：正文顺带提及，压到背景层 */
+  #graphSvg path.edge.eself{opacity:.6;}                               /* 概览：时期块内部的连接（与跨期弧分居块的两侧） */
+  #graphSvg path.edge.ecross{opacity:.55;}                             /* 概览：跨期弧（一共才 23 条，理应每条都看清） */
+  /* 下钻后弧很稀疏（≤80 条），提高透明度让每条连线都能读出来 */
+  #graphSvg.sparse path.edge{opacity:.52;}
+  #graphSvg.sparse path.edge.weak{opacity:.2;}
+  #graphSvg path.edge:hover{stroke:var(--ac);opacity:1;}               /* 概览：鼠标扫过某条弧即点亮它 */
+  #graphSvg path.edge.hi{stroke:var(--ac);stroke-width:2.2;opacity:1;} /* 聚焦：悬停/选中节点的边 */
+  #graphSvg path.edge.dim{opacity:.04;}                                /* 聚焦时无关边压到几乎不可见 */
+  #graphSvg circle.node{stroke:var(--bg);stroke-width:3;cursor:pointer;touch-action:none;}   /* 光晕：背景色宽描边，弧线被明显截断 */
+  #graphSvg circle.node.iso{stroke-width:1.6;opacity:.62;}             /* 本档无连线：缩成时间轴上的小刻度 */
   #graphSvg circle.node.sel{stroke:var(--ac);stroke-width:3.5;}
   #graphSvg circle.node.broken{fill:var(--warn);stroke:var(--warn);stroke-dasharray:3 2;cursor:help;}
-  #graphSvg text{font-size:11px;fill:var(--tx2);cursor:pointer;}
+  /* --gs 由 applyGv 按当前缩放反向补偿，使文字的「屏幕像素」恒定，缩放时不糊也不炸 */
+  #graphSvg text{font-size:calc(11px * var(--gs,1));fill:var(--tx2);}
+  #graphSvg text.gyr{font-size:calc(10.5px * var(--gs,1));fill:var(--tx3);}      /* 年份刻度（等距轴上的真实年份） */
+  #graphSvg text.glane{font-size:calc(10.5px * var(--gs,1));fill:var(--tx3);}    /* 系列道名 */
+  /* 白描边：下钻后标签排在弧场里，靠它压住穿过的弧线，保证字始终读得出 */
+  #graphSvg text.glab{font-size:calc(11.5px * var(--gs,1));fill:var(--tx2);opacity:0;pointer-events:none;transition:opacity .12s;
+    paint-order:stroke;stroke:var(--bg);stroke-width:calc(3.5px * var(--gs,1));stroke-linejoin:round;}
+  #graphSvg text.glab.on{opacity:1;pointer-events:auto;cursor:pointer;}
+  #graphSvg text.glab.hub{fill:var(--tx1);font-weight:600;}
   #graphSvg text.broken{fill:var(--warn);}
+  /* 概览：时期块 */
+  #graphSvg rect.eblk{fill:var(--bg);stroke:var(--ac);stroke-width:1;cursor:pointer;}
+  #graphSvg g.era:hover rect.eblk{stroke-width:2.2;}
+  #graphSvg text.ename{font-size:calc(13px * var(--gs,1));fill:var(--tx1);font-weight:500;pointer-events:none;}
+  #graphSvg text.ecnt{font-size:calc(11px * var(--gs,1));fill:var(--tx3);pointer-events:none;}
+  #graphSvg text.gnum{font-size:calc(11px * var(--gs,1));fill:var(--tx2);opacity:.85;pointer-events:none;}
+  .glegend button.crumb{font-size:11.5px;padding:2px 9px;border:0.5px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ac);cursor:pointer;}
+  .glegend .crumb-t{font-size:12px;color:var(--tx1);font-weight:500;}
   .glegend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--tx3);padding:8px 4px;}
   .glegend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px;}
   .glegend i.broken{border:1.5px dashed var(--warn);background:var(--warn);border-radius:50%;}
@@ -207,7 +232,7 @@
   .mapbar input[type=range]{flex:1;min-width:200px;width:auto;}
   #mapBox{background:var(--bg);border:0.5px solid var(--line);border-radius:10px;overflow:hidden;}
   #mapSvg{display:block;width:100%;aspect-ratio:1000/403;background:#d9e8f3;}
-  @media (max-width:700px) and (orientation:portrait){ #mapSvg{aspect-ratio:1/1;} }   /* 手机竖屏方框，地图居中（meet 留白），坐标换算已按 letterbox 修正 */
+  /* 手机竖屏：JS 会按「旋转 90°」把 aspect-ratio 改成 403/1000（长边走屏幕长边），内联样式压过本条，这里只作 JS 未运行时的兜底 */
   #mapSvg .mland{fill-rule:evenodd;fill:var(--bg2);stroke:var(--line2);stroke-width:.5;vector-effect:non-scaling-stroke;}
   #mapSvg .mdot{stroke:var(--bg);cursor:pointer;}
   #mapSvg .mring{fill:none;stroke:var(--bg);pointer-events:none;}
@@ -442,7 +467,7 @@
     <!-- 关系图谱 -->
     <div id="graphPane" style="display:none;">
       <div class="glegend" id="graphLegend"></div>
-      <div id="graphBox"><div id="gBtns"><button id="gzIn" title="放大">＋</button><button id="gzOut" title="缩小">－</button><button id="gzReset" title="复位">⌂</button></div><svg id="graphSvg" viewBox="0 0 960 600" preserveAspectRatio="xMidYMid meet"></svg></div>
+      <div id="graphBox"><div id="gBtns"><button id="gzIn" title="放大">＋</button><button id="gzOut" title="缩小">－</button><button id="gzReset" title="复位">⌂</button></div><svg id="graphSvg" viewBox="0 0 2200 640" preserveAspectRatio="xMidYMid meet"></svg></div>
     </div>
 
     <!-- 维度矩阵 -->
@@ -1412,7 +1437,7 @@ function cardColor(c){ return c.series.length ? seriesColorOf(c.series[0]) : PAL
 let curPane = "shelf";
 let graphDirty = true;
 let graphSelDirty = false;         // 对比选择变化后，图谱需重渲染以同步选中高亮
-let graphRelOnly = false;          // 图谱只画「关系」节论证过的边（滤掉正文顺带提及的弱引用）；与阅读页关系视图同一口径
+let graphEdgeMode = "mutual";      // 图谱边的口径：mutual=互为引用（默认，最干净）/ rel=关系边 / all=全部引用
 /* 对比选择复选框：时间轴/维度矩阵共用（书架/阅读页有各自内联逻辑） */
 function toggleCmpBox(box){
   const uid = box.dataset.uid;
@@ -1489,6 +1514,31 @@ function yrLabel(y){ return y < 0 ? "公元前 " + (-y) : "公元 " + y; }
 let mapYear = null;                     /* null=未初始化（首次渲染取最晚年=全部） */
 let mz = { x:0, y:0, w:MAPW, h:MAPH };  /* viewBox 缩放态 */
 const mapSvgEl = $("mapSvg");
+/* ---- 手机竖屏：把世界图逆时针旋 90° ----
+   世界图是 1000×403（2.5:1）的横条，压进 390px 宽的手机屏后只剩 157px 高，南北向被挤成一条细带。
+   竖屏时把它整体逆时针转 90°（北在左、东在上），长边（经度 360°）改走屏幕的长边，
+   可用面积翻 4 倍以上，整幅世界图都能看清。
+   旋转只发生在最外层 <g>：所有几何、缩放钳位、命中判定（elementFromPoint）都不用改，
+   只有文字要反向旋 90° 才保持水平——rotate(-90) 与 rotate(90) 复合后是纯平移，位置与姿态都对。 */
+let mVert = false;                      /* 当前是否为「旋转 90°」摆法 */
+let MVW = MAPW, MVH = MAPH;             /* 画布（viewBox）尺寸：旋转后 = MAPH × MAPW */
+function mFit(){
+  const box = $("mapBox");
+  const bw = box ? box.clientWidth : 0;
+  mVert = bw > 0 && bw <= 720 && innerHeight > innerWidth;   /* 窄屏 + 竖屏才算手机摆法（横屏手机仍用常规摆法） */
+  MVW = mVert ? MAPH : MAPW; MVH = mVert ? MAPW : MAPH;
+  mapSvgEl.style.aspectRatio = MVW + " / " + MVH;
+  mapSvgEl.style.maxHeight = mVert ? "86vh" : "";   /* 旋转后按高宽比算出来有 968px 高，封到一屏内，两侧留白即海面（背景同色，看不出） */
+}
+function mWrap(html){ return mVert ? '<g transform="translate(0,' + MAPW + ') rotate(-90)">' + html + "</g>" : html; }
+function mOrient(){                     /* 反旋：旋转世界里的文字仍保持水平可读 */
+  if (!mVert) return;
+  mapSvgEl.querySelectorAll("text.mbdg").forEach(t => {
+    const x = t.getAttribute("x"), y = t.getAttribute("y");
+    if (x == null || y == null) return;
+    t.setAttribute("transform", "rotate(90," + x + "," + y + ")");
+  });
+}
 function mzScale(){
   /* meet 模式 letterbox 感知：返回缩放系数与内容居中偏移（竖屏 1:1 框时地图是窄条，直接用框宽换算会错位） */
   const r = mapSvgEl.getBoundingClientRect();
@@ -1497,7 +1547,7 @@ function mzScale(){
 }
 function applyMz(){
   mapSvgEl.setAttribute("viewBox", mz.x + " " + mz.y + " " + mz.w + " " + mz.h);
-  const k = mz.w / MAPW;                         /* 缩放系数 */
+  const k = mz.w / MVW;                          /* 缩放系数（旋转画布下以画布宽为基准） */
   /* 圆点随放大同步变大：初始视图极小（约 1.5px 半径，全局位置关系不被遮挡），放大后按 1/k^0.8 增长，满级视野封顶 8.4px；命中圈保持 +7px 容手指误差，保证极小圆点也能点中 */
   const { sc } = mzScale();                      /* 每用户单位对应的屏幕像素（letterbox 感知） */
   const kRoot = Math.pow(k, 0.8);
@@ -1511,16 +1561,16 @@ function applyMz(){
   mapSvgEl.querySelectorAll(".mring").forEach(el => { el.setAttribute("r", (tr * 1.5 / sc).toFixed(2)); el.setAttribute("stroke-width", (Math.max(2, tr * 0.22) / sc).toFixed(2)); });
   mapSvgEl.querySelectorAll(".mbdg").forEach(el => { el.setAttribute("font-size", (tr * 1.05 / sc).toFixed(2)); el.style.display = tr >= 7 ? "" : "none"; });   /* 圆点太小时数字读不清，只留叠环提示 */
 }
-function mapReset(){ mz = { x:0, y:0, w:MAPW, h:MAPH }; applyMz(); }
+function mapReset(){ mz = { x:0, y:0, w:MVW, h:MVH }; applyMz(); }
 function mzPt(ev){
   const { r, sc, ox, oy } = mzScale();
   return [mz.x + (ev.clientX - r.left - ox) / sc, mz.y + (ev.clientY - r.top - oy) / sc];
 }
 function zoomAt(px, py, f){
-  const nw = Math.min(MAPW, Math.max(MAPW / 64, mz.w * f)), k = nw / mz.w;   /* 最大放大 64 倍（原 24）：城市圈内密集点（如中原/关中）在极限视野下仍相互分开 */
+  const nw = Math.min(MVW, Math.max(MVW / 64, mz.w * f)), k = nw / mz.w;   /* 最大放大 64 倍（原 24）：城市圈内密集点（如中原/关中）在极限视野下仍相互分开 */
   mz.x = px - (px - mz.x) * k; mz.y = py - (py - mz.y) * k;
-  mz.w = nw; mz.h = MAPH * nw / MAPW;   /* 高度按累计比例，修复：旧写法用单步比 k，第二次起 h 不再缩小，viewBox 高瘦化导致地图停止放大而圆点持续变小 */
-  mz.x = Math.max(0, Math.min(MAPW - mz.w, mz.x)); mz.y = Math.max(0, Math.min(MAPH - mz.h, mz.y));
+  mz.w = nw; mz.h = MVH * nw / MVW;   /* 高度按累计比例，修复：旧写法用单步比 k，第二次起 h 不再缩小，viewBox 高瘦化导致地图停止放大而圆点持续变小 */
+  mz.x = Math.max(0, Math.min(MVW - mz.w, mz.x)); mz.y = Math.max(0, Math.min(MVH - mz.h, mz.y));
   applyMz();
 }
 mapSvgEl.addEventListener("wheel", ev => {
@@ -1541,8 +1591,8 @@ mapSvgEl.addEventListener("pointermove", ev => {
   const { sc } = mzScale();
   const dx = ev.clientX - mdrag.x0, dy = ev.clientY - mdrag.y0;
   if (Math.abs(dx) + Math.abs(dy) > 5) mdrag.moved = true;
-  mz.x = Math.max(0, Math.min(MAPW - mz.w, mdrag.mx - dx / sc));
-  mz.y = Math.max(0, Math.min(MAPH - mz.h, mdrag.my - dy / sc));
+  mz.x = Math.max(0, Math.min(MVW - mz.w, mdrag.mx - dx / sc));
+  mz.y = Math.max(0, Math.min(MVH - mz.h, mdrag.my - dy / sc));
   applyMz();
 });
 let mTap = null;   /* {gi, t, timer} 区分单击（选中）与双击（进入卡片） */
@@ -1584,6 +1634,18 @@ mapSvgEl.addEventListener("dblclick", ev => { if (!(ev.target.closest && ev.targ
 $("mzIn").onclick = () => zoomAt(mz.x + mz.w / 2, mz.y + mz.h / 2, 1 / 1.4);
 $("mzOut").onclick = () => zoomAt(mz.x + mz.w / 2, mz.y + mz.h / 2, 1.4);
 $("mzReset").onclick = mapReset;
+/* 窗口/转屏：窄竖屏与普通横摆之间的切换要整幅重画（旋转是几何，不是样式）；
+   同为竖屏只是宽度变了的话，重算一次缩放态（圆点半径按屏幕像素走）即可，不必重投影。 */
+let mResizeT = 0;
+addEventListener("resize", () => {
+  clearTimeout(mResizeT);
+  mResizeT = setTimeout(() => {
+    if (curPane !== "map") return;
+    const bw = $("mapBox").clientWidth;
+    const v = bw > 0 && bw <= 720 && innerHeight > innerWidth;
+    if (v !== mVert) renderMap(); else applyMz();
+  }, 180);
+});
 
 function renderMap(){
   const pts = cards.filter(c => c.fields["纬度"] && c.fields["经度"]);
@@ -1597,8 +1659,9 @@ function renderMap(){
   $("mapYearLab").textContent = mapYear >= ymax ? "全部时期" : yrLabel(mapYear) + " 及以前";
   $("mapCount").textContent = pts.length ? pts.length + " 张卡有坐标" : "暂无有坐标的卡片（YAML 填 纬度/经度 后自动出现）";
   const wp = { land: pathOf(featRings("land"), mxy, true), lakes: pathOf(featRings("lakes"), mxy, true), rivers: pathOf(featRings("rivers"), mxy, false) };
-  mapSvgEl.setAttribute("viewBox", "0 0 " + MAPW + " " + MAPH);
-  mz = { x:0, y:0, w:MAPW, h:MAPH };
+  mFit();                                       /* 先按容器宽与屏幕方向决定横摆/旋转 90° */
+  mapSvgEl.setAttribute("viewBox", "0 0 " + MVW + " " + MVH);
+  mz = { x:0, y:0, w:MVW, h:MVH };
   /* 同坐标多卡聚合：一个地点一组（点 = 地点），激活卡数 >1 时显示叠环 + 计数角标，点击弹列表选年份（方向一 + 方向二） */
   const gmap = new Map();
   for (const c of pts){
@@ -1607,16 +1670,19 @@ function renderMap(){
     gmap.get(key).cards.push(c);   /* cards 已按年份升序，组内同序 */
   }
   mGroups = [...gmap.values()];
-  mapSvgEl.innerHTML = '<path class="mland" d="' + wp.land + '"/><path class="mlake" d="' + wp.lakes + '"/><path class="mriver" d="' + wp.rivers + '"/>' +
+  const world = '<path class="mland" d="' + wp.land + '"/><path class="mlake" d="' + wp.lakes + '"/><path class="mriver" d="' + wp.rivers + '"/>' +
     mGroups.map((g, gi) => {
       const p = mxy(g.lon, g.lat);
       const newest = g.cards[g.cards.length - 1];
       const pos = 'cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '"';
+      const tpos = 'x="' + p[0].toFixed(1) + '" y="' + p[1].toFixed(1) + '"';   /* 文字只认 x/y：旧写法沿用 cx/cy，角标一直画在 (0,0)（缩到全球视野时正好在框外，所以看不出来） */
       return '<circle class="mring" data-gi="' + gi + '" ' + pos + ' r="6"/>' +
         '<circle class="mdot" data-gi="' + gi + '" ' + pos + ' r="4.5" stroke-width="1.2" fill="' + cardColor(newest) + '"><title></title></circle>' +
-        '<text class="mbdg" data-gi="' + gi + '" ' + pos + '></text>' +
+        '<text class="mbdg" data-gi="' + gi + '" ' + tpos + '></text>' +
         '<circle class="mhit" data-gi="' + gi + '" ' + pos + ' r="9"><title></title></circle>';
     }).join("");
+  mapSvgEl.innerHTML = mWrap(world);
+  mOrient();                                    /* 旋转摆法下把角标文字反旋回水平 */
   mapApplyFilter();
   applyMz();
 }
@@ -1914,48 +1980,280 @@ function tlJumpTo(y){
   tlHitTimer = setTimeout(() => el.classList.remove("tlhit"), 1500);
 }
 
-/* ================= 双链关系图谱（零依赖力学布局） ================= */
-function graphModel(){
-  const map = new Map();
-  for (const c of cards) map.set(c.slug, { id:c.slug, card:c, broken:false });
-  const edges = [], used = new Set();      /* used=参与边的节点，只显示关系边时用它收掉孤立点 */
-  for (const c of cards){
-    const hasProj = (c.rel && c.rel.length) || (c.weak && c.weak.length);
-    const pairs = [];
-    if (hasProj){
-      for (const r of (c.rel || [])) pairs.push({ t:r.t, strong:true });
-      if (!graphRelOnly) for (const w of (c.weak || [])) pairs.push({ t:w.t, strong:false });
-    } else if (!graphRelOnly) for (const sl of c.links) pairs.push({ t:sl, strong:false });   // 老索引无投影：全当弱引用
-    for (const p of pairs){
-      if (!map.has(p.t)) map.set(p.t, { id:p.t, card:null, broken:true });
-      edges.push({ s:map.get(c.slug), t:map.get(p.t), strong:p.strong });
-      used.add(c.slug); used.add(p.t);
-    }
+/* ================= 双链关系图谱（两级：时期概览 → 时期内部卡片弧线图） =================
+   为什么既不是「一张力学图」也不是「一张全卡弧线图」：264 个节点平均度 17.5、单一连通分量，
+   力导向只会给出一团圆雾；而把 264 个点铺在一屏时每张卡只摊到 5.7px，225 条互为引用里又有
+   158 条贴着主轴的短弧（两端相隔 ≤10 张卡）——它们信息量低却占满视觉带宽，把仅有的 21 条
+   跨 500 年长弧淹掉。所以正解不是换画法，而是降规模，分两级：
+     概览：12 个时期作为节点、34 组连接，每条弧都能单独读（比聊容量而言这是唯一干净的量级）；
+     下钻：点时期或点弧进入该范围之内 ≤42 张卡的卡片级弧线图，这时个体才读得出来。
+   两级共用同一套「时间序 + 系列分道」的弧线布局（graphLayout / arcPath）。 */
+/* 世界坐标有两副性格：GW＝沿「时间轴」方向的长度，GH＝横跨方向的长度（系列分道／时期块厚度）。
+   宽屏横排时 GW 就是横轴；手机窄屏把同一个横排世界整体 rotate(90)，二者角色互换，时间变成纵轴。 */
+const G_NARROW = 720;                      /* 图谱容器宽度 ≤ 这个值就切竖排（手机竖屏）：横排 2200 个单位宽的世界压到 390px 上，每张卡只摊到 5px，标签必然全军覆没 */
+let gVert = false;                         /* 当前是否为竖排 */
+let GW = 2200;                             /* 横排：2200 才够 264 个点铺开 */
+let GH = 640;                              /* 概览 470（只有一行时期块）／卡片级 640（还含系列分道） */
+let G_PADL = 74, G_PADR = 66;              /* 时间轴两端留白 */
+let G_RULER = 60;                          /* 卡片级：年份刻度轴（上移给枢纽标签的多行交错留空间） */
+let G_MAIN = 150;                          /* 卡片级：主道（卡片最多的系列）基线 */
+let G_ARC = 300;                           /* 卡片级：主道弧线最大下垂深度 */
+let E_Y = 96, E_H = 54, E_ARC = 250, E_MINW = 92, E_GAP = 16;   /* 概览：时期块顶边 / 块厚 / 跨期弧最大深度 / 块最小宽 / 块间距 */
+let VW = GW, VH = GH;                      /* 最终画布（viewBox）尺寸：竖排时等于 GH × GW */
+/* 决定画布方向，并套用对应的一套常量。竖排时横跨方向仍是 GH（它决定标签能占到百分之几的宽度），
+   沿时间方向的 GW 由画布高宽比反推，使内容刚好铺满（width:100% + 固定高度），不会上下留白。 */
+function gFit(){
+  const box = $("graphBox");
+  const bw = box ? box.clientWidth : 0;
+  gVert = bw > 0 && bw <= G_NARROW;
+  if (gVert){
+    GH = gView ? 640 : 470;
+    const bh = Math.round(Math.min(700, Math.max(420, bw * 1.85)));   /* 竖屏给一个「长条」画布 */
+    GW = Math.round(GH * bh / bw);
+    G_PADL = 20; G_PADR = 20;
+    G_RULER = 10; G_MAIN = 218; G_ARC = 230;   /* 刻度收到最右侧；主道右移给右侧标签腾出约 1/3 画布宽 */
+    E_Y = 60; E_H = 150; E_ARC = 250; E_MINW = 46; E_GAP = 8;         /* 时期块旋 90° 后 54 会太窄，块名放不进去 */
+    $("graphSvg").style.height = bh + "px";
+  } else {
+    GW = 2200; GH = gView ? 640 : 470;
+    G_PADL = 74; G_PADR = 66;
+    G_RULER = 60; G_MAIN = 150; G_ARC = 300;
+    E_Y = 96; E_H = 54; E_ARC = 250; E_MINW = 92; E_GAP = 16;
+    $("graphSvg").style.height = "";           /* 交回 CSS：height:auto + aspect-ratio */
   }
-  const nodes = graphRelOnly ? [...map.values()].filter(n => used.has(n.id)) : [...map.values()];
-  return { nodes, edges };
+  VW = gVert ? GH : GW; VH = gVert ? GW : GH;
+  $("graphSvg").style.aspectRatio = VW + " / " + VH;
 }
-let simState = null;
-let graphHover = null;            /* 悬停聚焦的节点（无悬停时聚焦=全部已选中节点） */
-/* 聚焦高亮：只点亮悬停/选中节点的边，其余压暗——解决穿越线冒充连接的核心手段 */
-function updateEdgeFocus(){
-  const svg = $("graphSvg");
-  if (!simState) return;
-  const focus = new Set();
-  if (graphHover && !graphHover.broken) focus.add(graphHover);
-  for (const n of simState.nodes) if (n.card && chosen.has(n.card.uid)) focus.add(n);
-  const lines = svg.querySelectorAll("line");
-  if (!focus.size){ lines.forEach(l => l.classList.remove("hi", "dim")); return; }
-  simState.edges.forEach((e, i) => {
-    const on = focus.has(e.s) || focus.has(e.t);
-    lines[i].classList.toggle("hi", on);
-    lines[i].classList.toggle("dim", !on);
+/* 竖排：把整个横排世界旋 90°（时间变成向下的纵轴，弧线向左侧鼓），文字再逐个反旋 -90° 恢复水平。
+   rotate(90) 与 rotate(-90,锚点) 复合后恰好是纯平移，所以文字位置对、姿态也对，不用动任何坐标算式。 */
+function gWrap(html){ return gVert ? '<g transform="translate(' + GH + ',0) rotate(90)">' + html + "</g>" : html; }
+function orientTexts(svg){
+  if (!gVert) return;
+  svg.querySelectorAll("text").forEach(t => {
+    const x = t.getAttribute("x"), y = t.getAttribute("y");
+    if (x == null || y == null) return;
+    t.setAttribute("transform", "rotate(-90," + x + "," + y + ")");
   });
 }
-let graphRaf = 0;                 // 全局唯一句柄：重绘时必须取消上一轮模拟，旧帧不得访问新 DOM
+const EMPTY_T = new Set();
+function gYear(y){ return y == null ? "?" : (y < 0 ? "前" + (-y) : String(y)); }
+/* 时期分段（编年史惯例）：短名上轴，全名进悬停提示 */
+const ERA_DEFS = [
+  ["史前",     "史前（—前 3000）",        -Infinity, -3000],
+  ["上古",     "上古（前 3000—前 800）",   -3000,  -800],
+  ["古典",     "古典（前 800—500）",       -800,    500],
+  ["中世早",   "中世纪早期（500—1000）",    500,    1000],
+  ["中世盛",   "中世纪盛期（1000—1400）",  1000,    1400],
+  ["文艺前",   "文艺复兴前夜（1400—1500）", 1400,    1500],
+  ["16世纪",   "16 世纪（1500—1600）",     1500,    1600],
+  ["17世纪",   "17 世纪（1600—1700）",     1600,    1700],
+  ["18世纪",   "18 世纪（1700—1800）",     1700,    1800],
+  ["19世纪",   "19 世纪（1800—1900）",     1800,    1900],
+  ["20世纪",   "20 世纪（1900—2000）",     1900,    2000],
+  ["21世纪",   "21 世纪（2000—）",         2000,    Infinity]
+];
+function eraOf(y){
+  if (y == null) return ERA_DEFS[ERA_DEFS.length - 1][0];
+  for (const d of ERA_DEFS) if (y >= d[2] && y < d[3]) return d[0];
+  return ERA_DEFS[ERA_DEFS.length - 1][0];
+}
+let gView = null;                          /* null=时期概览｜{era:"19世纪"}｜{pair:["18世纪","19世纪"]} */
+/* 卡片级原始边（无向去重、已按口径过滤）。概览聚合与下钻都以它为唯一数据源，口径不会跑偏。 */
+function graphPairs(mode){
+  const use = mode || graphEdgeMode;
+  const relSet = new Map(cards.map(c => [c.slug, new Set((c.rel || []).map(r => r.t))]));
+  const out = [], seen = new Set();
+  for (const c of cards){
+    const hasProj = (c.rel && c.rel.length) || (c.weak && c.weak.length);
+    const ps = [];
+    if (hasProj){
+      for (const r of (c.rel || [])) ps.push([r.t, true, r.w || ""]);
+      for (const w of (c.weak || [])) ps.push([w.t, false, ""]);
+    } else for (const sl of c.links) ps.push([sl, false, ""]);      // 老索引无投影：全当弱引用
+    for (const p of ps){
+      const tid = p[0], strong = p[1], why = p[2];
+      if (tid === c.slug) continue;                                 /* 自指不算边 */
+      const mutual = (relSet.get(c.slug) || EMPTY_T).has(tid) && (relSet.get(tid) || EMPTY_T).has(c.slug);
+      const keep = use === "mutual" ? (strong && mutual) : (use === "rel" ? strong : true);
+      if (!keep) continue;
+      const k = c.slug < tid ? c.slug + " " + tid : tid + " " + c.slug;
+      if (seen.has(k)) continue;
+      seen.add(k); out.push({ a:c.slug, b:tid, strong, why });
+    }
+  }
+  return out;
+}
+function graphCounts(){
+  return { mutual:graphPairs("mutual").length, rel:graphPairs("rel").length, all:graphPairs("all").length };
+}
+/* 卡片级图（下钻时用）：pool=允许的卡片集合；crossOnly=只保留跨越两个时期的边 */
+function graphModel(pool, crossOnly){
+  const map = new Map();
+  const bySlug = new Map(cards.map(c => [c.slug, c]));
+  const node = (slug, cid) => { if (!map.has(slug)) map.set(slug, { id:slug, slug, card:cid, broken:!cid }); return map.get(slug); };
+  /* 单时期下钻：把该时期全部卡片都放上轴（无连线的也留作刻度，好看出「这个时期还有哪些卡是孤岛」）；
+     两时期视图只放真正跨界的卡，否则一堆无关刻度反而成了噪音。 */
+  if (!crossOnly) for (const c of cards) if (!pool || pool.has(c.slug)) node(c.slug, c);
+  const edges = [];
+  for (const p of graphPairs()){
+    if (pool && !(pool.has(p.a) && pool.has(p.b))) continue;
+    const ca = bySlug.get(p.a), cb = bySlug.get(p.b);
+    if (crossOnly && (!ca || !cb || eraOf(ca.yearKey) === eraOf(cb.yearKey))) continue;
+    edges.push({ s:node(p.a, ca), t:node(p.b, cb), strong:p.strong, why:p.why });
+  }
+  return { nodes:[...map.values()], edges, counts:graphCounts() };
+}
+/* 下钻范围：gView 决定的卡片集合 */
+function gPool(){
+  if (!gView) return null;
+  const keep = new Set();
+  for (const c of cards){
+    const er = eraOf(c.yearKey);
+    if (gView.era ? er === gView.era : (er === gView.pair[0] || er === gView.pair[1])) keep.add(c.slug);
+  }
+  return keep;
+}
+let graphState = null;            /* { nodes, edges, labOn }——弧线图是确定性布局，不再有力学状态 */
+let graphHover = null;            /* 悬停聚焦的节点（无悬停时聚焦=全部已选中节点） */
+/* 弧线布局：横轴=年份序等距；纵轴=系列分道（卡片最多的系列走主道，其余依次往下，断链垫底） */
+function graphLayout(nodes, edges, poolCards){
+  const pc = (poolCards && poolCards.length) ? poolCards : cards;     /* 下钻时只按范围内的卡分系列道 */
+  const ord = nodes.slice().sort((a,b) => {
+    const ay = a.card ? a.card.yearKey : null, by = b.card ? b.card.yearKey : null;
+    if ((ay == null) !== (by == null)) return ay == null ? 1 : -1;     /* 无年份的排末尾 */
+    if (ay != null && ay !== by) return ay - by;
+    return a.id.localeCompare(b.id);
+  });
+  const main = ord.filter(n => !n.broken), brk = ord.filter(n => n.broken);
+  const span = GW - G_PADL - G_PADR;
+  main.forEach((n,i) => { n.x = G_PADL + (main.length > 1 ? span * i / (main.length - 1) : span / 2); });
+  brk.forEach((n,i) => { n.x = G_PADL + (brk.length > 1 ? span * i / (brk.length - 1) : span / 2); });
+  const cnt = new Map();
+  for (const c of pc) for (const s of c.series) cnt.set(s, (cnt.get(s) || 0) + 1);
+  const sList = [...cnt.keys()].sort((a,b) => (cnt.get(b) - cnt.get(a)) || a.localeCompare(b));
+  const laneOf = new Map(sList.map((s,i) => [s, i]));
+  const laneNames = sList.slice();
+  let brkLane = -1;
+  if (brk.length){ brkLane = laneNames.length; laneNames.push("断链（待写卡片）"); }
+  const top0 = G_MAIN + G_ARC + 20, bot0 = GH - 30;      /* 主道弧最深到 G_MAIN+G_ARC，下方诸道从 top0 起排 */
+  const laneY = [G_MAIN];
+  for (let i = 1; i < laneNames.length; i++)
+    laneY[i] = laneNames.length <= 2 ? top0 : top0 + (bot0 - top0) * (i - 1) / (laneNames.length - 2);
+  for (const n of main){
+    const s = (n.card && n.card.series.length) ? n.card.series[0] : sList[0];
+    n.lane = laneOf.has(s) ? laneOf.get(s) : 0;
+    n.y = laneY[n.lane];
+  }
+  for (const n of brk){ n.lane = brkLane; n.y = laneY[brkLane]; }
+  return { main, laneNames, laneY };
+}
+/* 枢纽标签的摆放必须在 gvReset() 之后：文字的世界字号被 --gs 反向补偿过，
+   只有拿到 --gs 才能算出「这个卡名在世界坐标里占多宽」，进而判断是否与已放标签相撞。
+   分两行交错摆放，容量约翻倍；行距受上方年份刻度轴挤压，压不动就退回单行。 */
+function placeHubLabels(down){
+  const svg = $("graphSvg");
+  if (!graphState) return;
+  const { nodes } = graphState;
+  const gs = parseFloat(svg.style.getPropertyValue("--gs")) || 1;
+  const unit = 11.5 * gs;                                  /* 一个汉字在世界坐标下的宽度 */
+  const halfW = t => { let w = 0; for (const ch of t) w += /[⺀-鿿＀-￯]/.test(ch) ? 1 : 0.58; return w * unit / 2; };
+  /* 竖排：时间是纵轴，标签只能排在主道右侧同一列里，「多行交错」在这里失效——往外错＝往右挪，
+     而文字本身就是往右延伸的，错一行只能在竖直方向躲，那会离自己的圆点越来越远。
+     所以改成单列 + 只判纵轴：相邻两张卡的间距容得下一行字，才允许再贴一行标签。 */
+  if (gVert){
+    const rowH = Math.max(11, 15 * gs);                    /* 一行字占的纵向高度（含行间留白） */
+    const wid = t => { let w = 0; for (const ch of t) w += /[⺀-鿿＀-￯]/.test(ch) ? 1 : 0.58; return w * unit; };
+    const placed = [], labOn = new Set();
+    const cap = nodes.length <= 60 ? 80 : 22;
+    for (const n of nodes.filter(x => !x.broken && x.deg > 0 && x.lane === 0).sort((a,b) => b.deg - a.deg)){
+      if (labOn.size >= cap) break;
+      const x0 = GH - n.y + n.r + 8;                       /* 标签起点：主道圆点右侧（世界坐标） */
+      if (x0 + wid(n.short || n.id) > GH - 30) continue;   /* 字太长伸到画布外：宁缺，画面干净优先 */
+      if (placed.some(py => Math.abs(py - n.x) < rowH)) continue;   /* 前一张卡的标签还没落地 */
+      placed.push(n.x); labOn.add(n.i);
+      const t = svg.querySelector('text.glab[data-i="' + n.i + '"]');
+      if (t){
+        t.setAttribute("x", (n.x + 4).toFixed(1));          /* 基线稍微下沉，字在竖直方向才与圆点对中 */
+        t.setAttribute("y", (n.y - n.r - 8).toFixed(1));
+        t.setAttribute("transform", "rotate(-90," + t.getAttribute("x") + "," + t.getAttribute("y") + ")");
+      }
+    }
+    graphState.labOn = labOn;
+    svg.querySelectorAll("text.glab").forEach(t => t.classList.toggle("hub", labOn.has(Number(t.dataset.i))));
+    return;
+  }
+  /* 全卡视图：标签排在主道上方（上面只有刻度轴，空间有限，最多 2 行）；
+     下钻后节点少、弧场空旷：改排到主道下方，能排到 4 行，卡名这才放得下。 */
+  const avail = down ? (G_ARC - 40) : (G_MAIN - 12 - 5 - (G_RULER + 16));
+  const gapY = Math.max(0, Math.min(18 * gs, avail));
+  const nRows = gapY < 8 ? 1 : Math.min(down ? 4 : 2, Math.floor(avail / gapY) + 1);
+  const rows = []; for (let i = 0; i < nRows; i++) rows.push([]);
+  const labOn = new Set();
+  const txtOf = n => n.short || n.id;
+  const baseY = n => (down && n.lane === 0) ? (n.y + n.r + 26) : (n.y - n.r - 5);
+  const dir = n => (down && n.lane === 0) ? 1 : -1;
+  const cap = nodes.length <= 60 ? 80 : 22;    /* 下钻后节点少（≤42），卡名全部显示反而更好读 */
+  for (const n of nodes.filter(x => !x.broken && x.deg > 0).sort((a,b) => b.deg - a.deg)){
+    if (labOn.size >= cap) break;
+    const hw = halfW(txtOf(n));
+    let row = -1;
+    for (let r = 0; r < nRows; r++){
+      if (rows[r].some(p => Math.abs(p.x - n.x) < p.hw + hw + 12 * gs)) continue;           /* 同行：必须拉开完整字宽 */
+      if (rows.some((rr, ri) => ri !== r && rr.some(p => Math.abs(p.x - n.x) < (p.hw + hw) * 0.3))) continue;  /* 跨行：不许正上下压着 */
+      row = r; break;
+    }
+    if (row < 0) continue;
+    rows[row].push({ x:n.x, hw });
+    labOn.add(n.i);
+    const t = svg.querySelector('text.glab[data-i="' + n.i + '"]');
+    if (t) t.setAttribute("y", (baseY(n) + dir(n) * gapY * row).toFixed(1));
+  }
+  graphState.labOn = labOn;
+  svg.querySelectorAll("text.glab").forEach(t => t.classList.toggle("hub", labOn.has(Number(t.dataset.i))));
+}
+/* 弧线：同道弧的高度随跨度增长（封顶 G_ARC）；跨道弧只在两道之间浅浅鼓一下，
+   避免横向大弧切穿主道的弧线场。二次贝塞尔顶点在控制点偏移的一半处，故控制点取 2×深度。 */
+function arcPath(e){
+  const x1 = e.s.x, y1 = e.s.y, x2 = e.t.x, y2 = e.t.y;
+  const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy) || 1;
+  /* 同道用半椭圆：顶点恰好=ry，跨度增长自然；封顶后是扁椭圆而不是所有弧挤成一条"平顶线" */
+  if (Math.abs(dy) < 0.5){
+    const rx = Math.abs(dx) / 2, ry = Math.min(G_ARC, 6 + Math.abs(dx) * 0.42);
+    return "M" + x1.toFixed(1) + "," + y1.toFixed(1) +
+           "A" + rx.toFixed(1) + "," + ry.toFixed(1) + " 0 0 " + (dx > 0 ? 0 : 1) + " " +
+           x2.toFixed(1) + "," + y2.toFixed(1);
+  }
+  const depth = Math.min(96, 14 + len * 0.07);
+  return "M" + x1.toFixed(1) + "," + y1.toFixed(1) +
+         "Q" + ((x1 + x2) / 2).toFixed(1) + "," + ((y1 + y2) / 2 + depth * 2).toFixed(1) +
+         " " + x2.toFixed(1) + "," + y2.toFixed(1);
+}
+/* 聚焦高亮：只点亮悬停/选中节点的边，其余压暗；同时把「本点 + 它的邻居」的卡名浮出来 */
+function updateEdgeFocus(){
+  if (graphState && graphState.level === "era") return updateEraFocus();
+  const svg = $("graphSvg");
+  if (!graphState) return;
+  const { nodes, edges, labOn } = graphState;
+  const focus = new Set();
+  if (graphHover && !graphHover.broken) focus.add(graphHover);
+  for (const n of nodes) if (n.card && chosen.has(n.card.uid)) focus.add(n);
+  const paths = svg.querySelectorAll("path.edge"), labs = svg.querySelectorAll("text.glab");
+  if (!focus.size){
+    paths.forEach(p => p.classList.remove("hi", "dim"));
+    labs.forEach((t,i) => t.classList.toggle("on", labOn.has(i)));
+    return;
+  }
+  const near = new Set(focus);
+  for (const e of edges){ if (focus.has(e.s)) near.add(e.t); if (focus.has(e.t)) near.add(e.s); }
+  edges.forEach((e,i) => {
+    const on = focus.has(e.s) || focus.has(e.t);
+    paths[i].classList.toggle("hi", on);
+    paths[i].classList.toggle("dim", !on);
+  });
+  labs.forEach((t,i) => t.classList.toggle("on", labOn.has(i) || near.has(nodes[i])));
+}
 /* ---- 图谱视图缩放/平移（与地图同一套 viewBox 方案）---- */
-const GW = 960, GH = 600;
-let gv = { x:0, y:0, w:GW, h:GH };
+let gv = { x:0, y:0, w:VW, h:VH };
 function gvScale(){
   const r = $("graphSvg").getBoundingClientRect();
   const sc = Math.min(r.width / gv.w, r.height / gv.h);
@@ -1966,14 +2264,21 @@ function toSvg(svg, ev){
   const { sc, ox, oy } = gvScale();
   return { x:(ev.clientX - r.left - ox) / sc + gv.x, y:(ev.clientY - r.top - oy) / sc + gv.y };
 }
-function applyGv(){ $("graphSvg").setAttribute("viewBox", gv.x + " " + gv.y + " " + gv.w + " " + gv.h); }
-function gvReset(){ gv = { x:0, y:0, w:GW, h:GH }; applyGv(); }
+function applyGv(){
+  const svg = $("graphSvg");
+  svg.setAttribute("viewBox", gv.x + " " + gv.y + " " + gv.w + " " + gv.h);
+  /* 文字按「屏幕像素恒定」渲染：反向补偿世界字号，否则 2200 宽的世界在初始全幅视图下
+     11.5px 的字会被缩到 7px 糊成一团。放大后自动回落，屏幕字号始终 ≈ 设定值。 */
+  const k = gvScale().sc;
+  if (k > 0) svg.style.setProperty("--gs", Math.min(4, 1 / k).toFixed(3));
+}
+function gvReset(){ gv = { x:0, y:0, w:VW, h:VH }; applyGv(); }
 function gvAt(px, py, f){         /* 保持内容点 (px,py) 在屏幕上不动；f<1 放大，f>1 缩小；极限 1x~8x */
-  const nw = Math.max(GW / 8, Math.min(GW, gv.w * f));
+  const nw = Math.max(VW / 8, Math.min(VW, gv.w * f));
   const k = nw / gv.w;
   gv.x = px - (px - gv.x) * k; gv.y = py - (py - gv.y) * k;
-  gv.w = nw; gv.h = GH * nw / GW;
-  gv.x = Math.max(0, Math.min(GW - gv.w, gv.x)); gv.y = Math.max(0, Math.min(GH - gv.h, gv.y));
+  gv.w = nw; gv.h = VH * nw / VW;
+  gv.x = Math.max(0, Math.min(VW - gv.w, gv.x)); gv.y = Math.max(0, Math.min(VH - gv.h, gv.y));
   applyGv();
 }
 const graphSvgEl = $("graphSvg");
@@ -1995,8 +2300,8 @@ graphSvgEl.addEventListener("pointermove", ev => {
   if (!gdrag) return;
   const { sc } = gvScale();
   const dx = ev.clientX - gdrag.x0, dy = ev.clientY - gdrag.y0;
-  gv.x = Math.max(0, Math.min(GW - gv.w, gdrag.gx - dx / sc));
-  gv.y = Math.max(0, Math.min(GH - gv.h, gdrag.gy - dy / sc));
+  gv.x = Math.max(0, Math.min(VW - gv.w, gdrag.gx - dx / sc));
+  gv.y = Math.max(0, Math.min(VH - gv.h, gdrag.gy - dy / sc));
   applyGv();
 });
 graphSvgEl.addEventListener("pointerup", () => { gdrag = null; });
@@ -2005,87 +2310,241 @@ graphSvgEl.addEventListener("dblclick", ev => { if (!ev.target.closest("g")) gvR
 $("gzIn").onclick = () => gvAt(gv.x + gv.w / 2, gv.y + gv.h / 2, 1 / 1.4);
 $("gzOut").onclick = () => gvAt(gv.x + gv.w / 2, gv.y + gv.h / 2, 1.4);
 $("gzReset").onclick = gvReset;
-function drawGraph(svg, s){
-  const lineEls = svg.querySelectorAll("line");
-  s.edges.forEach((e,i) => {
-    const l = lineEls[i];
-    l.setAttribute("x1", e.s.x); l.setAttribute("y1", e.s.y); l.setAttribute("x2", e.t.x); l.setAttribute("y2", e.t.y);
-  });
-  svg.querySelectorAll("g").forEach((g,i) => g.setAttribute("transform", "translate(" + s.nodes[i].x + "," + s.nodes[i].y + ")"));
-}
-function simStep(s){
-  const W = 960, H = 600, nodes = s.nodes, edges = s.edges;
-  for (const n of nodes){ n.fx = 0; n.fy = 0; }
-  for (let i=0;i<nodes.length;i++) for (let j=i+1;j<nodes.length;j++){
-    const a = nodes[i], b = nodes[j];
-    let dx = a.x - b.x, dy = a.y - b.y;
-    const d2 = dx*dx + dy*dy || 0.01, d = Math.sqrt(d2);
-    const f = 2600 / d2, fx = f*dx/d, fy = f*dy/d;
-    a.fx += fx; a.fy += fy; b.fx -= fx; b.fy -= fy;
-  }
-  for (const e of edges){
-    let dx = e.t.x - e.s.x, dy = e.t.y - e.s.y;
-    const d = Math.hypot(dx,dy) || 0.01, f = (d - 170) * 0.02;
-    const fx = f*dx/d, fy = f*dy/d;
-    e.s.fx += fx; e.s.fy += fy; e.t.fx -= fx; e.t.fy -= fy;
-  }
-  for (const n of nodes){
-    if (s.drag === n) continue;
-    n.fx += (W/2 - n.x) * 0.012; n.fy += (H/2 - n.y) * 0.012;
-    n.vx = (n.vx + n.fx*0.1) * 0.86; n.vy = (n.vy + n.fy*0.1) * 0.86;
-    n.x = Math.max(30, Math.min(W-30, n.x + n.vx));
-    n.y = Math.max(26, Math.min(H-26, n.y + n.vy));
-  }
-}
-function runSim(svg, s){
-  cancelAnimationFrame(graphRaf);
-  (function frame(){
-    for (let k=0;k<6;k++){ simStep(s); s.t++; }
-    drawGraph(svg, s);
-    if (s.t < 360) graphRaf = requestAnimationFrame(frame);
-  })();
-}
+/* 窗口宽度变化：①横竖切换 ②竖排画布高度是按容器宽算的 —— 这两种情况必须重渲。
+   90° 旋转是「几何」而非「样式」，标签位置全得重算，交给 CSS 自适应是做不到的。 */
+let gResizeT = 0;
+addEventListener("resize", () => {
+  clearTimeout(gResizeT);
+  gResizeT = setTimeout(() => {
+    if (!graphState) return;                                  /* 图还没渲染过就不用管 */
+    const bw = $("graphBox").clientWidth;
+    const vert = bw > 0 && bw <= G_NARROW;
+    if (vert !== gVert || vert) renderGraph();                /* 变了就重来（会顺带复位缩放） */
+  }, 180);
+});
+/* 图谱入口：默认「时期概览」，下钻后进「该时期的卡片弧线图」 */
 function renderGraph(){
   graphDirty = false;
   graphSelDirty = false;
   const svg = $("graphSvg");
-  const { nodes, edges } = graphModel();
-  $("graphLegend").innerHTML =
-    allSeries().map(sn => '<span><i style="background:' + seriesColorOf(sn) + '"></i>' + esc(sn) + "</span>").join("") +
-    '<span><i class="broken"></i>断链 = 待写卡片</span>' +
-    '<label style="margin-left:12px;cursor:pointer;white-space:nowrap;" title="只画「关系」节论证过的边，滤掉正文顺带提及的弱引用（与卡片页关系视图同一口径）">' +
-      '<input type="checkbox" id="gRelOnlyBox" style="width:auto;vertical-align:-2px;margin:0 4px 0 0;"' + (graphRelOnly ? " checked" : "") + '>只显示关系边</label>' +
-    '<span style="font-size:11.5px;color:var(--tx3);">共 ' + edges.length + " 条边 / " + nodes.length + " 个节点</span>" +
-    '<span style="margin-left:auto;">滚轮缩放 · 拖空白处平移 · 双击空白复位 · 悬停/单击圆点聚焦连线 · 双击圆点开卡 · 拖圆点调布局</span>';
-  const rob = $("gRelOnlyBox");
-  if (rob) rob.onchange = () => { graphRelOnly = rob.checked; renderGraph(); };
-  nodes.forEach((n,i) => {
-    const a = Math.PI*2*i/Math.max(nodes.length,1);
-    n.x = 480 + Math.cos(a)*220; n.y = 300 + Math.sin(a)*200; n.vx = 0; n.vy = 0;
+  gFit();                                    /* 先按容器宽度定横排/竖排（决定 GW/GH 这一套常量的值） */
+  return gView ? renderCardGraph(svg) : renderEraGraph(svg);
+}
+/* ---- 概览：把卡片级边按时期聚合成 12 个块 + 34 组连接 ---- */
+function graphEraModel(){
+  const pairs = graphPairs();
+  const bySlug = new Map(cards.map(c => [c.slug, c]));
+  const all = ERA_DEFS.map(d => ({ name:d[0], full:d[1], cards:[], self:0, selfItems:[], deg:0 }));
+  const byName = new Map(all.map(n => [n.name, n]));
+  for (const c of cards){ const n = byName.get(eraOf(c.yearKey)); if (n) n.cards.push(c); }
+  const nodes = all.filter(n => n.cards.length);
+  /* 横向排布：块宽 ∝ 该时期卡片数（下限保底为放得下三个字的标签），块之间留均匀的缝 */
+  const span = GW - G_PADL - G_PADR, gap = E_GAP, MINW = E_MINW;
+  const sumN = nodes.reduce((s,n) => s + n.cards.length, 0) || 1;
+  const base = Math.max(0, (span - gap * (nodes.length - 1)) - MINW * nodes.length);
+  let x = G_PADL;
+  for (const n of nodes){
+    n.w = MINW + base * n.cards.length / sumN;
+    n.x = x; n.cx = x + n.w / 2; n.y = E_Y; n.h = E_H;
+    x += n.w + gap;
+  }
+  const em = new Map();
+  for (const p of pairs){
+    const ca = bySlug.get(p.a), cb = bySlug.get(p.b);
+    if (!ca || !cb) continue;
+    const A = byName.get(eraOf(ca.yearKey)), B = byName.get(eraOf(cb.yearKey));
+    if (!A || !B || !A.cards.length || !B.cards.length) continue;
+    const item = ca.slug + " ↔ " + cb.slug + (p.why ? "（" + p.why + "）" : "");
+    if (A === B){ A.self++; if (A.selfItems.length < 6) A.selfItems.push(item); continue; }
+    const k = A.name < B.name ? A.name + " " + B.name : B.name + " " + A.name;
+    let e = em.get(k);
+    if (!e){ e = { s:A, t:B, n:0, items:[] }; em.set(k, e); }
+    e.n++; A.deg++; B.deg++;
+    if (e.items.length < 6) e.items.push(item);
+  }
+  return { nodes, edges:[...em.values()].sort((u,v) => v.n - u.n), counts:graphCounts() };
+}
+function eraHighlight(svg, names){
+  const set = names ? new Set(names) : null;
+  svg.querySelectorAll("path.edge").forEach(p => {
+    const ks = p.dataset.self ? [p.dataset.self] : [p.dataset.a, p.dataset.b];
+    const on = ks.some(k => set && set.has(k));
+    p.classList.toggle("hi", !!set && on);
+    p.classList.toggle("dim", !!set && !on);
   });
-  svg.innerHTML =
-    edges.map((e,i) => "<line data-i=\"" + i + "\"></line>").join("") +
-    nodes.map((n,i) =>
-      '<g data-i="' + i + '"><circle class="node' + (n.broken ? " broken" : "") + (n.card && chosen.has(n.card.uid) ? " sel" : "") + '" r="' + (n.broken ? 7 : 9) + '"' +
-      (n.broken ? "" : ' fill="' + cardColor(n.card) + '"') +
-      ' title="' + escAttr(n.broken ? n.id + "（库里还没有这张卡片）" : n.id) + '"></circle>' +
-      '<text class="' + (n.broken ? "broken" : "") + '" dy="-14" text-anchor="middle">' + esc(n.id) + "</text></g>").join("");
-  simState = { nodes, edges, t:0, drag:null };
+}
+function updateEraFocus(){
+  const svg = $("graphSvg");
+  if (!graphState || graphState.level !== "era") return;
+  eraHighlight(svg, graphState.hover ? [graphState.hover] : null);
+}
+function renderEraGraph(svg){
+  svg.classList.remove("sparse");
+  const { nodes, edges, counts } = graphEraModel();
+  const yBot = E_Y + E_H;
+  let html = "";
+  /* 同期内部的连接：块上方的小半圆，半径 ∝ 条数（与跨期弧分居块的两侧，互不干扰） */
+  for (const n of nodes){
+    if (!n.self) continue;
+    const r = Math.min(E_Y - 26, 10 + Math.sqrt(n.self) * 5);
+    html += '<path class="edge eself" data-self="' + escAttr(n.name) + '" d="M' + (n.cx - r).toFixed(1) + ',' + E_Y +
+      "Q" + n.cx.toFixed(1) + "," + (E_Y - 2 * r).toFixed(1) + " " + (n.cx + r).toFixed(1) + "," + E_Y + '">' +
+      "<title>" + escAttr(n.full + " · 同期内部 " + n.self + " 条连接" +
+        (n.selfItems.length ? "，例如 " + n.selfItems.slice(0, 3).join("；") : "")) + "</title></path>";
+  }
+  /* 跨期连接：端点落在两个时期块底边中点，向下鼓；弧宽 ∝ 条数 */
+  for (const e of edges){
+    const dx = e.t.cx - e.s.cx;
+    const rx = Math.abs(dx) / 2, ry = Math.min(E_ARC, 16 + Math.abs(dx) * 0.30);
+    html += '<path class="edge ecross" data-a="' + escAttr(e.s.name) + '" data-b="' + escAttr(e.t.name) + '" d="M' + e.s.cx.toFixed(1) + ',' + yBot +
+      "A" + rx.toFixed(1) + "," + ry.toFixed(1) + " 0 0 " + (dx > 0 ? 0 : 1) + " " + e.t.cx.toFixed(1) + "," + yBot + '"' +
+      ' style="stroke-width:' + Math.min(9, 1.2 + Math.sqrt(e.n) * 1.6).toFixed(1) + '">' +
+      "<title>" + escAttr(e.s.full + " ↔ " + e.t.full + "\n" + e.n + " 条连接" +
+        (e.items.length ? "\n例如 " + e.items.slice(0, 4).join("\n例如 ") : "")) + "</title></path>";
+  }
+  /* 只给较粗的弧标数字，否则密的数字比弧本身还糊 */
+  const topN = Math.max(3, Math.max(1, ...edges.map(e => e.n)) * 0.3);
+  for (const e of edges){
+    if (e.n < topN) continue;
+    const ry = Math.min(E_ARC, 16 + Math.abs(e.t.cx - e.s.cx) * 0.30);
+    html += '<text class="gnum" x="' + ((e.s.cx + e.t.cx) / 2).toFixed(1) + '" y="' + (yBot + ry + 18).toFixed(1) +
+      '" text-anchor="middle">' + e.n + "</text>";
+  }
+  /* 时期块内的两行字：横排时上下排（y 不同）；竖排时块被旋成竖条，「上下」成了左右，
+     两行必须沿块的高度（＝时间方向，即 x）拉开，否则会挤在同一个纵坐标上互相压。 */
+  const ty = E_Y + E_H - 10;
+  for (const n of nodes){
+    const nm = gVert
+      ? '<text class="ename" x="' + (n.x + n.w * 0.42).toFixed(1) + '" y="' + ty + '" text-anchor="start">' + esc(n.name) + "</text>" +
+        '<text class="ecnt" x="' + (n.x + n.w * 0.76).toFixed(1) + '" y="' + ty + '" text-anchor="start">' + n.cards.length + " 张</text>"
+      : '<text class="ename" x="' + n.cx.toFixed(1) + '" y="' + (E_Y + 22) + '" text-anchor="middle">' + esc(n.name) + "</text>" +
+        '<text class="ecnt" x="' + n.cx.toFixed(1) + '" y="' + (E_Y + 42) + '" text-anchor="middle">' + n.cards.length + " 张</text>";
+    html += '<g class="era" data-n="' + escAttr(n.name) + '">' +
+      '<rect class="eblk" x="' + n.x.toFixed(1) + '" y="' + E_Y + '" width="' + n.w.toFixed(1) + '" height="' + E_H + '" rx="8"/>' +
+      "<title>" + escAttr(n.full + " · " + n.cards.length + " 张卡 · 同期内部 " + n.self + " 条 · 对外 " + n.deg + " 条\n（点一下看这 " + n.cards.length + " 张卡之间的关系）") + "</title>" +
+      nm + "</g>";
+  }
+  const totIntra = nodes.reduce((s,n) => s + n.self, 0), totCross = edges.reduce((s,e) => s + e.n, 0);
+  const axisWord = gVert ? "块的高度" : "块宽";
+  $("graphLegend").innerHTML =
+    '<span class="crumb-t">时期概览</span>' +
+    '<span style="font-size:11.5px;color:var(--tx3);">' + nodes.length + " 个时期 · 跨期 " + edges.length + " 组（" + totCross + " 条）· 同期内部 " + totIntra + " 条</span>" +
+    gModeHtml(counts) +
+    '<span style="font-size:11px;color:var(--tx3);">' + axisWord + "＝这个时期有几张卡 · 弧宽＝两个时期之间有几条连接 · 块" + (gVert ? "左" : "上") + "方的弧＝同期内部的连接</span>" +
+    '<span style="margin-left:auto;">点时期块看它内部 · 点弧只看这两个时期之间 · 悬停高亮</span>';
+  gBindMode();
+  svg.innerHTML = gWrap(html);
+  orientTexts(svg);
+  graphState = { level:"era", nodes, edges, hover:null };
   gvReset();
+  svg.querySelectorAll("g.era").forEach(g => {
+    const nm = g.dataset.n;
+    g.addEventListener("pointerenter", () => { graphState.hover = nm; eraHighlight(svg, [nm]); });
+    g.addEventListener("pointerleave", () => { if (graphState.hover === nm){ graphState.hover = null; eraHighlight(svg, null); } });
+    g.addEventListener("click", () => { gView = { era:nm }; renderGraph(); });
+  });
+  svg.querySelectorAll("path.edge").forEach(p => {
+    if (p.dataset.self){ p.addEventListener("click", () => { gView = { era:p.dataset.self }; renderGraph(); }); return; }
+    p.addEventListener("click", () => { gView = { pair:[p.dataset.a, p.dataset.b] }; renderGraph(); });
+  });
+}
+/* 口径下拉 + 面包屑（两个层级共用） */
+function gModeHtml(counts){
+  return '<label style="cursor:pointer;white-space:nowrap;" title="互为引用＝两卡的「关系」节互相点名（最干净）；关系边＝所有关系节出边；全部引用＝再加正文顺带提及的弱引用">' +
+    '边的口径 <select id="gModeSel" style="font-size:11.5px;padding:1px 2px;border:0.5px solid var(--line);border-radius:6px;background:var(--bg);color:var(--tx2);">' +
+    '<option value="mutual"' + (graphEdgeMode === "mutual" ? " selected" : "") + ">互为引用（" + counts.mutual + "）</option>" +
+    '<option value="rel"' + (graphEdgeMode === "rel" ? " selected" : "") + ">关系边（" + counts.rel + "）</option>" +
+    '<option value="all"' + (graphEdgeMode === "all" ? " selected" : "") + ">全部引用（" + counts.all + "）</option>" +
+    "</select></label>";
+}
+function gBindMode(){
+  const sel = $("gModeSel");
+  if (sel) sel.onchange = () => { graphEdgeMode = sel.value; renderGraph(); };
+}
+function gCrumbHtml(label){
+  return '<button id="gBackBtn" class="crumb">‹ 全部时期</button><span class="crumb-t">' + esc(label) + "</span>";
+}
+function gBindBack(){
+  const b = $("gBackBtn");
+  if (b) b.onclick = () => { gView = null; renderGraph(); };
+}
+/* ---- 下钻：某个时期（或某两个时期之间）的卡片级弧线图 ---- */
+function renderCardGraph(svg){
+  const pool = gPool();
+  const poolCards = cards.filter(c => pool.has(c.slug));
+  const { nodes, edges, counts } = graphModel(pool, !!gView.pair);
+  svg.classList.toggle("sparse", edges.length < 80);   /* 弧稀疏时提高透明度，让每条连线都读得出 */
+  for (const n of nodes) n.deg = 0;
+  for (const e of edges){ e.s.deg++; e.t.deg++; }        /* 度数只统计当前档位的边：换档即重排视觉层次 */
+  const lay = graphLayout(nodes, edges, poolCards);      /* 系列分道只统计范围内的卡 */
+  /* 视觉层次 B：点半径随度数增长（封顶 12），本档无连线者缩成时间轴上的小刻度 */
+  for (const n of nodes) n.r = n.deg === 0 ? 3.2 : Math.min(11, 3.4 + 1.7 * Math.sqrt(n.deg));
+  nodes.forEach((n,i) => { n.i = i; });
+  /* 年份刻度：等距轴上标真实年份，按字宽避让，避免叠字 */
+  let ruler = '<line class="rul" x1="' + G_PADL + '" y1="' + G_RULER + '" x2="' + (GW - G_PADR) + '" y2="' + G_RULER + '"/>' +
+    '<line class="rul" style="opacity:.32" x1="' + G_PADL + '" y1="' + G_MAIN + '" x2="' + (GW - G_PADR) + '" y2="' + G_MAIN + '"/>';   /* 主道基线：明示这是一条时间轴 */
+  /* 年份标签：横排时刻线标签在轴上方居中；竖排时「上方」变成了轴的左侧，且要贴着画布右缘，
+     于是把文字改成向左排（text-anchor:end），这样无论多长的年份都不会顶出画布。 */
+  const yrY = gVert ? (G_RULER + 16) : (G_RULER - 11), yrA = gVert ? "end" : "middle";
+  let lastRight = -1e9;
+  const pushTick = i => {
+    const n = lay.main[i];
+    if (!n || !n.card || n.card.yearKey == null) return;
+    const txt = gYear(n.card.yearKey), w = txt.length * 6.8;
+    if (n.x - w / 2 < lastRight + 10) return;
+    lastRight = n.x + w / 2;
+    ruler += '<line class="rul" x1="' + n.x.toFixed(1) + '" y1="' + (G_RULER - 7) + '" x2="' + n.x.toFixed(1) + '" y2="' + (G_RULER + 8) + '"/>' +
+      '<text class="gyr" x="' + n.x.toFixed(1) + '" y="' + yrY + '" text-anchor="' + yrA + '">' + esc(txt) + "</text>";
+  };
+  const step = Math.max(1, Math.ceil(lay.main.length / 22));
+  for (let i = 0; i < lay.main.length; i += step) pushTick(i);
+  pushTick(lay.main.length - 1);
+  /* 系列道不再写道名：左侧留白不足以放下四个字的标签（会被画布裁掉一半），系列色图例已足够 */
+  const isoN = nodes.filter(n => n.deg === 0 && !n.broken).length;
+  const label = gView.era
+    ? gView.era + " · " + nodes.length + " 张卡"
+    : gView.pair[0] + " ↔ " + gView.pair[1] + " · " + edges.length + " 条跨期连接";
+  $("graphLegend").innerHTML =
+    gCrumbHtml(label) +
+    '<span style="font-size:11.5px;color:var(--tx3);">共 ' + edges.length + " 条边 / " + nodes.length + " 张卡" +
+      (isoN ? "（" + isoN + " 张本档无连线，缩为刻度）" : "") + "</span>" +
+    gModeHtml(counts) +
+    (nodes.some(n => n.broken) ? '<span><i class="broken"></i>断链 = 待写卡片</span>' : "") +
+    '<span style="font-size:11px;color:var(--tx3);">' + (gVert ? "纵轴" : "横轴") + "＝按年份排序的等距刻度（非线性，标签为真实年份）· 弧越" + (gVert ? "宽" : "高") + "＝时间跨度越大</span>" +
+    '<span style="margin-left:auto;">滚轮缩放 · 拖空白处平移 · 双击空白复位 · 悬停/单击圆点聚焦连线 · 双击圆点开卡</span>';
+  gBindMode();
+  gBindBack();
+  svg.innerHTML = gWrap(ruler +
+    edges.map((e,i) => {
+      const col = e.s.card ? cardColor(e.s.card) : (e.t.card ? cardColor(e.t.card) : "");
+      return '<path class="edge' + (e.strong ? " strong" : " weak") + '" data-i="' + i + '" d="' + arcPath(e) + '"' +
+        (col ? ' style="--ec:' + col + '"' : "") + "/>";
+    }).join("") +
+    nodes.map((n,i) =>
+      '<g data-i="' + i + '">' +
+      '<circle class="node' + (n.broken ? " broken" : (n.deg === 0 ? " iso" : "")) + (n.card && chosen.has(n.card.uid) ? " sel" : "") + '"' +
+        ' cx="' + n.x.toFixed(1) + '" cy="' + n.y.toFixed(1) + '" r="' + n.r.toFixed(1) + '"' +
+        (n.broken ? "" : ' fill="' + cardColor(n.card) + '"') +
+        '><title>' + escAttr(n.broken ? n.id + "（库里还没有这张卡片）" : n.id + " · 本档 " + n.deg + " 条连线") + "</title></circle>" +
+      '<text class="glab' + (n.broken ? " broken" : "") + '" data-i="' + i +
+        '" x="' + n.x.toFixed(1) + '" y="' + (n.y - n.r - 5).toFixed(1) + '" text-anchor="' + (gVert ? "start" : "middle") + '">' + esc(n.short || n.id) + "</text></g>").join(""));
+  orientTexts(svg);
+  /* 下钻到单个时期时，横轴已经表达了年份顺序，标签只留地点（宽度砍半，才放得下 42 个）；
+     同地点出现多次的退回完整卡名，悬停提示里始终给全名。 */
+  if (!gView.pair && nodes.length <= 60){
+    const cc = new Map();
+    for (const n of nodes){ const loc = n.id.replace(/^[^-]*-/, ""); cc.set(loc, (cc.get(loc) || 0) + 1); }
+    for (const n of nodes){ const loc = n.id.replace(/^[^-]*-/, ""); n.short = (loc && cc.get(loc) === 1) ? loc : n.id; }
+  }
+  graphState = { nodes, edges, labOn:new Set() };
+  gvReset();                 /* 先定 viewBox 并写入 --gs，字号才知道在世界坐标里有多宽 */
+  placeHubLabels(!gView.pair);   /* 再决定哪些枢纽标签常驻（依赖 --gs） */
   updateEdgeFocus();
-  svg.querySelectorAll("g").forEach((g,i) => {
-    const n = nodes[i], circle = g.querySelector("circle");
-    let down = false, moved = false, tapTimer = 0;
-    circle.addEventListener("pointerdown", ev => { down = true; moved = false; simState.drag = n; circle.setPointerCapture(ev.pointerId); ev.preventDefault(); });
-    circle.addEventListener("pointermove", ev => {
-      if (!down) return;
-      moved = true;
-      const p = toSvg(svg, ev); n.x = p.x; n.y = p.y; n.vx = 0; n.vy = 0;
-      drawGraph(svg, simState);
-    });
+  svg.querySelectorAll("g[data-i]").forEach((g,i) => {   /* 竖排时外层多一层旋转用的 <g>，只认带序号的那些 */
+    const n = nodes[i], circle = g.querySelector("circle"), t = g.querySelector("text");
+    let tapTimer = 0;
     circle.addEventListener("pointerup", () => {
-      down = false; simState.drag = null;
-      if (moved || n.broken) return;
+      if (n.broken) return;
       clearTimeout(tapTimer);
       tapTimer = setTimeout(() => {                 /* 延迟判定：单击=选中/取消，给双击留窗口 */
         if (!chosen.has(n.card.uid) && chosen.size >= 4){ alert("对比最多选 4 张，先取消一张。"); return; }
@@ -2093,14 +2552,13 @@ function renderGraph(){
         updateCmpBar();
         circle.classList.toggle("sel", chosen.has(n.card.uid));
         updateEdgeFocus();                          /* 选中即聚焦：点亮该节点的边 */
-      }, 260);
+      }, 240);
     });
-    circle.addEventListener("dblclick", () => { clearTimeout(tapTimer); openCard(n.card.uid); });   /* 双击 = 进入卡片 */
+    circle.addEventListener("dblclick", () => { clearTimeout(tapTimer); if (!n.broken) openCard(n.card.uid); });   /* 双击 = 进入卡片 */
     circle.addEventListener("pointerenter", () => { graphHover = n; updateEdgeFocus(); });          /* 悬停聚焦：只看这个点的关系 */
     circle.addEventListener("pointerleave", () => { if (graphHover === n){ graphHover = null; updateEdgeFocus(); } });
-    g.querySelector("text").addEventListener("click", () => { if (!n.broken) openCard(n.card.uid); });
+    if (t && !n.broken) t.addEventListener("click", () => openCard(n.card.uid));
   });
-  runSim(svg, simState);
 }
 
 /* ================= 卡片 × 维度填充矩阵 ================= */
@@ -2148,6 +2606,9 @@ function allTags(){
 }
 function sortTagsByCount(ts){     /* 数量从大到小，同数量按名称（中文）稳定排序 */
   return ts.slice().sort((a,b)=> (tagRank.get(b)||0)-(tagRank.get(a)||0) || a.localeCompare(b, "zh"));
+}
+function tagKind(t){              /* 标签身份：透镜 / 地区 / 状态 / 长尾（只做提示与着色，不影响排序） */
+  return navWords.lenses.includes(t) ? "透镜" : navWords.regions.includes(t) ? "地区" : t === STATUS_TAG ? "状态" : "长尾标签";
 }
 /* ---- 导航词（书架筛选栏分区）：透镜=标签并集，README「透镜映射表」登记；地区=README 地区词表；正式来源都在 README，以下仅为解析失败兜底 ---- */
 let navWords = {
@@ -2209,7 +2670,7 @@ function renderTagDrawer(q){
      只出现 1 次的占 82%，单独折叠，避免把有意义的词淹掉。搜索时搜全量，不分主栏/抽屉。 */
   const arr = allTags();
   const pool = q ? arr.filter(([t]) => t.includes(q)) : arr.filter(([t]) => !mainTags.has(t));
-  const chip = ([t,n]) => '<span class="chip' + (fTags.has(t)?" on":"") + '" data-t="' + escAttr(t) + '">' + esc(t) + '<span class="n">' + n + "</span></span>";
+  const chip = ([t,n]) => '<span class="chip' + (fTags.has(t)?" on":"") + '" data-t="' + escAttr(t) + '" title="' + tagKind(t) + '（' + n + ' 张）">' + esc(t) + '<span class="n">' + n + "</span></span>";
   const many = pool.filter(([t,n]) => n >= 2), once = pool.filter(([t,n]) => n === 1);
   $("tagDrawerList").innerHTML = many.map(chip).join("")
     + (once.length ? '<div class="tagmore"><button id="tagOnceBtn" data-n="' + once.length + '">只出现 1 次的 ' + once.length + ' 个 ▾</button>' +
@@ -2288,24 +2749,20 @@ function renderHome(){
     '<span class="chip' + (fSeries==="全部"?" on":"") + '" data-s="全部">全部<span class="n">' + cards.length + "</span></span>" +
     allSeries().map(s => '<span class="chip' + (fSeries===s?" on":"") + '" data-s="' + escAttr(s) + '">' + esc(s) + '<span class="n">' + cards.filter(c=>c.series.includes(s)).length + "</span></span>").join("");
   $("seriesFilter").querySelectorAll(".chip").forEach(el => el.onclick = () => { fSeries = el.dataset.s; renderHome(); });
-  /* 标签筛选：主栏 = 全库热度 Top N（不分身份，谁热谁上）
-     + 导航词保底（没进 Top 的透镜/地区/状态追加在后面，保证按地区筛永远点得到）
-     + 当前选中的长尾词（便于看见与取消） */
+  /* 标签筛选：主栏 = 全库热度 Top N（不分身份，谁热谁上）+ 当前选中的词（便于看见与取消）。
+     不给冷门导航词保底：加勒比(1)、贸易管制(3) 这类同样按热度排，进不了 Top 就下抽屉，
+     否则会出现「主栏里的词比抽屉里最热的还冷」的倒挂。代价：罕见地区词要点开更多才找得到。 */
   const tags = allTags();
   const top = tags.slice(0, Math.min(MAIN_TAG_TOP, tags.length));
   const inMain = new Set(top.map(x => x[0]));
-  const navBack = tags.filter(([t]) => isNavTag(t) && !inMain.has(t));
-  navBack.forEach(x => inMain.add(x[0]));
   const picked = tags.filter(([t]) => fTags.has(t) && !inMain.has(t));
   picked.forEach(x => inMain.add(x[0]));
   mainTags = inMain;
   const restN = tags.length - inMain.size;
-  const kindOf = t => navWords.lenses.includes(t) ? "透镜" : navWords.regions.includes(t) ? "地区" : t === STATUS_TAG ? "状态" : "长尾标签";
-  const chipHtml = ([t,n]) => '<span class="chip' + (fTags.has(t)?" on":"") + (navWords.lenses.includes(t)?" lens":"") + '" data-t="' + escAttr(t) + '" title="' + kindOf(t) + '（' + n + ' 张）">' + esc(t) + '<span class="n">' + n + "</span></span>";
+  const chipHtml = ([t,n]) => '<span class="chip' + (fTags.has(t)?" on":"") + (navWords.lenses.includes(t)?" lens":"") + '" data-t="' + escAttr(t) + '" title="' + tagKind(t) + '（' + n + ' 张）">' + esc(t) + '<span class="n">' + n + "</span></span>";
   const sep = (txt, tip) => '<span class="tagsep" title="' + tip + '">' + txt + "</span>";
   $("tagFilter").innerHTML = top.map(chipHtml).join("")
-    + (navBack.length ? sep("导航 ▸", "未进热度榜 Top" + MAIN_TAG_TOP + " 的透镜/地区/状态，保底保留：按地区筛永远点得到") + navBack.map(chipHtml).join("") : "")
-    + (picked.length ? sep("已选 ▸", "当前选中的长尾词，便于看见与取消") + picked.map(chipHtml).join("") : "")
+    + (picked.length ? sep("已选 ▸", "当前选中的标签，便于看见与取消") + picked.map(chipHtml).join("") : "")
     + (restN ? '<span class="chip" id="moreTagsBtn">更多标签<span class="n">' + restN + '</span> ▾</span>' : "")
     || '<span style="font-size:12px;color:var(--tx3);">（暂无标签）</span>';
   $("tagFilter").querySelectorAll(".chip[data-t]").forEach(el => el.onclick = () => {
