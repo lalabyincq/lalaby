@@ -3377,6 +3377,17 @@ function collectFields(){
 }
 function yamlList(arr){ return arr.length ? "\n"+arr.map(x => "  - "+x).join("\n") : " []"; }
 function todayStr(){ const d = new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+/* 「更新」字段 = 卡片内容最后一次真正变动的日期。
+   判据：把「更新:」那一行剔掉后与原文逐字比对，完全相同说明这次保存没动内容 → 保留原日期；
+   有任何差异（含新建卡）→ 写今天。 */
+function stripUpdateLine(s){ return String(s||"").replace(/\r\n?/g,"\n").replace(/^更新:[^\n]*\n/m,"").replace(/\s+$/,""); }
+function oldUpdateDate(s){ const m = String(s||"").match(/^更新:\s*(.+)$/m); return m ? m[1].trim() : ""; }
+function resolveUpdateDate(newMd){
+  const raw = editTarget && editTarget.raw;
+  if (!raw) return todayStr();                       // 新建卡
+  if (stripUpdateLine(raw) === stripUpdateLine(newMd)) return (oldUpdateDate(raw) || todayStr());
+  return todayStr();
+}
 function buildMarkdown(){
   const t = tpl(), f = collectFields();
   const missing = t.req.filter(k => !f[k]);
@@ -3388,7 +3399,7 @@ function buildMarkdown(){
   }
   md += "系列:"+yamlList(f["系列"])+"\n";
   md += "标签:"+yamlList(f["标签"])+"\n";
-  md += "更新: "+todayStr()+"\n---\n\n";
+  md += "更新: __UPD__\n---\n\n";
   md += "# 概述\n\n"+(f["概述"] || "（待补：这个卡片最突出的面貌）")+"\n\n";
   for (const d of t.dims) md += "## "+d+"\n\n"+(dimValues[d]||"").trim()+"\n\n";
   for (const d of customDims) if ((dimValues[d]||"").trim()) md += "## "+d+"\n\n"+dimValues[d].trim()+"\n\n";
@@ -3404,6 +3415,7 @@ function buildMarkdown(){
   md += "## 关系\n\n"+(links || "（待补：与其他卡片的双链）")+"\n\n";
   md += "## 来源\n\n"+($("source").value.trim() || "（待补）")+"\n";
   if (editTarget && editTarget.extra) md += editTarget.extra;
+  md = md.replace("更新: __UPD__", "更新: " + resolveUpdateDate(md));
   return { fields:f, md };
 }
 function extOf(file){ const m = (file.name.match(/\.\w+$/) || [".jpg"])[0]; return m.toLowerCase(); }
@@ -3959,7 +3971,7 @@ async function startEditCard(uid){
     setMsg("");
     const p = loadCardIntoForm(md, c.fsDir);
     pasteLeftover = []; renderLeftover();
-    editTarget = { type, path, extra:p.extra, rawImages:p.rawImages };
+    editTarget = { type, path, extra:p.extra, rawImages:p.rawImages, raw: md };
     editReturn = { mode:"edit", uid:c.uid };
     updatePreview();
     show("editView");
