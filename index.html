@@ -110,9 +110,6 @@
   @keyframes skeleton{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
   .reader figcaption{font-size:12px;color:var(--tx3);margin-top:5px;}
   .reader figure img.lazyimg{cursor:zoom-in;}
-  .hiresBtn{border:1px solid var(--line2);background:var(--bg2);color:var(--ac);border-radius:5px;padding:0 7px;margin-left:8px;font-size:11px;cursor:pointer;}
-  .hiresBtn:hover{background:var(--ac-bg);}
-  .hiresBtn[disabled]{opacity:.5;cursor:default;}
   /* 高清灯箱：点击卡片内图片 → 直接加载存档高清原件；点图在适合窗口/原始尺寸间切换，放大后可滚动平移 */
   #lightbox{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);display:none;overflow:auto;padding:16px;}
   #lightbox img{display:block;margin:auto;max-width:96vw;max-height:84vh;object-fit:contain;border-radius:6px;background:#111;cursor:zoom-in;}
@@ -1192,8 +1189,10 @@ function inline(s){
 function figureHtml(card, ref, alt, caption, hi){
   const missing = card.missingImgs.includes(ref);
   const cap = caption ? inline(caption) : esc(alt || ref);
-  const hiBtn = hi ? ' <button class="hiresBtn" data-hires="' + escAttr(hi) + '" title="加载存档的高清原件（仅本地模式，文件较大）">🔍 高清原件</button>' : "";
-  return '<figure><img class="lazyimg' + (missing ? " missing" : "") + '" data-uid="' + escAttr(card.uid) + '" data-ref="' + escAttr(ref) + '" data-hires="' + escAttr(hi || "") + '" alt="' + escAttr(alt||ref) + '" title="' + escAttr((missing ? "图片文件缺失：" : "") + ref) + '"><figcaption>' + cap + hiBtn + (missing ? '（图片缺失）' : '') + '</figcaption></figure>';
+  /* 高清原件不再以文字按钮挂在图注末尾：改为点击图片本身触发灯箱、加载 图片-原图/ 存档原件。
+     有高清时用 title 给出可发现的提示（原生 tooltip，不是链接）。 */
+  const tip = (missing ? "图片文件缺失：" : "") + (hi && !missing ? "点击查看高清原件 · " : "") + ref;
+  return '<figure><img class="lazyimg' + (missing ? " missing" : "") + '" data-uid="' + escAttr(card.uid) + '" data-ref="' + escAttr(ref) + '" data-hires="' + escAttr(hi || "") + '" alt="' + escAttr(alt||ref) + '" title="' + escAttr(tip) + '"><figcaption>' + cap + (missing ? '（图片缺失）' : '') + '</figcaption></figure>';
 }
 function mdHtml(md, card){
   const lines = (md||"").replace(/\r/g,"").split("\n");
@@ -1389,12 +1388,6 @@ lbImg().addEventListener("click", () => {
   $("lbNote").textContent = im.classList.contains("lbZoom") ? "原始尺寸——拖动滚动条平移查看细节，再点图片还原" : "";
 });
 document.addEventListener("click", e => {
-  const hb = e.target.closest && e.target.closest("figcaption .hiresBtn");
-  if (hb){
-    const im = hb.closest("figure").querySelector("img.lazyimg");
-    openLightbox(im && im.src || "", hb.dataset.hires);
-    return;
-  }
   const im = e.target.closest && e.target.closest("img.lazyimg");
   if (im && !im.classList.contains("missing") && im.src) openLightbox(im.src, im.dataset.hires);
 });
