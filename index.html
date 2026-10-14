@@ -28,6 +28,10 @@
     - 页头浮动栏新增「朗读」钮：Web Speech API（优先 zh-CN 语音），按 h3 节标题/段落/引文/列表分段队列播放；
       翻卡、点双链跳卡、返回书架或切走视图自动停止；Win10 Edge/Chrome 与手机浏览器均支持，不支持时给出提示
     - 阅读页内的固定 px 小字（元信息/标签/图注/关系块/代码/待补徽标）一律改为 em 相对字号，随 A+/A- 整体缩放；首页与对比页保持原样
+  v6.7 2026-10-15 阅读页五风格切换：
+    - 页头浮动栏「风格」钮（位于 A- 左侧）弹下拉框，选中即切换：A 衬线纸墨 / B 极简白 / C 暗色夜读 / D 杂志编排 / E 新中式
+    - 主题类挂在 body 上（重定义 CSS 变量 + 少量结构规则），只在阅读视图挂载，离开即摘；选择存 localStorage（nb-reader-style），默认 A
+    - 全部用系统字体栈（Noto Serif SC / Songti / SimSun、PingFang / Microsoft YaHei），不引 web font，保持零依赖单文件
 -->
 <style>
   :root{--bg:#ffffff;--bg2:#f5f4f0;--line:#d9d7cf;--line2:#b4b2a9;--tx:#2c2c2a;--tx2:#5f5e5a;--tx3:#888780;--ac:#185fa5;--ac-bg:#e6f1fb;--ok:#0f6e56;--ok-bg:#e1f5ee;--warn:#993c1d;--warn-bg:#faece7;--fs:17px;}
@@ -45,6 +49,36 @@
   .hdr-btn{border:0.5px solid var(--line2);background:var(--bg);border-radius:6px;padding:2px 9px;font-size:12.5px;line-height:1.5;color:var(--tx2);cursor:pointer;display:none;white-space:nowrap;}
   .hdr-btn:hover{border-color:var(--ac);color:var(--ac);}
   .hdr-btn.on{background:var(--ac-bg);border-color:var(--ac);color:var(--ac);}
+  /* ===== 阅读页五风格（页头「风格」钮切换，localStorage: nb-reader-style；默认 a 衬线纸墨）=====
+     主题类挂在 body 上，只重定义变量 + 少量结构规则；show() 进出阅读视图时挂/摘，
+     首页/对比/编辑视图不受影响；--fs（A+/A-）与风格正交，互不干扰。 */
+  .th-a{--bg:#f7f4ec;--bg2:#f1ecdf;--line:#ddd5c3;--line2:#c4b89f;--tx:#33302a;--tx2:#6d6552;--tx3:#8a8172;--ac:#9e2b25;--ac-bg:#f3e6e0;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;}
+  .th-b{--bg:#ffffff;--bg2:#fafafa;--line:#e6e5e1;--line2:#d3d2ce;--tx:#22211f;--tx2:#5c5b57;--tx3:#8f8e89;--ac:#185fa5;--ac-bg:#e8f1fa;font-family:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,sans-serif;}
+  .th-c{--bg:#1e2025;--bg2:#262a31;--line:#34373d;--line2:#454a53;--tx:#d6d1c5;--tx2:#a9a496;--tx3:#8b8677;--ac:#b98f4d;--ac-bg:#2e2a20;--ok:#5dcaa5;--ok-bg:#1d2b26;--warn:#e0997b;--warn-bg:#33241d;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;}
+  .th-d{--bg:#fdfdfb;--bg2:#f4f3ee;--line:#e7e6e1;--line2:#d3d2cb;--tx:#29261f;--tx2:#6e6a5e;--tx3:#a3906c;--ac:#a3906c;--ac-bg:#f5efdf;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;}
+  .th-e{--bg:#f3eee1;--bg2:#ede6d3;--line:#d6cbb0;--line2:#b3a67e;--tx:#2e2a22;--tx2:#6f6650;--tx3:#8a7f66;--ac:#2e4a62;--ac-bg:#e4e9ee;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;}
+  .th-a .reader{line-height:1.95;}
+  .th-b .reader{line-height:1.72;}
+  .th-c .reader{line-height:1.92;}
+  .th-d .reader{line-height:2;padding:26px 32px;}
+  .th-e .reader{line-height:2.05;}
+  /* D 杂志编排：节标题改为无边框金色字 + 顶部分隔线，每节首段首字下沉 */
+  .th-d #hdrTitle{letter-spacing:.04em;}
+  .th-d .reader h3{border-left:none;padding-left:0;color:var(--ac);letter-spacing:.14em;font-size:1.05em;border-top:0.5px solid var(--line);padding-top:14px;}
+  .th-d .reader h3 + div > p:first-child::first-letter{font-size:2.5em;float:left;line-height:1;margin:.06em .1em 0 0;color:var(--ac);font-weight:500;}
+  /* E 新中式：节标题黛蓝、引文绛红边、元信息行下双细线 */
+  .th-e .reader h3{color:var(--ac);}
+  .th-e .reader blockquote{border-left:3px solid #8c2f39;}
+  .th-e .reader .rhead + .rmeta{border-bottom:1px solid var(--line2);padding-bottom:12px;position:relative;}
+  .th-e .reader .rhead + .rmeta::after{content:"";display:block;border-top:1px solid var(--line2);margin-top:3px;}
+  /* C 暗色：局部地图的硬编码浅色改暗，否则浅蓝水面配深色陆地很跳 */
+  .th-c .minimap svg{background:#2a3440;}
+  .th-c .minimap .mmland{fill:#3a3f47;stroke:#4a4f57;}
+  .th-c .minimap .mmlake{fill:#31414f;stroke:#3f5568;}
+  .th-c .minimap .mmriver{stroke:#4a6a85;}
+  .th-c .minimap .mmlab{stroke:#2a3440;}
+  #stylePopup{min-width:172px;}
+  #stylePopup button.on{background:var(--ac-bg);color:var(--ac);}
   .menu-popup{position:absolute;top:100%;right:8px;background:var(--bg);border:0.5px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.08);padding:6px;min-width:240px;max-width:92vw;max-height:85vh;overflow:auto;z-index:10;}
   .menu-popup button{width:100%;text-align:left;margin:2px 0;padding:7px 10px;}
   .menu-popup #ghPanel{margin:4px 0;}
@@ -389,6 +423,16 @@
 <header>
   <h1><span id="hdrTitle">阅读卡片</span><span id="srcDot" class="src-dot" title="未连接数据源"></span></h1>
   <span class="spacer"></span>
+  <span style="position:relative;display:inline-block;">
+    <button id="styleBtn" class="hdr-btn" style="display:none;" title="阅读页风格（点击切换）" aria-label="切换阅读页风格">风格</button>
+    <div id="stylePopup" class="menu-popup" style="display:none;right:0;top:100%;min-width:172px;">
+      <button data-style="a">衬线纸墨</button>
+      <button data-style="b">极简白</button>
+      <button data-style="c">暗色夜读</button>
+      <button data-style="d">杂志编排</button>
+      <button data-style="e">新中式</button>
+    </div>
+  </span>
   <button id="fsDown" class="hdr-btn" style="display:none;" title="缩小文字" aria-label="缩小文字">A-</button>
   <button id="fsUp" class="hdr-btn" style="display:none;" title="放大文字" aria-label="放大文字">A+</button>
   <button id="readBtn" class="hdr-btn" style="display:none;" title="朗读本页" aria-label="朗读本页">朗读</button>
@@ -1427,7 +1471,8 @@ function show(view){
   $("navNext").style.display = isReader ? "block" : "none";
   $("navHome").style.display = (isReader || isCmp) ? "block" : "none";
   $("cmpToggle").style.display = isCmp ? "block" : "none";
-  for (const id of ["fsDown","fsUp","readBtn"]) $(id).style.display = isReader ? "inline-block" : "none";   /* A-/A+/朗读只在阅读视图出现 */
+  for (const id of ["styleBtn","fsDown","fsUp","readBtn"]) $(id).style.display = isReader ? "inline-block" : "none";   /* 风格/A-/A+/朗读只在阅读视图出现 */
+  if (isReader) applyStyleClass(); else { removeStyleClass(); $("stylePopup").style.display = "none"; }   /* 主题类只挂在阅读视图；离开即摘，首页/对比/编辑保持原样 */
   if (!isReader){ $("tocBox").style.display = "none"; stopReading(); }   /* 目录只在阅读视图出现；离开阅读视图朗读即停 */
 }
 $("homeBtn").onclick = () => goHome();
@@ -4105,6 +4150,55 @@ function stopReading(){
   updateReadBtn();
 }
 $("readBtn").onclick = () => { reading ? stopReading() : startReading(); };
+
+/* ================= #5d 阅读页五风格切换（「风格」钮在 A- 左边，下拉选中即换） ================= */
+const STYLE_KEY = "nb-reader-style";
+const STYLE_NAMES = {a:"衬线纸墨", b:"极简白", c:"暗色夜读", d:"杂志编排", e:"新中式"};
+let curStyle = "a";
+function applyStyleClass(){
+  document.body.classList.remove("th-a","th-b","th-c","th-d","th-e");
+  document.body.classList.add("th-" + curStyle);
+}
+function removeStyleClass(){
+  document.body.classList.remove("th-a","th-b","th-c","th-d","th-e");
+}
+function markStylePopup(){
+  $("stylePopup").querySelectorAll("button[data-style]").forEach(b => {
+    const on = b.dataset.style === curStyle;
+    b.classList.toggle("on", on);
+    b.textContent = (on ? "✓ " : "") + STYLE_NAMES[b.dataset.style];
+  });
+}
+function setStyle(id){
+  curStyle = STYLE_NAMES[id] ? id : "a";
+  try{ localStorage.setItem(STYLE_KEY, curStyle); }catch(e){}
+  applyStyleClass();
+  markStylePopup();
+}
+(function initStyle(){
+  let v = null;
+  try{ v = localStorage.getItem(STYLE_KEY); }catch(e){}
+  curStyle = STYLE_NAMES[v] ? v : "a";
+  markStylePopup();
+})();
+$("styleBtn").onclick = (e) => {
+  if (e.stopPropagation) e.stopPropagation();
+  const p = $("stylePopup");
+  const opening = p.style.display !== "";
+  p.style.display = opening ? "" : "none";
+  if (opening){ $("menuPopup").style.display = "none"; markStylePopup(); }
+};
+$("stylePopup").querySelectorAll("button[data-style]").forEach(b => {
+  b.onclick = (e) => {
+    if (e.stopPropagation) e.stopPropagation();
+    setStyle(b.dataset.style);
+    $("stylePopup").style.display = "none";
+  };
+});
+document.addEventListener("click", (e) => {
+  const p = $("stylePopup");
+  if (p.style.display !== "none" && !p.contains(e.target) && e.target.id !== "styleBtn") p.style.display = "none";
+});
 $("reloadBtn").onclick = () => {
   if (source.type === "gh") loadGh();
   else if (source.root) readLocalRoot(source.root).catch(e => setMsg("刷新失败：" + e.message));
