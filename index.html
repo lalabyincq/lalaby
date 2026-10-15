@@ -32,6 +32,10 @@
     - 页头浮动栏「风格」钮（位于 A- 左侧）弹下拉框，选中即切换：A 衬线纸墨 / B 极简白 / C 暗色夜读 / D 杂志编排 / E 新中式
     - 主题类挂在 body 上（重定义 CSS 变量 + 少量结构规则），只在阅读视图挂载，离开即摘；选择存 localStorage（nb-reader-style），默认 A
     - 全部用系统字体栈（Noto Serif SC / Songti / SimSun、PingFang / Microsoft YaHei），不引 web font，保持零依赖单文件
+  v6.8 2026-10-15 读法折叠（默认收起）：
+    - 「> 读法：」块改为原生 <details> 折叠：summary 标签 =「读法」徽标 + 首句预览（约 28 字，剥 ** 与 [[双链]]），点开看全文
+    - 纯前端识别，不动任何卡片数据；读法行格式全库统一（> 读法：单行），锚点可靠
+    - 朗读模块：折叠读法只读展开后的正文，跳过 summary 标签；图注/普通引文块不受影响
 -->
 <style>
   :root{--bg:#ffffff;--bg2:#f5f4f0;--line:#d9d7cf;--line2:#b4b2a9;--tx:#2c2c2a;--tx2:#5f5e5a;--tx3:#888780;--ac:#185fa5;--ac-bg:#e6f1fb;--ok:#0f6e56;--ok-bg:#e1f5ee;--warn:#993c1d;--warn-bg:#faece7;--fs:17px;}
@@ -144,6 +148,16 @@
   .reader p{margin:7px 0;}
   .reader ul{margin:7px 0;padding-left:22px;}
   .reader blockquote{margin:7px 0;padding:4px 12px;border-left:3px solid var(--line2);color:var(--tx2);background:var(--bg2);border-radius:0 6px 6px 0;}
+  /* 读法折叠：默认收起，summary 是「读法 + 首句预览」标签，点开看全文 */
+  .reader details.dufa{margin:7px 0;border:0.5px solid var(--line);border-left:3px solid var(--ac);border-radius:6px;background:var(--bg2);}
+  .reader details.dufa summary{list-style:none;cursor:pointer;padding:6px 12px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;user-select:none;-webkit-user-select:none;}
+  .reader details.dufa summary::-webkit-details-marker{display:none;}
+  .reader details.dufa summary::before{content:"▸";color:var(--ac);font-size:0.9em;transition:transform .15s;flex:0 0 auto;}
+  .reader details.dufa[open] summary::before{transform:rotate(90deg);}
+  .reader details.dufa .dufa-tag{font-size:0.8em;color:var(--ac);background:var(--ac-bg);border-radius:4px;padding:1px 7px;flex:0 0 auto;}
+  .reader details.dufa .dufa-prev{font-size:0.9em;color:var(--tx3);line-height:1.4;}
+  .reader details.dufa .dufa-body{margin:0;padding:2px 12px 10px;color:var(--tx2);font-size:0.94em;line-height:1.65;border-top:0.5px dashed var(--line);}
+  .reader details.dufa .dufa-body .wikilink{font-size:0.95em;}
   .reader code{background:var(--bg2);border-radius:4px;padding:0 5px;font-size:0.88em;font-family:Consolas,monospace;}
   .reader figure{margin:12px 0;}
   .reader figure img{max-width:100%;border-radius:8px;border:0.5px solid var(--line);display:block;background:var(--bg2);min-height:120px;}
@@ -1275,7 +1289,20 @@ function mdHtml(md, card){
     if (/^\s*>\s?/.test(line)){
       const q = [];
       while (i < lines.length && /^\s*>\s?/.test(lines[i])){ q.push(lines[i].replace(/^\s*>\s?/,"")); i++; }
-      out.push("<blockquote>" + inline(q.join(" ")) + "</blockquote>"); continue;
+      const txt = q.join(" ");
+      /* 读法块：默认折叠。识别「读法：」前缀，包一层 <details>，<summary> 放「读法 + 首句预览」。
+         纯前端识别，不动任何卡片数据；读法行格式全库统一（> 读法：单行），锚点可靠。 */
+      const dm = txt.match(/^读法[：:]\s*(.*)$/s);
+      if (dm){
+        const body = dm[1];
+        /* 首句预览：截到第一个句号/分号/「——」前，取约 28 字，剥 ** 与 [[ ]] */
+        const stop = body.search(/[。；——]/);
+        let prev = (stop > 0 ? body.slice(0, stop) : body).replace(/\*\*/g,"").replace(/\[\[|\]\]/g,"");
+        if (prev.length > 28){ prev = prev.slice(0,28) + "…"; }
+        out.push('<details class="dufa"><summary><span class="dufa-tag">读法</span><span class="dufa-prev">' + esc(prev) + '</span></summary><div class="dufa-body">' + inline(body) + '</div></details>');
+        continue;
+      }
+      out.push("<blockquote>" + inline(txt) + "</blockquote>"); continue;
     }
     if (/^\s*[-*]\s+/.test(line)){
       const items = [];
@@ -4111,8 +4138,15 @@ function pickZhVoice(){
 }
 function readSegments(){
   const out = [];
-  $("readerBox").querySelectorAll("h3, p, blockquote, li").forEach(el => {
+  $("readerBox").querySelectorAll("h3, p, blockquote, li, details.dufa").forEach(el => {
     if (el.closest(".minimap") || el.closest(".relbox") || el.closest("figure")) return;
+    /* 折叠读法：跳过 summary（标签+预览不是正文），只读展开后的 .dufa-body 正文 */
+    if (el.matches("details.dufa")){
+      const body = el.querySelector(".dufa-body");
+      const t = (body ? body.textContent : "").replace(/\s+/g, " ").trim();
+      if (t) out.push(t);
+      return;
+    }
     const t = (el.textContent || "").replace(/\s+/g, " ").trim();
     if (t) out.push(t);
   });
