@@ -417,9 +417,13 @@
     #graphSvg{height:55vh;min-height:300px;}
     .matrixwrap{font-size:11px;}
     table.matrix th,table.matrix td{padding:4px 5px;}
-    /* 手机地图最大化：隐藏年代滑块与操作提示句，让地图占满屏幕 */
+    /* 手机地图最大化：隐藏年代滑块与地图说明句，让地图占满屏幕 */
     .mapbar{display:none;}
-    .mlegend{display:none;}
+    #mapPane .mlegend{display:none;}   /* 只打地图的说明句；矩阵视图也用 .mlegend，不能误伤 */
+    /* 地图出血：去掉容器边框圆角，并清掉 main 的页面边距（由 JS 在切到地图视图时挂 body.mapfull） */
+    body.mapfull main{padding:0;}
+    body.mapfull #mapBox{border:0;border-radius:0;background:#d9e8f3;}
+    body.mapfull .health{display:none;}   /* 「数据体检」状态条也不出现在地图视图 */
   }
   @media (max-width:900px){
     main{padding:12px;}
@@ -1552,6 +1556,7 @@ $("viewTabs").querySelectorAll("button[data-pane]").forEach(b => b.onclick = () 
 function switchPane(p){
   curPane = p;
   for (const id of ["shelfPane","timelinePane","graphPane","matrixPane","mapPane"]) $(id).style.display = id === p + "Pane" ? "" : "none";
+  document.body.classList.toggle("mapfull", p === "map");   /* 手机地图视图：配合 CSS 出血（清 main 边距/去容器边框/藏体检条） */
   $("viewTabs").querySelectorAll("button[data-pane]").forEach(b => b.classList.toggle("on", b.dataset.pane === p));
   if (p === "timeline") renderTimeline();
   if (p === "matrix") renderMatrix();
