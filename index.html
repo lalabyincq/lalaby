@@ -10,12 +10,10 @@
     - 书架：系列筛选 / 标签聚合 / 全文搜索 / 年份排序
     - 阅读：Markdown 渲染、图片懒加载、[[双链]]跳转、自动反向链接、断链标"待写"
     - 双卡对比：同系列按维度逐行对齐，跨系列并排
-    - 数据体检：断链（待写线索）、缺图、待补小节
     - 数据源：本地项目文件夹（只读）/ GitHub 私有库（令牌沿用录入工具的 localStorage nb-gh）
-  v2 2026-09-20 可视化三视图：
+  v2 2026-09-20 可视化视图：
     - 时间轴：年份排序的纵向轴，按系列着色（负年/区间/"N世纪"走同一投影启发式）
     - 关系图谱：零依赖力学布局，卡片圆点可点可拖，断链以红色虚线节点标出（=待写卡片）
-    - 维度矩阵：卡片 × 维度填充情况一览（● 已写 / 待 占位 / – 未涉及）
   v3 2026-09-20 文件夹记忆：
     - 首次选择的项目文件夹句柄存入 IndexedDB（与录入卡片共享）；同会话再开自动连接，跨会话点一下「继续使用」即可，不再翻目录树
     - 浏览器安全模型不允许网页感知自身路径或凭路径开目录，句柄授权是纯前端唯一免选方案
@@ -130,11 +128,6 @@
   .toolbar input[type=search]{flex:1;min-width:200px;}
   .filterwrap{margin-bottom:12px;}
   .filterwrap .lab{font-size:11.5px;color:var(--tx3);margin:6px 0 2px;}
-  details.health{margin-bottom:14px;background:var(--bg);border:0.5px solid var(--line);border-radius:10px;padding:8px 14px;}
-  details.health summary{cursor:pointer;font-size:12.5px;color:var(--tx2);}
-  details.health .hrow{font-size:12.5px;padding:4px 0;border-bottom:0.5px dashed var(--line);}
-  details.health .hrow:last-child{border-bottom:none;}
-  details.health button.linklike{border:none;padding:0;color:var(--ac);}
   .empty{text-align:center;color:var(--tx3);padding:70px 20px;}
   .empty .big{font-size:15px;color:var(--tx2);margin-bottom:14px;}
   .empty button{margin:0 8px 10px;}
@@ -274,16 +267,7 @@
   .glegend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--tx3);padding:8px 4px;}
   .glegend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px;}
   .glegend i.broken{border:1.5px dashed var(--warn);background:var(--warn);border-radius:50%;}
-  /* 矩阵 */
-  .matrixwrap{overflow-x:auto;border:0.5px solid var(--line);border-radius:10px;background:var(--bg);}
-  table.matrix{border-collapse:collapse;font-size:12px;white-space:nowrap;}
-  table.matrix th,table.matrix td{border:0.5px solid var(--line);padding:5px 9px;text-align:center;}
-  table.matrix thead th{background:var(--bg2);font-weight:500;color:var(--tx2);position:sticky;top:0;}
-  table.matrix th.rowh,table.matrix td.rowh{text-align:left;position:sticky;left:0;background:var(--bg);font-weight:500;color:var(--ac);cursor:pointer;z-index:1;}
-  table.matrix thead th.rowh{z-index:2;background:var(--bg2);}
-  table.matrix td.yes{color:var(--ok);}
-  table.matrix td.todo{color:var(--warn);}
-  table.matrix td.no{color:var(--line2);}
+  /* 矩阵（已移除，2026-10-19） */
   .mlegend{font-size:11.5px;color:var(--tx3);padding:6px 2px;}
   /* 地图 */
   .mapbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:6px 2px;font-size:12px;color:var(--tx3);}
@@ -308,6 +292,11 @@
   #mapSvg .mlake{fill-rule:evenodd;fill:#bcd9ec;stroke:#8fb8d4;stroke-width:.5;vector-effect:non-scaling-stroke;}
   #mapSvg .mriver{fill:none;stroke:#6f9cbf;stroke-width:.6;opacity:.55;vector-effect:non-scaling-stroke;}
   #mapBox{position:relative;}
+  /* 图谱/地图视图出血：页边距最小化，画布占满浏览器宽度（JS 切到图谱/地图时挂 body.fullbleed） */
+  body.fullbleed main{max-width:none;padding:0 0 12px;}
+  body.fullbleed #mapBox,body.fullbleed #graphBox{border:0;border-radius:0;}
+  body.fullbleed #mapBox{background:#d9e8f3;}
+  body.fullbleed .glegend,body.fullbleed .mapbar,body.fullbleed .mlegend{padding-left:10px;padding-right:10px;}
   #mapBtns,#gBtns{position:absolute;top:8px;right:8px;display:flex;gap:4px;z-index:5;}
   #mapBtns button,#gBtns button{width:30px;height:30px;border:0.5px solid var(--line);background:var(--bg);border-radius:8px;font-size:14px;color:var(--tx2);cursor:pointer;}
   #graphSvg{touch-action:none;}
@@ -415,15 +404,9 @@
     .tl .item .yr{font-size:11.5px;min-width:72px;}
     .tl .item .nm{font-size:13px;}
     #graphSvg{height:55vh;min-height:300px;}
-    .matrixwrap{font-size:11px;}
-    table.matrix th,table.matrix td{padding:4px 5px;}
-    /* 手机地图最大化：隐藏年代滑块与地图说明句，让地图占满屏幕 */
+    /* 手机地图最大化：隐藏年代滑块与地图说明句（出血规则在媒体查询外的 body.fullbleed） */
     .mapbar{display:none;}
-    #mapPane .mlegend{display:none;}   /* 只打地图的说明句；矩阵视图也用 .mlegend，不能误伤 */
-    /* 地图出血：去掉容器边框圆角，并清掉 main 的页面边距（由 JS 在切到地图视图时挂 body.mapfull） */
-    body.mapfull main{padding:0;}
-    body.mapfull #mapBox{border:0;border-radius:0;background:#d9e8f3;}
-    body.mapfull .health{display:none;}   /* 「数据体检」状态条也不出现在地图视图 */
+    #mapPane .mlegend{display:none;}   /* 只打地图的说明句 */
   }
   @media (max-width:900px){
     main{padding:12px;}
@@ -495,13 +478,10 @@
 
   <!-- 书架及其同库视图 -->
   <div id="homeView" style="display:none;">
-    <details class="health" id="healthPanel"><summary id="healthSummary">数据体检</summary><div id="healthBody"></div></details>
-
     <nav class="vtabs" id="viewTabs">
       <button data-pane="shelf" class="on">书架</button>
       <button data-pane="timeline">时间轴</button>
       <button data-pane="graph">关系图谱</button>
-      <button data-pane="matrix">维度矩阵</button>
       <button data-pane="map">地图</button>
       <button id="cmpGoBtn" disabled>对比所选</button>
       <button id="cmpClearBtn" style="display:none;" title="取消全部对比选择">清空</button>
@@ -548,11 +528,7 @@
       <div id="graphBox"><div id="gBtns"><button id="gzIn" title="放大">＋</button><button id="gzOut" title="缩小">－</button><button id="gzReset" title="复位">⌂</button></div><svg id="graphSvg" viewBox="0 0 2200 640" preserveAspectRatio="xMidYMid meet"></svg></div>
     </div>
 
-    <!-- 维度矩阵 -->
-    <div id="matrixPane" style="display:none;">
-      <div class="mlegend">● 已写维度　<span style="color:var(--warn);">待</span> 留了待补占位　– 该卡未涉及此维度；点卡片名打开阅读。</div>
-      <div class="matrixwrap"><table class="matrix" id="matrixBox"></table></div>
-    </div>
+    <!-- 维度矩阵（已移除，2026-10-19） -->
 
     <!-- 地图（v5：离线海岸线，无国界） -->
     <div id="mapPane" style="display:none;">
@@ -1527,7 +1503,7 @@ let curPane = "shelf";
 let graphDirty = true;
 let graphSelDirty = false;         // 对比选择变化后，图谱需重渲染以同步选中高亮
 let graphEdgeMode = "mutual";      // 图谱边的口径：mutual=互为引用（默认，最干净）/ rel=关系边 / all=全部引用
-/* 对比选择复选框：时间轴/维度矩阵共用（书架/阅读页有各自内联逻辑） */
+/* 对比选择复选框：时间轴用（书架/阅读页有各自内联逻辑） */
 function toggleCmpBox(box){
   const uid = box.dataset.uid;
   if (box.checked){ if (chosen.size >= 4){ box.checked = false; alert("对比最多选 4 张，先取消一张。"); return; } chosen.add(uid); }
@@ -1555,11 +1531,10 @@ $("cmpClearBtn").onclick = clearCmp;
 $("viewTabs").querySelectorAll("button[data-pane]").forEach(b => b.onclick = () => switchPane(b.dataset.pane));
 function switchPane(p){
   curPane = p;
-  for (const id of ["shelfPane","timelinePane","graphPane","matrixPane","mapPane"]) $(id).style.display = id === p + "Pane" ? "" : "none";
-  document.body.classList.toggle("mapfull", p === "map");   /* 手机地图视图：配合 CSS 出血（清 main 边距/去容器边框/藏体检条） */
+  for (const id of ["shelfPane","timelinePane","graphPane","mapPane"]) $(id).style.display = id === p + "Pane" ? "" : "none";
+  document.body.classList.toggle("fullbleed", p === "map" || p === "graph");   /* 图谱/地图视图：配合 CSS 出血（清 main 边距与容器边框，画布占满浏览器宽度） */
   $("viewTabs").querySelectorAll("button[data-pane]").forEach(b => b.classList.toggle("on", b.dataset.pane === p));
   if (p === "timeline") renderTimeline();
-  if (p === "matrix") renderMatrix();
   if (p === "graph" && (graphDirty || graphSelDirty)) renderGraph();
   if (p === "map") renderMap();
 }
@@ -2651,37 +2626,7 @@ function renderCardGraph(svg){
   });
 }
 
-/* ================= 卡片 × 维度填充矩阵 ================= */
-const STRUCT_TITLES = new Set(["关系", "来源", "图像"]);
-function dimColumns(){
-  const cols = [];
-  for (const c of cards) for (const s of c.sections)
-    if (!STRUCT_TITLES.has(s.title) && !cols.includes(s.title)) cols.push(s.title);
-  return cols;
-}
-async function renderMatrix(){
-  await ensureAllFull();               // 矩阵需要全部小节，索引模式下先补全文
-  const cols = dimColumns();
-  const rows = cards.slice().sort((a,b)=> (a.yearKey==null?1:0)-(b.yearKey==null?1:0) || (a.yearKey||0)-(b.yearKey||0) || a.slug.localeCompare(b.slug));
-  let h = "<thead><tr><th class=\"rowh\">卡片（" + rows.length + "）</th>" + cols.map(t => "<th>" + esc(t) + "</th>").join("") + "</tr></thead><tbody>";
-  for (const c of rows){
-    const sec = new Map(c.sections.map(s => [s.title, s]));
-    h += '<tr><td class="rowh" data-open="' + escAttr(c.uid) + '"><input type="checkbox" class="cmp" data-uid="' + escAttr(c.uid) + '" title="加入对比"' + (chosen.has(c.uid) ? " checked" : "") + '> ' + esc(c.slug) + '</td>';
-    for (const t of cols){
-      const s = sec.get(t);
-      if (!s) h += '<td class="no" title="' + escAttr(c.slug + "：未涉及 " + t) + '">–</td>';
-      else if (s.placeholder) h += '<td class="todo" title="' + escAttr(c.slug + "：" + t + " 待补") + '">待</td>';
-      else h += '<td class="yes" title="' + escAttr(c.slug + "：" + t + " 已写") + '">●</td>';
-    }
-    h += "</tr>";
-  }
-  $("matrixBox").innerHTML = h + "</tbody>";
-  $("matrixBox").querySelectorAll(".rowh[data-open]").forEach(el => el.onclick = () => openCard(el.dataset.open));
-  $("matrixBox").querySelectorAll(".cmp").forEach(box => {
-    box.addEventListener("click", ev => ev.stopPropagation());   // 防止触发行头的打开卡片
-    box.onchange = () => { toggleCmpBox(box); graphSelDirty = true; };
-  });
-}
+/* 维度矩阵功能已于 2026-10-19 移除（按钮/面板/样式/渲染函数全部删除） */
 
 /* ================= 书架 ================= */
 let tagRank = new Map();          /* 标签 -> 全库出现次数；由 allTags() 顺带刷新，供书架卡面标签按热度排序 */
@@ -2882,42 +2827,6 @@ function renderHome(){
     updateCmpBar();
   });
   updateCmpBar();
-  renderHealth();
-}
-function renderHealth(){
-  const broken = new Map();       // slug -> [cards]
-  const missImg = [];
-  const todo = [];
-  for (const c of cards){
-    for (const sl of c.links) if (!slugIndex[sl]){ (broken.get(sl) || broken.set(sl, []).get(sl)).push(c); }
-    if (c.missingImgs.length) missImg.push(c);
-    if (c.placeholders.length) todo.push(c);
-  }
-  const total = broken.size + missImg.length + todo.length;
-  $("healthSummary").textContent = "数据体检：" + (total ? "发现 " + broken.size + " 个断链 / " + missImg.length + " 张缺图 / " + todo.length + " 张有待补" : "全部健康：无断链、无缺图、无待补") + (cards.some(c => c.summaryOnly) ? "（全文加载中，待补统计暂不完整…）" : "");
-  let h = "";
-  if (broken.size){
-    h += '<div style="margin-top:6px;color:var(--warn);">断链（缺失的卡片 = 待写线索）：</div>';
-    for (const [sl, cs] of broken){
-      h += '<div class="hrow">→ <button class="linklike" data-new="' + escAttr(sl) + '">[[' + esc(sl) + ']]</button>　被引于 ' +
-        cs.map(c => '<button class="linklike" data-open="' + escAttr(c.uid) + '">' + esc(c.slug) + "</button>").join("、") + "</div>";
-    }
-  }
-  if (missImg.length){
-    h += '<div style="margin-top:6px;color:var(--warn);">缺图（引用了但 图/ 里没有）：</div>';
-    for (const c of missImg){
-      h += '<div class="hrow"><button class="linklike" data-open="' + escAttr(c.uid) + '">' + esc(c.slug) + "</button>：" + c.missingImgs.map(esc).join("、") + "</div>";
-    }
-  }
-  if (todo.length){
-    h += '<div style="margin-top:6px;color:var(--tx2);">待补小节：</div>';
-    for (const c of todo){
-      h += '<div class="hrow"><button class="linklike" data-open="' + escAttr(c.uid) + '">' + esc(c.slug) + "</button>：" + esc(c.placeholders.join("、")) + "</div>";
-    }
-  }
-  $("healthBody").innerHTML = h;
-  $("healthBody").querySelectorAll("[data-open]").forEach(b => b.onclick = () => openCard(b.dataset.open));
-  $("healthBody").querySelectorAll("[data-new]").forEach(b => b.onclick = () => openNewFromSlug(b.dataset.new));
 }
 $("searchInput").addEventListener("input", renderHome);
 $("sortSel").addEventListener("change", renderHome);
@@ -4026,17 +3935,6 @@ function startNewCard(){
   show("editView");
   window.scrollTo(0,0);
   setStatus("新建卡片：填完点「保存卡片」将写入 " + (source.type === "gh" ? "GitHub 仓库" : "项目文件夹") + "。", "ok");
-}
-function openNewFromSlug(sl){
-  startNewCard();
-  const [yearPart, ...rest] = sl.split("-");
-  const placePart = rest.join("-");
-  const yearInput = document.querySelector('#axes input[data-k="年份"]');
-  const placeInput = document.querySelector('#axes input[data-k="地点"]');
-  if (/^-?\d+$/.test(yearPart) && yearInput) yearInput.value = yearPart;
-  if (placePart && placeInput) placeInput.value = placePart;
-  updatePreview();
-  setStatus("从断链 [[ " + sl + " ]] 新建卡片：坐标已预填。", "ok");
 }
 async function readRelFile(rt, rel){
   const parts = rel.split("/"); const name = parts.pop();
