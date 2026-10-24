@@ -164,12 +164,15 @@
   .reader .tag{font-size:0.88em;}
   .reader .badge{font-size:0.8em;}
   .reader .wikilink.broken em{font-size:0.78em;}
-  /* 高清灯箱：点击卡片内图片 → 直接加载存档高清原件；点图在适合窗口/原始尺寸间切换，放大后可滚动平移 */
+  /* 高清灯箱：点击卡片内图片 → 加载存档高清原件；右下角固定放大/缩小/关闭按钮；放大后按住拖动平移，左上角显示原文图注 */
   #lightbox{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);display:none;overflow:auto;padding:16px;}
-  #lightbox img{display:block;margin:auto;max-width:96vw;max-height:84vh;object-fit:contain;border-radius:6px;background:#111;cursor:zoom-in;}
-  #lightbox img.lbZoom{max-width:none;max-height:none;cursor:zoom-out;}
-  #lightbox .lbBar{position:fixed;top:12px;left:20px;max-width:70vw;color:#ddd;font-size:12.5px;text-shadow:0 1px 3px #000;}
-  #lightbox .lbClose{position:fixed;top:10px;right:16px;font-size:26px;color:#eee;background:none;border:none;cursor:pointer;line-height:1;}
+  #lightbox img{display:block;margin:auto;max-width:96vw;max-height:84vh;object-fit:contain;border-radius:6px;background:#111;cursor:default;user-select:none;-webkit-user-drag:none;}
+  #lightbox img.lbPan{cursor:grab;}
+  #lightbox .lbBar{position:fixed;top:12px;left:20px;max-width:calc(100vw - 150px);color:#ddd;font-size:12.5px;line-height:1.6;text-shadow:0 1px 3px #000;}
+  #lbBtns{position:fixed;right:16px;bottom:16px;z-index:10000;display:flex;gap:10px;align-items:center;}
+  #lbBtns button{width:44px;height:44px;border-radius:50%;border:none;background:rgba(48,48,48,.86);color:#f2f2f2;font-size:22px;line-height:1;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:0;}
+  #lbBtns button:hover{background:rgba(82,82,82,.95);}
+  #lbBtns button:disabled{opacity:.35;cursor:default;}
   .wikilink{border:none;background:var(--ac-bg);color:var(--ac);border-radius:5px;padding:0 6px;font-size:inherit;cursor:pointer;}
   .wikilink:hover{text-decoration:underline;color:var(--ac);}
   .wikilink.broken{background:var(--warn-bg);color:var(--warn);cursor:default;text-decoration:none;}
@@ -706,9 +709,13 @@
 </div>
 
 <div id="lightbox" style="display:none;">
-  <button class="lbClose" title="关闭（Esc）">×</button>
-  <img alt="查看图片">
+  <img alt="查看图片" draggable="false">
   <div class="lbBar"><span id="lbNote"></span></div>
+  <div id="lbBtns">
+    <button id="lbOut" title="缩小">−</button>
+    <button id="lbIn" title="放大">＋</button>
+    <button id="lbClose" title="关闭（Esc）">×</button>
+  </div>
 </div>
 
 <script>
@@ -1429,37 +1436,96 @@ async function resolveHiResUrl(rel){
   return cdnImgUrl(rel);
 }
 function lbImg(){ return $("lightbox").querySelector("img"); }
+/* 缩放档位：0=适合窗口；1=原始尺寸（1:1 像素，原图比窗口小时至少放大 1.5 倍）；此后逐级 ×1.5 */
+const LB_MAXLEVEL = 3;
+let lbLevel = 0, lbCap = "", lbDrag = null;
+/* 适合窗口时的显示宽度：与 CSS 的 max-width:96vw / max-height:84vh 一致，按原图比例算 */
+function lbFitWidth(){
+  const im = lbImg(), nw = im.naturalWidth, nh = im.naturalHeight;
+  if (!nw || !nh) return 0;
+  return Math.min(innerWidth * 0.96, innerHeight * 0.84 * (nw / nh));
+}
+function lbUpdate(){
+  const lb = $("lightbox"), im = lbImg();
+  if (lbLevel === 0){
+    im.style.width = ""; im.style.maxWidth = ""; im.style.maxHeight = ""; im.style.touchAction = "";
+    im.classList.remove("lbPan");
+    lb.scrollLeft = 0; lb.scrollTop = 0;
+  } else {
+    const fitW = lbFitWidth();
+    if (fitW){
+      let w = Math.max(im.naturalWidth, Math.round(fitW * 1.5));
+      for (let i = 1; i < lbLevel; i++) w = Math.round(w * 1.5);
+      im.style.maxWidth = "none"; im.style.maxHeight = "none";
+      im.style.width = w + "px";
+      im.style.touchAction = "none";      /* 触屏按住即拖动平移，不触发页面滚动 */
+      im.classList.add("lbPan");
+      /* 放大后图片大于窗口：把滚动位置对到图片正中，进原始尺寸时不会停在左上角 */
+      requestAnimationFrame(() => {
+        lb.scrollLeft = Math.max(0, Math.round((lb.scrollWidth - lb.clientWidth) / 2));
+        lb.scrollTop = Math.max(0, Math.round((lb.scrollHeight - lb.clientHeight) / 2));
+      });
+    }
+  }
+  $("lbOut").disabled = lbLevel === 0;
+  $("lbIn").disabled = lbLevel === LB_MAXLEVEL;
+  $("lbNote").textContent = lbLevel === 0 ? "" : lbCap;   /* 原始尺寸时左上角显示原文图注 */
+}
 async function loadHiRes(rel){
   $("lbNote").textContent = "正在读取高清原件（文件较大，请稍候）……";
   try {
     lbImg().src = await resolveHiResUrl(rel);
-    $("lbNote").textContent = rel + "（高清原件）——点击图片放大至原始尺寸，再点还原";
+    lbUpdate();                            /* 高清原件就位后按当前档位重新排版 */
   } catch(err){
     $("lbNote").textContent = "高清原件加载失败：" + (err && err.message ? err.message : err) + "（当前显示为普通版）";
   }
 }
-function openLightbox(src, hiRef){
+function openLightbox(src, hiRef, cap){
   const lb = $("lightbox");
   lb.style.display = "block";
-  lb.scrollTop = 0;
+  lb.scrollLeft = 0; lb.scrollTop = 0;
   const im = lbImg();
-  im.classList.remove("lbZoom");
+  im.removeAttribute("style");
+  im.classList.remove("lbPan");
   im.src = src || "";
-  $("lbNote").textContent = "";
+  lbLevel = 0; lbCap = (cap || "").trim();
+  lbUpdate();
   if (hiRef) loadHiRes(hiRef);
 }
-function closeLightbox(){ const lb = $("lightbox"); lb.style.display = "none"; lbImg().src = ""; $("lbNote").textContent = ""; }
-$("lightbox").addEventListener("click", e => { if (e.target.id === "lightbox" || e.target.classList.contains("lbClose")) closeLightbox(); });
+function closeLightbox(){
+  const lb = $("lightbox");
+  lb.style.display = "none"; lbImg().src = ""; $("lbNote").textContent = "";
+  lbLevel = 0; lbCap = ""; lbDrag = null;
+}
+lbImg().addEventListener("load", () => { if (lbLevel > 0) lbUpdate(); });
+$("lightbox").addEventListener("click", e => { if (e.target.id === "lightbox" || e.target.id === "lbClose") closeLightbox(); });
+$("lbIn").addEventListener("click", () => { if (lbLevel < LB_MAXLEVEL){ lbLevel++; lbUpdate(); } });
+$("lbOut").addEventListener("click", () => { if (lbLevel > 0){ lbLevel--; lbUpdate(); } });
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeLightbox(); });
-lbImg().addEventListener("click", () => {
-  const im = lbImg();
-  if (!im.src) return;
-  im.classList.toggle("lbZoom");
-  $("lbNote").textContent = im.classList.contains("lbZoom") ? "原始尺寸——拖动滚动条平移查看细节，再点图片还原" : "";
+/* 原始尺寸下：按住（或触屏）即移动操作，拖动平移图片 */
+lbImg().addEventListener("pointerdown", e => {
+  const lb = $("lightbox"), im = lbImg();
+  if (lbLevel === 0 || !im.src) return;
+  lbDrag = {x: e.clientX, y: e.clientY, sl: lb.scrollLeft, st: lb.scrollTop};
+  im.setPointerCapture(e.pointerId);
+  im.style.cursor = "grabbing";
+  e.preventDefault();
 });
+lbImg().addEventListener("pointermove", e => {
+  if (!lbDrag) return;
+  const lb = $("lightbox");
+  lb.scrollLeft = lbDrag.sl - (e.clientX - lbDrag.x);
+  lb.scrollTop = lbDrag.st - (e.clientY - lbDrag.y);
+});
+function lbEndDrag(){ if (!lbDrag) return; lbDrag = null; lbImg().style.cursor = ""; }
+lbImg().addEventListener("pointerup", lbEndDrag);
+lbImg().addEventListener("pointercancel", lbEndDrag);
 document.addEventListener("click", e => {
   const im = e.target.closest && e.target.closest("img.lazyimg");
-  if (im && !im.classList.contains("missing") && im.src) openLightbox(im.src, im.dataset.hires);
+  if (!im || im.classList.contains("missing") || !im.src) return;
+  const fig = im.closest("figure");
+  const fc = fig && fig.querySelector("figcaption");
+  openLightbox(im.src, im.dataset.hires, fc ? fc.textContent : "");
 });
 
 /* ================= 视图切换 ================= */
