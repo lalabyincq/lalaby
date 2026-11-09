@@ -315,6 +315,7 @@
   .minimap .mmlake{fill-rule:evenodd;fill:#bcd9ec;stroke:#8fb8d4;stroke-width:.8;vector-effect:non-scaling-stroke;}
   .minimap .mmriver{fill:none;stroke:#6f9cbf;stroke-width:.8;opacity:.55;vector-effect:non-scaling-stroke;}
   .minimap .mmdot{pointer-events:none;}                      /* 可见点极小，命中交给透明圈 */
+  .minimap .mmmulti{stroke:var(--bg);stroke-width:1.4px;vector-effect:non-scaling-stroke;}   /* 同坐标多卡：白描边提示可点多张 */
   .minimap .mmhit{fill:transparent;stroke:none;pointer-events:all;cursor:pointer;}
   .minimap .mmhalo{fill:var(--ac);opacity:.25;pointer-events:none;}
   .minimap .mmself{fill:var(--ac);stroke:var(--bg);pointer-events:none;}
@@ -1896,6 +1897,7 @@ const MM_DOT_MIN  = 0.9;           /* 缩小下限半径：再小就近邻看不
 const MM_HIT_MIN  = 11;            /* 透明命中圈最小半径（屏幕像素）：0.5px 的点也一定点得到 */
 const MM_ZOUT_MAX_MUL = 12;        /* 缩小上限＝初始视野的倍数封顶（防止高纬投影把世界压得过窄时反而放不出来） */
 let mmz = { x:-MMW/2, y:-MMH/2, w:MMW, h:MMH };
+let mmGroups = [];               /* 局部地图同坐标分组：一个地点一组，点多张卡时点击弹列表选择 */
 let mmMaxW = MMW, mmMaxH = MMH;    /* 当前卡可缩小到的最大视野（=该纬度下的全球宽度，再封顶） */
 let mmWorld = { x0:-MMW, x1:MMW, y0:-MMH, y1:MMH };   /* 当前投影下陆地数据的实际范围，供平移/缩放钳位 */
 function miniMapHtml(c){
@@ -1909,26 +1911,33 @@ function miniMapHtml(c){
   /* 陆地数据范围（软钳位用，避免拖到空白海图之外）：经度全域，纬度按 ±90° 留足 */
   mmWorld = { x0: (-180 - clon) * kx, x1: (180 - clon) * kx,
               y0: (clat - 90) * 110.574, y1: (clat + 90) * 110.574 };
-  const dots = [];
+  /* 同坐标多卡聚合（与主地图同思路）：一个地点一组，点多张卡时点击弹列表选卡 */
+  mmGroups = [];
+  const gmap = new Map();
   for (const o of cards){
     if (o === c || !o.fields["纬度"]) continue;
     const ola = parseFloat(o.fields["纬度"]), olo = parseFloat(o.fields["经度"]);
     if (!isFinite(ola) || !isFinite(olo)) continue;
-    dots.push({ o, q: proj(olo, ola) });   /* 全部有坐标的卡都画点：缩小到全球视野时才看得到远处簇 */
+    const key = ola.toFixed(4) + "," + olo.toFixed(4);
+    let gi = gmap.get(key);
+    if (gi == null){ gi = mmGroups.length; gmap.set(key, gi); mmGroups.push({ q: proj(olo, ola), cards: [] }); }
+    mmGroups[gi].cards.push(o);   /* 全部有坐标的卡都画点：缩小到全球视野时才看得到远处簇 */
   }
   const d = { land: pathOf(featRings("land"), proj, true), lakes: pathOf(featRings("lakes"), proj, true), rivers: pathOf(featRings("rivers"), proj, false) };
   const me = proj(clon, clat);
   const nm = c.fields["地点"] || c.slug;
   mmz = { x:-MMW/2, y:-MMH/2, w:MMW, h:MMH };
-  const tipOf = n => esc(n.o.slug) + " · " + esc(n.o.fields["年份"] || "?") + "（" +
-    Math.round(distKm(clat, clon, parseFloat(n.o.fields["纬度"]), parseFloat(n.o.fields["经度"]))) + " 公里）";
+  const tipOf = g => g.cards.length === 1
+    ? esc(g.cards[0].slug) + " · " + esc(g.cards[0].fields["年份"] || "?") + "（" +
+      Math.round(distKm(clat, clon, parseFloat(g.cards[0].fields["纬度"]), parseFloat(g.cards[0].fields["经度"]))) + " 公里）"
+    : g.cards.length + " 张卡片（点击选择）";
   const pos = q => 'cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '"';
   return '<div class="minimap">' +
     '<div class="mmBtns"><button data-mm="in" title="放大">＋</button><button data-mm="out" title="缩小">－</button><button data-mm="reset" title="复位">⌂</button></div>' +
     '<svg id="mmSvg" viewBox="' + mmz.x + " " + mmz.y + " " + mmz.w + " " + mmz.h + '" preserveAspectRatio="xMidYMid meet">' +
     '<path class="mmland" d="' + d.land + '"/><path class="mmlake" d="' + d.lakes + '"/><path class="mmriver" d="' + d.rivers + '"/>' +
-    dots.map(n => '<circle class="mmdot" ' + pos(n.q) + ' r="1" fill="' + cardColor(n.o) + '"/>' +
-      '<circle class="mmhit" data-open="' + escAttr(n.o.uid) + '" ' + pos(n.q) + ' r="1"><title>' + tipOf(n) + '</title></circle>').join("") +
+    mmGroups.map((g, gi) => '<circle class="mmdot' + (g.cards.length > 1 ? " mmmulti" : "") + '" ' + pos(g.q) + ' r="1" fill="' + cardColor(g.cards[0]) + '"/>' +
+      '<circle class="mmhit" data-mg="' + gi + '" ' + pos(g.q) + ' r="1"><title>' + tipOf(g) + '</title></circle>').join("") +
     '<circle class="mmhalo" ' + pos(me) + ' r="1"/>' +
     '<circle class="mmself" ' + pos(me) + ' r="1"/>' +
     '<text class="mmlab" data-mx="' + me[0].toFixed(1) + '" data-my="' + me[1].toFixed(1) + '" ' + pos(me) + '>' + esc(nm) + '</text>' +
@@ -2011,13 +2020,33 @@ function initMiniMap(){
     /* setPointerCapture 把 click 重定向到 svg，圆点自己的 onclick 收不到——在 pointerup 里定位 */
     if (md && !moved){
       const t = document.elementFromPoint(ev.clientX, ev.clientY);
-      const hit = t && t.closest ? t.closest(".mmhit[data-open]") : null;
-      if (hit) openCard(hit.dataset.open);
+      const hit = t && t.closest ? t.closest(".mmhit[data-mg]") : null;
+      if (hit){
+        const g = mmGroups[Number(hit.dataset.mg)];
+        if (g && g.cards.length === 1) openCard(g.cards[0].uid);
+        else if (g && g.cards.length > 1) mmMenuShow(g, ev.clientX, ev.clientY);   /* 同坐标多卡：弹列表选卡（同主地图） */
+      }
     }
     md = null;
   });
   el.addEventListener("dblclick", () => mmReset());
   applyMmz();
+}
+/* 局部地图多卡点弹列表：单击行直接进卡（阅读页场景不做对比选中，与主地图的单击选中/双击进卡不同） */
+function mmMenuShow(g, x, y){
+  mMenuClose();
+  mMenuEl = document.createElement("div");
+  mMenuEl.id = "mMenu";
+  mMenuEl.innerHTML = g.cards.map(c =>
+    '<div class="mMenuIt" data-open="' + escAttr(c.uid) + '"><span class="mMenuDot" style="background:' + cardColor(c) + '"></span>' +
+    esc((c.fields["年份"] || "?") + (c.fields["地点"] ? " · " + c.fields["地点"] : "")) + "</div>").join("");
+  document.body.appendChild(mMenuEl);
+  const w = mMenuEl.offsetWidth, h = mMenuEl.offsetHeight;
+  mMenuEl.style.left = Math.max(6, Math.min(x, innerWidth - w - 6)) + "px";
+  mMenuEl.style.top = Math.max(6, Math.min(y + 10, innerHeight - h - 6)) + "px";
+  mMenuEl.querySelectorAll(".mMenuIt").forEach(el => {
+    el.onclick = () => { mMenuClose(); openCard(el.dataset.open); };
+  });
 }
 
 /* ================= 时间轴 ================= */
@@ -3121,7 +3150,7 @@ const BUILTIN = {
   chronicle: {
     name:"编年卡片", folder:"编年",
     req:["年份","地点"],
-    dims:["政治","经济","社会","科技","日常生活","艺术","哲学与思想","环境与地理"],
+    dims:["政治","经济","社会","科技","日常生活","哲学与思想","环境与地理","艺术"],
     dimHints:{
       "政治":"谁说了算？权力怎么分配？——例：君主官僚制成熟期，科举文官主导朝政。",
       "经济":"人们靠什么谋生？买卖怎么进行？——例：纸币会子流通，瓦舍勾栏构成庞大服务业经济。",
