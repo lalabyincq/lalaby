@@ -59,6 +59,8 @@
   .hdr-btn{border:0.5px solid var(--line2);background:var(--bg);border-radius:6px;padding:2px 9px;font-size:12.5px;line-height:1.5;color:var(--tx2);cursor:pointer;display:none;white-space:nowrap;}
   .hdr-btn:hover{border-color:var(--ac);color:var(--ac);}
   .hdr-btn.on{background:var(--ac-bg);border-color:var(--ac);color:var(--ac);}
+  /* 四个阅读工具按钮成组：桌面在页头，手机整组搬进 ⋮ 菜单（JS 按宽度搬 DOM，按钮只有一套） */
+  .reader-tools{position:relative;display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;}
   /* ===== 阅读页五风格（页头「风格」钮切换，localStorage: nb-reader-style；默认 a 衬线纸墨）=====
      主题类挂在 body 上，只重定义变量 + 少量结构规则；show() 进出阅读视图时挂/摘，
      首页/对比/编辑视图不受影响；--fs（A+/A-）与风格正交，互不干扰。 */
@@ -67,6 +69,10 @@
   .th-c{--bg:#1e2025;--bg2:#262a31;--line:#34373d;--line2:#454a53;--tx:#d6d1c5;--tx2:#a9a496;--tx3:#8b8677;--ac:#b98f4d;--ac-bg:#2e2a20;--ok:#5dcaa5;--ok-bg:#1d2b26;--warn:#e0997b;--warn-bg:#33241d;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;}
   .th-d{--bg:#fdfdfb;--bg2:#f4f3ee;--line:#e7e6e1;--line2:#d3d2cb;--tx:#29261f;--tx2:#6e6a5e;--tx3:#a3906c;--ac:#a3906c;--ac-bg:#f5efdf;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;}
   .th-e{--bg:#f3eee1;--bg2:#ede6d3;--line:#d6cbb0;--line2:#b3a67e;--tx:#2e2a22;--tx2:#6f6650;--tx3:#8a7f66;--ac:#2e4a62;--ac-bg:#e4e9ee;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;}
+  /* f 宋刻本：皮纸暖米底、浓墨、朱丝栏界行与朱笔句读；字面取宋体衬线，行距放宽仿雕版 */
+  .th-f{--bg:#f6eed9;--bg2:#efe3c8;--line:#d9c9a6;--line2:#b9a37a;--tx:#31291d;--tx2:#5c4c37;--tx3:#8a7455;--ac:#a33a2b;--ac-bg:#f2e0d5;--ok:#4b6b4a;--ok-bg:#e3ebdd;--warn:#8c4a20;--warn-bg:#f5e3d3;font-family:"Songti SC","STSong","SimSun","Noto Serif SC",serif;}
+  /* g 包豪斯：黑白灰＋原色红、正交网格、几何无衬线；方角、粗标题、横线分节 */
+  .th-g{--bg:#fbfbf9;--bg2:#f0f0ec;--line:#d0d0cc;--line2:#1c1c1c;--tx:#141414;--tx2:#4b4b48;--tx3:#7c7c78;--ac:#d2232a;--ac-bg:#fdeaea;--ok:#1f7a5a;--ok-bg:#e2f2eb;--warn:#b45b06;--warn-bg:#fbeee0;font-family:"Helvetica Neue",Arial,"PingFang SC","Microsoft YaHei",sans-serif;}
   .th-a .reader{line-height:1.95;}
   .th-b .reader{line-height:1.72;}
   .th-c .reader{line-height:1.92;}
@@ -82,6 +88,17 @@
   /* E 新中式：元信息行（现在的标签行）下双细线 */
   .th-e .reader > .rmeta{border-bottom:1px solid var(--line2);padding-bottom:12px;position:relative;}
   .th-e .reader > .rmeta::after{content:"";display:block;border-top:1px solid var(--line2);margin-top:3px;}
+  /* f 宋刻本：节标题用朱色双线界行，引文去圆角、只留朱色细栏 */
+  .th-f .reader{line-height:2.05;}
+  .th-f .reader h3{border-left:3px double var(--ac);letter-spacing:.08em;}
+  .th-f .reader blockquote{border-left:2px solid var(--ac);background:transparent;border-radius:0;}
+  .th-f #hdrTitle{letter-spacing:.05em;}
+  /* g 包豪斯：方角、黑色细框、节标题下划原色红粗线，标签去圆角 */
+  .th-g .reader{line-height:1.7;border:1px solid var(--line2);border-radius:0;}
+  .th-g .reader h3{border-left:0;border-bottom:3px solid var(--ac);padding-left:0;font-weight:700;letter-spacing:.02em;}
+  .th-g .reader blockquote{border-left:6px solid var(--line2);border-radius:0;}
+  .th-g .reader .tag{border-radius:0;}
+  .th-g #hdrTitle{font-weight:600;letter-spacing:.02em;}
   /* C 暗色：局部地图的硬编码浅色改暗，否则浅蓝水面配深色陆地很跳 */
   .th-c .minimap svg{background:#2a3440;}
   .th-c .minimap .mmland{fill:#3a3f47;stroke:#4a4f57;}
@@ -434,6 +451,20 @@
     .reader{padding:16px;}
     #editView{grid-template-columns:1fr;}
   }
+  /* 手机：阅读工具收进 ⋮ 菜单；卡片左右完全贴边，正文铺满可用宽度（上下留白保留）。
+     放在 900px 规则之后，靠源码顺序覆盖 main/.reader 的 padding；逐主题列选择器，
+     才能压过 .th-d .reader / .th-g .reader 这类更高优先级的主题规则。 */
+  @media (max-width:760px){
+    main{padding-left:0;padding-right:0;}
+    .reader,.th-a .reader,.th-b .reader,.th-c .reader,.th-d .reader,.th-e .reader,.th-f .reader,.th-g .reader{
+      max-width:none;padding-left:0;padding-right:0;border-left:0;border-right:0;border-radius:0;
+    }
+    #menuTools{padding:2px 0 6px;margin-bottom:4px;border-bottom:0.5px solid var(--line);}
+    #menuTools .reader-tools{display:block;position:static;}
+    #menuTools .hdr-btn{width:100%;text-align:left;font-size:13px;padding:7px 10px;margin:2px 0;}
+    #menuTools #stylePopup{position:static;right:auto;top:auto;min-width:0;width:100%;box-shadow:none;margin:2px 0 6px;max-height:none;}
+    #menuTools #stylePopup button{font-size:12px;padding:6px 10px;}
+  }
 </style>
 </head>
 <body>
@@ -447,7 +478,7 @@
 <header>
   <h1><span id="hdrTitle">阅读卡片</span><span id="srcDot" class="src-dot" title="未连接数据源"></span></h1>
   <span class="spacer"></span>
-  <span style="position:relative;display:inline-block;">
+  <span id="readerTools" class="reader-tools">
     <button id="styleBtn" class="hdr-btn" style="display:none;" title="阅读页风格（点击切换）" aria-label="切换阅读页风格">风格</button>
     <div id="stylePopup" class="menu-popup" style="display:none;right:0;top:100%;min-width:172px;">
       <button data-style="a">衬线纸墨</button>
@@ -455,13 +486,16 @@
       <button data-style="c">暗色夜读</button>
       <button data-style="d">杂志编排</button>
       <button data-style="e">新中式</button>
+      <button data-style="f">宋刻本</button>
+      <button data-style="g">包豪斯</button>
     </div>
+    <button id="fsDown" class="hdr-btn" style="display:none;" title="缩小文字" aria-label="缩小文字">A-</button>
+    <button id="fsUp" class="hdr-btn" style="display:none;" title="放大文字" aria-label="放大文字">A+</button>
+    <button id="readBtn" class="hdr-btn" style="display:none;" title="朗读本页" aria-label="朗读本页">朗读</button>
   </span>
-  <button id="fsDown" class="hdr-btn" style="display:none;" title="缩小文字" aria-label="缩小文字">A-</button>
-  <button id="fsUp" class="hdr-btn" style="display:none;" title="放大文字" aria-label="放大文字">A+</button>
-  <button id="readBtn" class="hdr-btn" style="display:none;" title="朗读本页" aria-label="朗读本页">朗读</button>
   <button id="menuBtn" class="menu-btn" aria-label="菜单" title="菜单">⋮</button>
   <div id="menuPopup" class="menu-popup" style="display:none;">
+    <div id="menuTools"></div>
     <button id="homeBtn" style="display:none;">← 返回书架</button>
     <button id="newCardBtn" class="primary" style="display:none;">+ 新增卡片</button>
     <button id="reloadBtn" style="display:none;">刷新数据</button>
@@ -1595,6 +1629,7 @@ function show(view){
   $("navHome").style.display = (isReader || isCmp) ? "block" : "none";
   $("cmpToggle").style.display = isCmp ? "block" : "none";
   for (const id of ["styleBtn","fsDown","fsUp","readBtn"]) $(id).style.display = isReader ? "inline-block" : "none";   /* 风格/A-/A+/朗读只在阅读视图出现 */
+  if ($("menuTools")) $("menuTools").style.display = isReader ? "" : "none";   /* 手机 ⋮ 菜单里这组工具同样只在阅读视图出现 */
   if (isReader) applyStyleClass(); else { removeStyleClass(); $("stylePopup").style.display = "none"; }   /* 主题类只挂在阅读视图；离开即摘，首页/对比/编辑保持原样 */
   if (!isReader){ $("tocBox").style.display = "none"; stopReading(); }   /* 目录只在阅读视图出现；离开阅读视图朗读即停 */
 }
@@ -4234,16 +4269,31 @@ function stopReading(){
 }
 $("readBtn").onclick = () => { reading ? stopReading() : startReading(); };
 
-/* ================= #5d 阅读页五风格切换（「风格」钮在 A- 左边，下拉选中即换） ================= */
+/* ================= #5d 阅读页风格切换（「风格」钮在 A- 左边，下拉选中即换） =================
+   2026-11-15：新增 f 宋刻本、g 包豪斯；手机端「风格/A-/A+/朗读」搬进 ⋮ 菜单。 */
+/* 手机端把四个阅读工具整组搬进 ⋮ 菜单：搬 DOM 而非复制，按钮只留一套，事件与状态全部沿用 */
+const mqMobile = window.matchMedia("(max-width:760px)");
+function placeReaderTools(){
+  const tools = $("readerTools"), slot = $("menuTools"), mb = $("menuBtn");
+  if (mqMobile.matches){
+    if (tools.parentNode !== slot) slot.appendChild(tools);
+  } else if (tools.parentNode !== mb.parentNode || tools.nextSibling !== mb){
+    mb.parentNode.insertBefore(tools, mb);
+  }
+}
+placeReaderTools();
+if (mqMobile.addEventListener) mqMobile.addEventListener("change", placeReaderTools);
+else if (mqMobile.addListener) mqMobile.addListener(placeReaderTools);
+
 const STYLE_KEY = "nb-reader-style";
-const STYLE_NAMES = {a:"衬线纸墨", b:"极简白", c:"暗色夜读", d:"杂志编排", e:"新中式"};
+const STYLE_NAMES = {a:"衬线纸墨", b:"极简白", c:"暗色夜读", d:"杂志编排", e:"新中式", f:"宋刻本", g:"包豪斯"};
 let curStyle = "a";
 function applyStyleClass(){
-  document.body.classList.remove("th-a","th-b","th-c","th-d","th-e");
+  document.body.classList.remove("th-a","th-b","th-c","th-d","th-e","th-f","th-g");
   document.body.classList.add("th-" + curStyle);
 }
 function removeStyleClass(){
-  document.body.classList.remove("th-a","th-b","th-c","th-d","th-e");
+  document.body.classList.remove("th-a","th-b","th-c","th-d","th-e","th-f","th-g");
 }
 function markStylePopup(){
   $("stylePopup").querySelectorAll("button[data-style]").forEach(b => {
@@ -4269,7 +4319,8 @@ $("styleBtn").onclick = (e) => {
   const p = $("stylePopup");
   const opening = p.style.display !== "";
   p.style.display = opening ? "" : "none";
-  if (opening){ $("menuPopup").style.display = "none"; markStylePopup(); }
+  /* 手机端风格钮就在 ⋮ 菜单里，关掉菜单会把刚展开的风格列表一起藏掉 */
+  if (opening){ if (!mqMobile.matches) $("menuPopup").style.display = "none"; markStylePopup(); }
 };
 $("stylePopup").querySelectorAll("button[data-style]").forEach(b => {
   b.onclick = (e) => {
