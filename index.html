@@ -61,7 +61,9 @@
   .hdr-btn.on{background:var(--ac-bg);border-color:var(--ac);color:var(--ac);}
   /* 四个阅读工具按钮成组：桌面在页头，手机整组搬进 ⋮ 菜单（JS 按宽度搬 DOM，按钮只有一套） */
   .reader-tools{position:relative;display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;}
-  /* ===== 阅读页五风格（页头「风格」钮切换，localStorage: nb-reader-style；默认 a 衬线纸墨）=====
+  /* ===== 阅读页风格（页头「风格」钮切换，localStorage: nb-reader-style；默认 a 衬线纸墨）=====
+     共 11 套：a–e 原有，f 宋刻本 / g 包豪斯 / h 浮世绘·蓝摺 / i 敦煌土壁 / j 水墨留白 / k 装饰艺术。
+     新增主题色板与字体依视觉风格谱系参考命名，只描述视觉语言，不做作品归属。 */
      主题类挂在 body 上，只重定义变量 + 少量结构规则；show() 进出阅读视图时挂/摘，
      首页/对比/编辑视图不受影响；--fs（A+/A-）与风格正交，互不干扰。 */
   .th-a{--bg:#f7f4ec;--bg2:#f1ecdf;--line:#ddd5c3;--line2:#c4b89f;--tx:#33302a;--tx2:#6d6552;--tx3:#8a8172;--ac:#9e2b25;--ac-bg:#f3e6e0;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;}
@@ -73,6 +75,14 @@
   .th-f{--bg:#f6eed9;--bg2:#efe3c8;--line:#d9c9a6;--line2:#b9a37a;--tx:#31291d;--tx2:#5c4c37;--tx3:#8a7455;--ac:#a33a2b;--ac-bg:#f2e0d5;--ok:#4b6b4a;--ok-bg:#e3ebdd;--warn:#8c4a20;--warn-bg:#f5e3d3;font-family:"Songti SC","STSong","SimSun","Noto Serif SC",serif;}
   /* g 包豪斯：黑白灰＋原色红、正交网格、几何无衬线；方角、粗标题、横线分节 */
   .th-g{--bg:#fbfbf9;--bg2:#f0f0ec;--line:#d0d0cc;--line2:#1c1c1c;--tx:#141414;--tx2:#4b4b48;--tx3:#7c7c78;--ac:#d2232a;--ac-bg:#fdeaea;--ok:#1f7a5a;--ok-bg:#e2f2eb;--warn:#b45b06;--warn-bg:#fbeee0;font-family:"Helvetica Neue",Arial,"PingFang SC","Microsoft YaHei",sans-serif;}
+  /* h 浮世绘·蓝摺：木版套色以蓝为主调，平涂色块、方角、轮廓线，朱印作点缀 */
+  .th-h{--bg:#f2f6f6;--bg2:#e4eef0;--line:#c6d8dd;--line2:#88aebc;--tx:#173142;--tx2:#3d6377;--tx3:#7894a1;--ac:#b5462f;--ac-bg:#f7e9e4;--ok:#2f6b5f;--ok-bg:#e2efe9;--warn:#a25b28;--warn-bg:#f6e9dc;font-family:"Yu Mincho","Hiragino Mincho ProN","Songti SC","STSong",serif;}
+  /* i 敦煌土壁：暖沙底、赭墨、石青与土红，取壁画矿物色的层次 */
+  .th-i{--bg:#f2e6cd;--bg2:#e8d8b9;--line:#d6c09c;--line2:#b2936d;--tx:#4a3320;--tx2:#7a5a3c;--tx3:#9c8060;--ac:#2f6b6b;--ac-bg:#dceae7;--ok:#4b6b4a;--ok-bg:#e3ebdd;--warn:#a8452e;--warn-bg:#f5e0d5;font-family:"Songti SC","STSong","SimSun","Noto Serif SC",serif;}
+  /* j 水墨留白：浓墨、极淡底、大行距与细淡分隔，取南宋边角山水的留白 */
+  .th-j{--bg:#fcfcfa;--bg2:#f2f2ef;--line:#e3e3df;--line2:#c9c9c4;--tx:#1d1f1d;--tx2:#55574f;--tx3:#8b8d86;--ac:#46534b;--ac-bg:#edf0ec;--ok:#3c6650;--ok-bg:#e8f0ea;--warn:#8c5a33;--warn-bg:#f4ebe2;font-family:"Songti SC","STSong","Noto Serif SC",serif;}
+  /* k 装饰艺术：深墨绿底、金色对称线框、几何无装饰，第二套深色主题 */
+  .th-k{--bg:#17231f;--bg2:#20302a;--line:#3a4c42;--line2:#6d6242;--tx:#f3ead3;--tx2:#cfc4a8;--tx3:#9b937a;--ac:#c9a227;--ac-bg:#2c2a1c;--ok:#7fc4a0;--ok-bg:#20352c;--warn:#e0a875;--warn-bg:#3a2a1e;font-family:"Bodoni MT","Didot",Georgia,"Songti SC","STSong",serif;}
   .th-a .reader{line-height:1.95;}
   .th-b .reader{line-height:1.72;}
   .th-c .reader{line-height:1.92;}
@@ -99,12 +109,37 @@
   .th-g .reader blockquote{border-left:6px solid var(--line2);border-radius:0;}
   .th-g .reader .tag{border-radius:0;}
   .th-g #hdrTitle{font-weight:600;letter-spacing:.02em;}
+  /* h 浮世绘·蓝摺：靛色粗边栏、方角平涂引文块 */
+  .th-h .reader{line-height:1.9;}
+  .th-h .reader h3{border-left:6px solid var(--tx2);letter-spacing:.06em;}
+  .th-h .reader blockquote{border-left:3px solid var(--line2);border-radius:0;background:var(--bg2);}
+  .th-h .reader .tag{border-radius:0;}
+  /* i 敦煌土壁：石青粗顶线分节、无左边线，土红标签 */
+  .th-i .reader{line-height:2;}
+  .th-i .reader h3{border-left:0;padding-left:0;border-top:2px solid var(--ac);padding-top:8px;color:var(--ac);}
+  .th-i .reader blockquote{border-left:4px solid #a8452e;border-radius:0;}
+  /* j 水墨留白：淡墨细线、字距拉开、段间留白放大 */
+  .th-j .reader{line-height:2.15;}
+  .th-j .reader h3{border-left:0;padding-left:0;font-weight:400;letter-spacing:.2em;color:var(--tx);border-bottom:0.5px solid var(--line);padding-bottom:6px;}
+  .th-j .reader p{margin:11px 0;}
+  .th-j .reader blockquote{border-left:1px solid var(--line2);background:transparent;border-radius:0;}
+  /* k 装饰艺术：金色上下对称线框、双线外框、深底引用 */
+  .th-k .reader{line-height:1.9;border:1px double var(--line2);border-radius:0;}
+  .th-k .reader h3{border-left:0;padding-left:0;color:var(--ac);letter-spacing:.18em;text-align:center;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2);padding:6px 0;}
+  .th-k .reader blockquote{border-left:3px solid var(--ac);background:transparent;border-radius:0;color:var(--tx2);}
+  .th-k #hdrTitle{letter-spacing:.08em;}
   /* C 暗色：局部地图的硬编码浅色改暗，否则浅蓝水面配深色陆地很跳 */
   .th-c .minimap svg{background:#2a3440;}
   .th-c .minimap .mmland{fill:#3a3f47;stroke:#4a4f57;}
   .th-c .minimap .mmlake{fill:#31414f;stroke:#3f5568;}
   .th-c .minimap .mmriver{stroke:#4a6a85;}
   .th-c .minimap .mmlab{stroke:#2a3440;}
+  /* K 深底：局部地图同样要压暗，金色作水系 */
+  .th-k .minimap svg{background:#20302a;}
+  .th-k .minimap .mmland{fill:#3a4c42;stroke:#5a6e5e;}
+  .th-k .minimap .mmlake{fill:#17231f;stroke:#3a4c42;}
+  .th-k .minimap .mmriver{stroke:#c9a227;}
+  .th-k .minimap .mmlab{stroke:#20302a;}
   #stylePopup{min-width:172px;}
   #stylePopup button.on{background:var(--ac-bg);color:var(--ac);}
   .menu-popup{position:absolute;top:100%;right:8px;background:var(--bg);border:0.5px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.08);padding:6px;min-width:240px;max-width:92vw;max-height:85vh;overflow:auto;z-index:10;}
@@ -451,19 +486,22 @@
     .reader{padding:16px;}
     #editView{grid-template-columns:1fr;}
   }
-  /* 手机：阅读工具收进 ⋮ 菜单；卡片左右完全贴边，正文铺满可用宽度（上下留白保留）。
-     放在 900px 规则之后，靠源码顺序覆盖 main/.reader 的 padding；逐主题列选择器，
-     才能压过 .th-d .reader / .th-g .reader 这类更高优先级的主题规则。 */
+  /* 手机：阅读工具收进 ⋮ 菜单；卡片左右留 12px 呼吸位（原 28px 太挤、0 太贴边），
+     上下留白保留、左右边框与圆角去掉。放在 900px 规则之后靠源码顺序覆盖 padding；
+     逐主题列选择器才能压过 .th-d .reader / .th-g .reader 这类更高优先级的主题规则。 */
   @media (max-width:760px){
     main{padding-left:0;padding-right:0;}
-    .reader,.th-a .reader,.th-b .reader,.th-c .reader,.th-d .reader,.th-e .reader,.th-f .reader,.th-g .reader{
-      max-width:none;padding-left:0;padding-right:0;border-left:0;border-right:0;border-radius:0;
+    .reader,.th-a .reader,.th-b .reader,.th-c .reader,.th-d .reader,.th-e .reader,
+    .th-f .reader,.th-g .reader,.th-h .reader,.th-i .reader,.th-j .reader,.th-k .reader{
+      max-width:none;padding-left:12px;padding-right:12px;border-left:0;border-right:0;border-radius:0;
     }
     #menuTools{padding:2px 0 6px;margin-bottom:4px;border-bottom:0.5px solid var(--line);}
     #menuTools .reader-tools{display:block;position:static;}
     #menuTools .hdr-btn{width:100%;text-align:left;font-size:13px;padding:7px 10px;margin:2px 0;}
-    #menuTools #stylePopup{position:static;right:auto;top:auto;min-width:0;width:100%;box-shadow:none;margin:2px 0 6px;max-height:none;}
-    #menuTools #stylePopup button{font-size:12px;padding:6px 10px;}
+    /* 11 套风格一次排完：两列网格，免得最后两套被内滚藏住、看不出还能滑 */
+    #menuTools #stylePopup{position:static;right:auto;top:auto;min-width:0;width:100%;box-shadow:none;margin:2px 0 6px;
+      display:grid;grid-template-columns:1fr 1fr;gap:4px;max-height:none;overflow:visible;}
+    #menuTools #stylePopup button{font-size:12px;padding:6px 8px;margin:0;width:100%;}
   }
 </style>
 </head>
@@ -488,6 +526,10 @@
       <button data-style="e">新中式</button>
       <button data-style="f">宋刻本</button>
       <button data-style="g">包豪斯</button>
+      <button data-style="h">浮世绘·蓝摺</button>
+      <button data-style="i">敦煌土壁</button>
+      <button data-style="j">水墨留白</button>
+      <button data-style="k">装饰艺术</button>
     </div>
     <button id="fsDown" class="hdr-btn" style="display:none;" title="缩小文字" aria-label="缩小文字">A-</button>
     <button id="fsUp" class="hdr-btn" style="display:none;" title="放大文字" aria-label="放大文字">A+</button>
@@ -4270,7 +4312,8 @@ function stopReading(){
 $("readBtn").onclick = () => { reading ? stopReading() : startReading(); };
 
 /* ================= #5d 阅读页风格切换（「风格」钮在 A- 左边，下拉选中即换） =================
-   2026-11-15：新增 f 宋刻本、g 包豪斯；手机端「风格/A-/A+/朗读」搬进 ⋮ 菜单。 */
+   2026-11-15：新增 f 宋刻本、g 包豪斯；11-16 再补 h 浮世绘·蓝摺 / i 敦煌土壁 / j 水墨留白 / k 装饰艺术（共 11 套）；
+   手机端「风格/A-/A+/朗读」搬进 ⋮ 菜单；手机卡片左右留 12px。 */
 /* 手机端把四个阅读工具整组搬进 ⋮ 菜单：搬 DOM 而非复制，按钮只留一套，事件与状态全部沿用 */
 const mqMobile = window.matchMedia("(max-width:760px)");
 function placeReaderTools(){
@@ -4286,14 +4329,15 @@ if (mqMobile.addEventListener) mqMobile.addEventListener("change", placeReaderTo
 else if (mqMobile.addListener) mqMobile.addListener(placeReaderTools);
 
 const STYLE_KEY = "nb-reader-style";
-const STYLE_NAMES = {a:"衬线纸墨", b:"极简白", c:"暗色夜读", d:"杂志编排", e:"新中式", f:"宋刻本", g:"包豪斯"};
+const STYLE_NAMES = {a:"衬线纸墨", b:"极简白", c:"暗色夜读", d:"杂志编排", e:"新中式", f:"宋刻本", g:"包豪斯",
+                     h:"浮世绘·蓝摺", i:"敦煌土壁", j:"水墨留白", k:"装饰艺术"};
 let curStyle = "a";
 function applyStyleClass(){
-  document.body.classList.remove("th-a","th-b","th-c","th-d","th-e","th-f","th-g");
+  document.body.classList.remove("th-a","th-b","th-c","th-d","th-e","th-f","th-g","th-h","th-i","th-j","th-k");
   document.body.classList.add("th-" + curStyle);
 }
 function removeStyleClass(){
-  document.body.classList.remove("th-a","th-b","th-c","th-d","th-e","th-f","th-g");
+  document.body.classList.remove("th-a","th-b","th-c","th-d","th-e","th-f","th-g","th-h","th-i","th-j","th-k");
 }
 function markStylePopup(){
   $("stylePopup").querySelectorAll("button[data-style]").forEach(b => {
