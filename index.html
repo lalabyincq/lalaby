@@ -503,6 +503,66 @@
       display:grid;grid-template-columns:1fr 1fr;gap:4px;max-height:none;overflow:visible;}
     #menuTools #stylePopup button{font-size:12px;padding:6px 8px;margin:0;width:100%;}
   }
+
+  /* ===== 专题入口（2026-11-27）：卡片页专题条 + 右侧抽屉，沿用阅读页主题变量 ===== */
+  .topic-strip{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 14px;padding:7px 10px;
+    border:0.5px solid var(--line);border-radius:8px;background:var(--bg2);font-size:0.86em;}
+  .topic-strip .ts-lab{color:var(--tx3);flex:0 0 auto;letter-spacing:0.04em;}
+  .tchip{border:0.5px solid var(--line2);background:var(--bg);color:var(--tx);border-radius:14px;
+    padding:2px 9px;font:inherit;font-size:0.95em;cursor:pointer;line-height:1.5;}
+  .tchip:hover{border-color:var(--ac);color:var(--ac);}
+  .tchip .tseq{color:var(--tx3);margin-left:5px;font-size:0.9em;}
+  .tmark{border:0;background:var(--ac-bg);color:var(--ac);border-radius:4px;padding:0 4px;margin-left:2px;
+    font:inherit;font-size:0.88em;cursor:pointer;line-height:1.5;}
+  .tmark:hover{outline:0.5px solid var(--ac);}
+
+  #topicDrawer{position:fixed;inset:0;z-index:80;display:none;}
+  #topicDrawer.on{display:block;}
+  #topicDrawer .td-mask{position:absolute;inset:0;background:rgba(30,28,24,.28);}
+  #topicDrawer .td-panel{position:absolute;top:0;right:0;bottom:0;width:min(420px,92vw);background:var(--bg);
+    border-left:0.5px solid var(--line);display:flex;flex-direction:column;
+    box-shadow:-8px 0 24px rgba(0,0,0,.06);}
+  #topicDrawer .td-head{display:flex;align-items:flex-start;gap:10px;padding:16px 18px 10px;}
+  #topicDrawer .td-name{font-size:1.18em;font-weight:600;letter-spacing:0.02em;}
+  #topicDrawer .td-span{color:var(--tx3);font-size:0.82em;margin-top:3px;}
+  #topicDrawer .td-close{margin-left:auto;border:0.5px solid var(--line);background:var(--bg);color:var(--tx2);
+    border-radius:6px;width:28px;height:28px;line-height:1;font-size:16px;cursor:pointer;flex:0 0 auto;}
+  #topicDrawer .td-q{padding:0 18px 12px;color:var(--tx2);font-size:0.88em;line-height:1.65;
+    border-bottom:0.5px solid var(--line);}
+  #topicDrawer .td-body{flex:1;overflow:auto;padding:12px 18px 18px;-webkit-overflow-scrolling:touch;}
+  #topicDrawer .td-strand{color:var(--tx3);font-size:0.8em;letter-spacing:0.06em;margin:10px 0 6px;}
+  #topicDrawer .td-item{display:flex;gap:9px;align-items:flex-start;padding:6px 8px;border-radius:7px;cursor:pointer;}
+  #topicDrawer .td-item:hover{background:var(--bg2);}
+  #topicDrawer .td-item.cur{background:var(--ac-bg);}
+  #topicDrawer .td-dot{width:7px;height:7px;border-radius:50%;background:var(--line2);margin-top:7px;flex:0 0 auto;}
+  #topicDrawer .td-item.cur .td-dot{background:var(--ac);}
+  #topicDrawer .td-lab{font-size:0.95em;line-height:1.45;}
+  #topicDrawer .td-slug{color:var(--tx3);font-size:0.78em;margin-left:6px;}
+  #topicDrawer .td-why{color:var(--tx2);font-size:0.82em;line-height:1.55;margin-top:2px;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  #topicDrawer .td-foot{border-top:0.5px solid var(--line);padding:10px 18px;display:flex;align-items:center;gap:10px;}
+  #topicDrawer .td-docbtn{border:0.5px solid var(--line2);background:var(--bg);color:var(--tx);
+    border-radius:7px;padding:5px 12px;font:inherit;font-size:0.88em;cursor:pointer;}
+  #topicDrawer .td-docbtn.on{background:var(--ac-bg);border-color:var(--ac);color:var(--ac);}
+  #topicDrawer .td-gap{color:var(--tx3);font-size:0.8em;margin-left:auto;}
+  #topicDrawer .td-doc{display:none;flex:1;overflow:auto;padding:6px 18px 24px;border-top:0.5px solid var(--line);}
+  #topicDrawer .td-doc.on{display:block;}
+  #topicDrawer .td-panel.docmode .td-body{display:none;}
+  #topicDrawer .td-doc h4{font-size:1em;margin:14px 0 6px;color:var(--tx);}
+  #topicDrawer .td-doc p,#topicDrawer .td-doc li{font-size:0.9em;line-height:1.75;color:var(--tx);}
+  #topicDrawer .td-doc ol{margin:6px 0 10px;padding-left:20px;}
+  #topicDrawer .td-doc ol li{margin:3px 0;}
+  #topicDrawer .td-doc blockquote{margin:8px 0;padding:6px 10px;border-left:2px solid var(--line2);color:var(--tx2);font-size:0.86em;}
+  @media (max-width:760px){
+    #topicDrawer .td-panel{top:auto;left:0;right:0;width:100%;height:82vh;border-left:0;
+      border-top:0.5px solid var(--line);border-radius:14px 14px 0 0;}
+    #topicDrawer .td-body{padding:10px 14px 14px;}
+    #topicDrawer .td-head{padding:14px 14px 8px;}
+    #topicDrawer .td-q{padding:0 14px 10px;}
+    #topicDrawer .td-foot{padding:8px 14px 14px;}
+    #topicDrawer .td-doc{padding:4px 14px 20px;}
+    .topic-strip{margin:0 0 12px;padding:6px 8px;}
+  }
 </style>
 </head>
 <body>
@@ -1300,8 +1360,10 @@ function finishLoad(items, statusText){
   ingest(items);
   afterIngest(statusText);
 }
-function afterIngest(statusText){
+async function afterIngest(statusText){
   setMsg("");
+  /* 先拿到专题索引（深链首屏就能看到专题条），但最多等 4 秒：网络卡住不能挡住院子里的卡片 */
+  await Promise.race([loadTopics(), new Promise(r => setTimeout(r, 4000))]);
   $("srcDot").classList.add("ok");
   $("srcDot").title = statusText;
   $("reloadBtn").style.display = "";
@@ -1321,6 +1383,12 @@ function afterIngest(statusText){
         // openCompare 在数据加载完成后调用会被 setMsg 中的 renderHome 覆盖，这里延迟调用
         setTimeout(() => openCompare(cmpForceMode), 50);
       }
+    } else if (parseTopicHash(h)) {
+      /* 专题深链：#t=书法&s=1420-赫拉特 —— 先开卡，再开抽屉 */
+      const tp = parseTopicHash(h);
+      const t = TOPICS.find(x => x.name === tp.name);
+      const c = slugIndex[tp.slug] || (t && t.stations.length ? slugIndex[t.stations[0].slug] : null);
+      if (c) setTimeout(() => { openCard(c.uid).then(() => openTopicDrawer(tp.name, c.slug)); }, 60);
     } else {
       const sl = decodeURIComponent(h.replace(/^\/?/, ""));
       if (slugIndex[sl]) openCard(slugIndex[sl].uid);
@@ -1417,6 +1485,12 @@ function mdHtml(md, card){
       const items = [];
       while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])){ items.push(lines[i].replace(/^\s*[-*]\s+/,"")); i++; }
       out.push("<ul>" + items.map(x=>"<li>"+inline(x)+"</li>").join("") + "</ul>"); continue;
+    }
+    /* 有序列表：专题综述的「结论」「反例」用 1. 2. 3.，卡片里偶尔也有；与 ul 同一套处理 */
+    if (/^\s*\d+[.、]\s+/.test(line)){
+      const items = [];
+      while (i < lines.length && /^\s*\d+[.、]\s+/.test(lines[i])){ items.push(lines[i].replace(/^\s*\d+[.、]\s+/,"")); i++; }
+      out.push("<ol>" + items.map(x=>"<li>"+inline(x)+"</li>").join("") + "</ol>"); continue;
     }
     if (!line.trim()){ i++; continue; }
     const p = [];
@@ -3054,6 +3128,158 @@ $("cmpModeSeries").addEventListener("click", () => { cmpForceMode = "series"; op
 $("cmpModeAll").addEventListener("click", () => { cmpForceMode = "all"; openCompare("all"); });
 
 /* ================= 阅读视图 ================= */
+/* ---- 专题索引（派生视图：索引/专题索引.json，由 _wb_topic_index.py 生成）----
+   前端不解析声明与综述，只读这一份；索引缺失时卡片页不显示专题条，不影响其它功能。 */
+let TOPICS = [];
+let _topicReturnFocus = null;          /* 关闭抽屉后把焦点还给触发它的按钮 */
+function topicHash(name, slug){
+  return "t=" + encodeURIComponent(name) + (slug ? "&s=" + encodeURIComponent(slug) : "");
+}
+function parseTopicHash(h){
+  const m = (h || "").match(/^t=([^&]+)(?:&s=([^&]+))?/);
+  return m ? { name: decodeURIComponent(m[1]), slug: m[2] ? decodeURIComponent(m[2]) : "" } : null;
+}
+async function loadTopics(){
+  const apply = (txt) => {
+    try {
+      const d = JSON.parse(txt);
+      TOPICS = Array.isArray(d.topics) ? d.topics : [];
+    } catch(e){ TOPICS = []; }
+  };
+  try {
+    if (source && source.type === "local" && source.root){
+      const ih = await source.root.getDirectoryHandle("索引");
+      const fh = await ih.getFileHandle("专题索引.json");
+      apply(await (await fh.getFile()).text());
+    } else if (gh.repo && gh.token){
+      apply(await ghGetText("索引/专题索引.json"));
+    }
+  } catch(e){ /* 没有专题索引就当没有，静默 */ }
+}
+function topicsOf(slug){
+  return TOPICS.filter(t => t.stations.some(s => s.slug === slug));
+}
+function topicStripHtml(c){
+  const ts = topicsOf(c.slug);
+  if (!ts.length) return "";
+  return '<div class="topic-strip"><span class="ts-lab">专题</span>' + ts.map(t => {
+    const s = t.stations.find(x => x.slug === c.slug);
+    const head = (s.strand ? s.strand + " " : "") + s.seq + "/" + s.total;
+    return '<button class="tchip" type="button" data-topic="' + escAttr(t.name) + '">' + esc(t.name) +
+      '<span class="tseq">' + esc(head) + "</span></button>";
+  }).join("") + "</div>";
+}
+/* 关系节里已经写好的「（专题·上游）」变成可点：只换这一小段，正文其它内容不碰 */
+function markTopics(html){
+  for (const t of TOPICS){
+    const nm = t.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    html = html.replace(new RegExp("（" + nm + "·(上游|下游|旁支)）", "g"),
+      (m, d) => '<button class="tmark" type="button" data-topic="' + t.name + '">' + t.name + "·" + d + "</button>");
+  }
+  return html;
+}
+function closeTopicDrawer(){
+  const d = $("topicDrawer");
+  if (!d || !d.classList.contains("on")) return;
+  d.classList.remove("on"); d.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = document.body.dataset.topicScroll || "";
+  if (curReaderUid){
+    const c = cards.find(x => x.uid === curReaderUid);
+    if (c){ try { history.replaceState(null, "", "#/" + encodeURIComponent(c.slug)); } catch(e){} }
+  }
+  if (_topicReturnFocus && _topicReturnFocus.focus){
+    try { _topicReturnFocus.focus({ preventScroll: true }); } catch(e){}
+  }
+  _topicReturnFocus = null;
+}
+function openTopicDrawer(name, slug){
+  const t = TOPICS.find(x => x.name === name);
+  if (!t) return;
+  const d = $("topicDrawer");
+  d.classList.add("on"); d.setAttribute("aria-hidden", "false");
+  _topicReturnFocus = document.activeElement;
+  document.body.dataset.topicScroll = document.body.style.overflow || "";
+  document.body.style.overflow = "hidden";            /* 抽屉打开时背景不跟着滑（手机上尤其明显） */
+  const panel = d.querySelector(".td-panel");
+  panel.setAttribute("tabindex", "-1");
+  try { panel.focus({ preventScroll: true }); } catch(e){}
+  try { history.replaceState(null, "", "#" + topicHash(name, slug || "")); } catch(e){}
+  $("tdName").textContent = t.name;
+  $("tdSpan").textContent = (t.span ? t.span + "｜" : "") + t.stations.length + " 站" +
+    (t.branches && t.branches.length ? "＋旁支 " + t.branches.length : "");
+  $("tdQ").textContent = t.question || "";
+  let h = "";
+  for (const st of t.strands){
+    if (st.name) h += '<div class="td-strand">' + esc(st.name) + " · " + st.stations.length + " 站</div>";
+    for (const sl of st.stations){
+      const s = t.stations.find(x => x.slug === sl && x.strand === st.name);
+      if (!s) continue;
+      h += '<div class="td-item' + (sl === slug ? " cur" : "") + '" data-slug="' + escAttr(sl) + '">' +
+        '<span class="td-dot"></span><div style="min-width:0"><div class="td-lab">' + esc(s.label) +
+        '<span class="td-slug">' + esc(sl) + "</span></div>" +
+        (s.why ? '<div class="td-why">' + esc(s.why) + "</div>" : "") + "</div></div>";
+    }
+  }
+  if (t.branches && t.branches.length)
+    h += '<div class="td-strand">旁支 · ' + t.branches.length + "（未过资格第 3 条）</div>" +
+      t.branches.map(b => '<div class="td-item" data-slug="' + escAttr(b) + '"><span class="td-dot"></span>' +
+        '<div style="min-width:0"><div class="td-lab">' + esc(b) + "</div></div></div>").join("");
+  const body = $("tdBody");
+  body.innerHTML = h;
+  /* 打开就落在当前站：列表可能很长（13 站 + 旁支），不滚就等于没高亮 */
+  const cur = body.querySelector(".td-item.cur");
+  if (cur){
+    const bb = body.getBoundingClientRect(), cb = cur.getBoundingClientRect();
+    body.scrollTop += cb.top - bb.top - 56;
+  } else body.scrollTop = 0;
+  $("tdBody").querySelectorAll(".td-item").forEach(el => el.onclick = () => {
+    const s = slugIndex[el.dataset.slug];
+    if (s){ closeTopicDrawer(); openCard(s.uid); }
+  });
+  $("tdGap").textContent = t.gaps ? "时间缺口 " + t.gaps + " 处" : "无时间断口";
+  const linkBtn = $("tdLinkBtn");
+  linkBtn.textContent = "复制链接";
+  linkBtn.onclick = async () => {
+    const url = location.href.split("#")[0] + "#" + topicHash(t.name, slug || "");
+    try {
+      await navigator.clipboard.writeText(url);
+      linkBtn.textContent = "已复制";
+      setTimeout(() => { linkBtn.textContent = "复制链接"; }, 1500);
+    } catch(e){ window.prompt("复制这个链接：", url); }
+  };
+  const doc = $("tdDoc"), btn = $("tdDocBtn");
+  doc.classList.remove("on"); doc.innerHTML = "";
+  d.querySelector(".td-panel").classList.remove("docmode");
+  btn.classList.remove("on"); btn.textContent = "读全文";
+  btn.onclick = () => {
+    const on = !doc.classList.contains("on");
+    if (on && !doc.innerHTML){
+      /* 综述第一行是 # 标题，和抽屉标题重复，剥掉 */
+      doc.innerHTML = mdHtml((t.doc || "").replace(/^#[^\n]*\n+/, ""), null);
+    }
+    doc.classList.toggle("on", on);
+    d.querySelector(".td-panel").classList.toggle("docmode", on);
+    btn.classList.toggle("on", on);
+    btn.textContent = on ? "收起全文" : "读全文";
+    if (on){
+      doc.scrollTop = 0;
+      doc.querySelectorAll(".wikilink[data-slug]").forEach(b => b.onclick = () => {
+        const s = slugIndex[b.dataset.slug];
+        if (s){ closeTopicDrawer(); openCard(s.uid); }
+      });
+    }
+  };
+  $("tdDoc").scrollTop = 0;
+}
+(function bindTopicDrawer(){
+  const d = $("topicDrawer");
+  if (!d) return;
+  d.querySelector(".td-mask").onclick = closeTopicDrawer;
+  d.querySelector(".td-close").onclick = closeTopicDrawer;
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeTopicDrawer(); });
+})();
+
+
 /* ---- 关系合并块：出边（我指向的，带自己写的理由）+ 入边（指向我的，照搬对方理由）----
    同一条边不再两端各记一遍：强引用=对方关系节论证过，把它那句理由搬过来（以前这句只活在对方卡上）；
    弱引用=对方正文顺带提及，默认折叠。互为指向的标「↔」。 */
@@ -3068,7 +3294,7 @@ function relBoxHtml(c, sec){
     (why ? '<span class="relwhy">' + esc(why) + "</span>" : "") + "</div>";
   let h = '<div class="relbox"><h3>关系（出 ' + outs.length + " · 入 " + ins.length + '）</h3>';
   h += '<div class="relsub">我指向的（' + outs.length + "）</div>";
-  if (sec && sec.body && !sec.placeholder) h += '<div class="relout">' + mdHtml(sec.body, c) + "</div>";
+  if (sec && sec.body && !sec.placeholder) h += '<div class="relout">' + markTopics(mdHtml(sec.body, c)) + "</div>";
   else if (outs.length) h += '<div class="relout">' + outs.map(o => row(o.t, "→", o.w)).join("") + "</div>";
   else h += '<div class="relnone">（本卡还没写关系）</div>';
   h += '<div class="relsub">指向我的（' + ins.length + "）</div>";
@@ -3105,6 +3331,7 @@ async function openCard(uid){
     '<button id="editCardBtn" type="button" title="在编辑视图中修改此卡（保存才会写回）">编辑此卡</button>' +
     c.tags.map(t=>'<span class="tag" data-tagjump="' + escAttr(t) + '">' + esc(t) + "</span>").join("") +
     '　<label style="font-size:0.85em;color:var(--tx3);"><input type="checkbox" id="cmpAdd" style="width:auto;vertical-align:-2px;"> 加入对比</label></div>';
+  h += topicStripHtml(c);
   h += miniMapHtml(c) + "<h3>概述</h3><div>" + mdHtml(c.overview || "（待补）", c) + "</div>";
   let relDone = false;
   for (const s of c.sections){
@@ -3113,6 +3340,8 @@ async function openCard(uid){
   }
   if (!relDone) h += relBoxHtml(c, null);   // 全文没读到（索引模式且未补全文）时也要有这一节
   $("readerBox").innerHTML = h;
+  $("readerBox").querySelectorAll(".tchip[data-topic]").forEach(b => b.onclick = () => openTopicDrawer(b.dataset.topic, c.slug));
+  $("readerBox").querySelectorAll(".tmark[data-topic]").forEach(b => b.onclick = () => openTopicDrawer(b.dataset.topic, c.slug));
   $("readerBox").querySelectorAll(".wikilink[data-slug]").forEach(b => b.onclick = () => {
     const target = slugIndex[b.dataset.slug];
     if (target) openCard(target.uid);
@@ -4396,5 +4625,24 @@ show("emptyView");
   }
 })();
 </script>
+
+<!-- 专题抽屉：点卡片页「专题」条或关系节里的（专题·上游/下游）打开 -->
+<div id="topicDrawer" aria-hidden="true">
+  <div class="td-mask"></div>
+  <aside class="td-panel" role="dialog" aria-modal="true" aria-labelledby="tdName">
+    <div class="td-head">
+      <div><div class="td-name" id="tdName"></div><div class="td-span" id="tdSpan"></div></div>
+      <button class="td-close" type="button" aria-label="关闭">×</button>
+    </div>
+    <div class="td-q" id="tdQ"></div>
+    <div class="td-body" id="tdBody"></div>
+    <div class="td-doc" id="tdDoc"></div>
+    <div class="td-foot">
+      <button class="td-docbtn" id="tdLinkBtn" type="button" title="复制这个专题在这一站的链接">复制链接</button>
+      <button class="td-docbtn" id="tdDocBtn" type="button">读全文</button>
+      <span class="td-gap" id="tdGap"></span>
+    </div>
+  </aside>
+</div>
 </body>
 </html>
