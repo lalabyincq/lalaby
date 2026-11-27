@@ -286,9 +286,9 @@ body{background:#f5f7fa;font-size:14px;color:#333;width:100%;-webkit-text-size-a
 const QUIZ_KEY = 'quiz_data_v1';
 const QUIZ_VER_KEY = 'quiz_data_ver';
 // 服务器端题库文件（部署到 GitHub Pages 时与本 HTML 同目录，建议英文名避免 URL 编码问题）
-const QUIZ_XLSX_URL = '题库模版.xlsx';
+const QUIZ_XLSX_URL = 'quiz.xlsx';
 // 题库版本号：更新服务器题库后改此版本号，访问者下次访问会自动重新拉取并清除旧答题记录
-const QUIZ_XLSX_VER = 'v3';
+const QUIZ_XLSX_VER = 'v4';
 let QUIZ_DATA = loadQuizData();
 function loadQuizData() {
     try {
@@ -574,7 +574,7 @@ function forceRefreshQuiz() {
         .catch(err => {
             btn.disabled = false;
             btn.textContent = '🔄 更新题库';
-            alert('题库更新失败：' + err.message + '\n请确认通过 HTTP 方式访问（非双击打开 HTML），且 题库模版.xlsx 与页面在同一目录。');
+            alert('题库更新失败：' + err.message + '\n请确认通过 HTTP 方式访问（非双击打开 HTML），且 quiz.xlsx 与页面在同一目录。');
         });
 }
 
